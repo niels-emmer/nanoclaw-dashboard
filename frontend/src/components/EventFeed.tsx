@@ -18,8 +18,10 @@ export function EventFeed({ events }: Props) {
     <div className="event-feed" role="log" aria-live="polite">
       {events.slice(0, 8).map((event) => {
         const key = `${event.id}`
-        const actor = event.type === 'question' ? agentLabelFromId(event.target) : agentLabelFromId(event.source)
-        const accent = colorForAgent(actor)
+        const actorId = event.type === 'question' ? event.target : event.source
+        const accent = colorForAgent(actorId)
+        const sourceLabel = event.payload.meta?.sourceLabel ?? readableNodeLabel(event.source)
+        const targetLabel = event.payload.meta?.targetLabel ?? readableNodeLabel(event.target)
         return (
           <article key={key} className={`event event-${event.type}`}>
             <span className="bullet" style={{ background: accent }} aria-hidden />
@@ -30,9 +32,9 @@ export function EventFeed({ events }: Props) {
               </header>
               <p>{event.payload.summary}</p>
               <footer>
-                <span>{event.source}</span>
+                <span>{sourceLabel}</span>
                 <span>→</span>
-                <span>{event.target}</span>
+                <span>{targetLabel}</span>
               </footer>
             </div>
           </article>
@@ -40,4 +42,13 @@ export function EventFeed({ events }: Props) {
       })}
     </div>
   )
+}
+
+const readableNodeLabel = (id: string) => {
+  if (id.startsWith('agent:')) return agentLabelFromId(id)
+  if (id.startsWith('channel:')) {
+    const channel = id.replace(/^channel:/, '')
+    return `${channel} channel`
+  }
+  return id
 }

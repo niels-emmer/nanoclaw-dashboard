@@ -27,3 +27,4 @@
 - Document any new commands or operational steps in `README.md` + `ARCHITECTURE.md` immediately.
 - Prefer using `./scripts/install_dashboard.sh` to provision deps + run verification; update the script whenever workflows change.
 - Container workflow: `docker compose up --build` reads `.env` defaults (ports + backend config). Update Compose + nginx proxy if you change transport paths.
+- When wiring to a real Nanoclaw host, require a read-only bind mount of the Nanoclaw checkout (`NANOCLAW_HOST_DATA` → `NANOCLAW_CONTAINER_DATA`) and set `NANOCLAW_ENABLED=true`. Never write to the mounted data folder.

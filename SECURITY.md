@@ -17,6 +17,7 @@ The repository follows `agent-governance/GOVERNANCE.md`. This document captures 
 ## Secrets + Configuration
 - No secrets committed. Use `.env.example` for documentation only; real secrets supplied via environment variables or OS keychain.
 - Backend configuration loaded via Pydantic `BaseSettings`; avoid environment-specific branches.
+- When `NANOCLAW_ENABLED=true`, bind-mount the Nanoclaw checkout read-only (see `.env`). The dashboard never writes to that folder; treat it as sensitive host data and restrict filesystem permissions accordingly.
 
 ## Cryptography
 - Use only standard libraries (Python `cryptography`, `ssl` module) when TLS or signing is required.

@@ -6,7 +6,7 @@ Live, single-screen telemetry dashboard that shows the nanoclaw orchestrator del
 
 | Layer     | Tech                                                          | Notes |
 |-----------|---------------------------------------------------------------|-------|
-| Backend   | FastAPI + Uvicorn, structlog, Pydantic Settings               | Provides `/health` + `/ws/events` WebSocket streaming mock nanoclaw telemetry. |
+| Backend   | FastAPI + Uvicorn, structlog, Pydantic Settings               | Provides `/health` + `/ws/events` WebSocket streaming mock telemetry by default (or live Nanoclaw data when enabled). |
 | Frontend  | Vite + React + TypeScript                                     | Full-screen flow canvas, agent grid, event log, toggleable debug panel. |
 | Tooling   | pytest + pytest-asyncio, npm scripts, Node 20.19, Python 3.11 | Both stacks pin dependencies per governance. |
 
@@ -43,6 +43,18 @@ PATH=$PWD/.tools/node/bin:$PATH npm --prefix frontend run dev
 ```
 
 The frontend auto-connects to `ws://localhost:8000/ws/events` when it detects the Vite dev port (`5173`). Override with `VITE_BACKEND_WS_URL` if you proxy or deploy elsewhere.
+
+### Connect to a local Nanoclaw host
+
+1. Ensure the Nanoclaw checkout (the directory that contains `data/v2.db`) is readable from this repo. The default assumes `../nanoclaw` relative to the dashboard root.
+2. Update `.env`:
+   - `NANOCLAW_ENABLED=true`
+   - `NANOCLAW_HOST_DATA` → absolute path to your Nanoclaw checkout (e.g. `/home/user/nanoclaw`).
+   - `NANOCLAW_CONTAINER_DATA` → mount point inside the backend container (default `/nanoclaw`).
+   - Optionally set `NANOCLAW_ORCHESTRATOR_GROUP` to the agent group id or name you want centered in the orbit (falls back to the first group or the one containing "orchestrator").
+3. Rebuild/restart the backend (`docker compose up --build backend` or `uvicorn` locally). The backend mounts the Nanoclaw data folder read-only and tails `data/v2.db` plus the per-session `inbound.db`/`outbound.db` files to emit real events.
+
+The integration is read-only: the backend never mutates Nanoclaw files, and all access stays within the mounted checkout. If the mount is missing or unreadable, the backend automatically falls back to the synthetic telemetry source.
 
 ## Docker workflow
 
@@ -82,7 +94,13 @@ Canonical event schema is defined in `backend/app/telemetry/models.py` and mirro
 }
 ```
 
-Mock telemetry (`MockTelemetrySource`) emits alternating question/response pairs, seeded with deterministic agent names until the real nanoclaw feed is connected. Replace the source implementation but keep the schema versioned; document changes in `DECISIONS.md`.
+Mock telemetry (`MockTelemetrySource`) emits alternating question/response pairs, seeded with deterministic agent names until the real Nanoclaw feed is connected. When `NANOCLAW_ENABLED=true`, the backend switches to `NanoclawTelemetrySource`, which:
+
+- Reads agent metadata from `data/v2.db`.
+- Tails each session’s `inbound.db` / `outbound.db` pairs to detect new inter-agent messages and channel traffic.
+- Emits the same canonical events with additional metadata (friendly labels) so the frontend animates the actual orchestrator/sub-agent conversations.
+
+Keep the schema versioned and update `DECISIONS.md` whenever the payload changes.
 
 ## Layout + UX highlights
 

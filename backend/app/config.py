@@ -1,7 +1,8 @@
 """Application settings using Pydantic BaseSettings."""
 
 import json
-from typing import Literal
+from pathlib import Path
+from typing import Literal, Optional
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, EnvSettingsSource, SettingsConfigDict
@@ -55,6 +56,13 @@ class Settings(BaseSettings):
     jitter_ms: int = Field(default=350, ge=0, le=5000)
     max_clients: int = Field(default=50, ge=1)
 
+    # Nanoclaw integration
+    enabled: bool = Field(default=False)
+    root: str = Field(default=str(Path.home() / "nanoclaw"))
+    poll_interval_ms: int = Field(default=750, ge=100, le=10_000)
+    history_events: int = Field(default=20, ge=0, le=200)
+    orchestrator_group: Optional[str] = Field(default=None)
+
     @field_validator("mock_agent_names", mode="before")
     @classmethod
     def _parse_mock_agents(cls, value: object) -> object:
@@ -62,6 +70,10 @@ class Settings(BaseSettings):
             items = [item.strip() for item in value.split(",") if item.strip()]
             return items or None
         return value
+
+    @property
+    def root_path(self) -> Path:
+        return Path(self.root).expanduser()
 
 
 settings = Settings()

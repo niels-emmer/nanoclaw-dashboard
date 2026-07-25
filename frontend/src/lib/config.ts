@@ -29,5 +29,5 @@ const inferWsUrl = () => {
 export const config = {
   wsUrl: inferWsUrl(),
   maxEventHistory: Number(import.meta.env.VITE_EVENT_HISTORY ?? 50),
-  orchestratorId: 'orchestrator',
+  orchestratorId: import.meta.env.VITE_ORCHESTRATOR_ID ?? 'orchestrator',
 }

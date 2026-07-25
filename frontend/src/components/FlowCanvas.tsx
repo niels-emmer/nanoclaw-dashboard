@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 
 import type { AgentSnapshot, EdgePulse } from '../lib/types'
-import { agentLabelFromId, colorForAgent } from '../lib/utils'
+import { colorForAgent } from '../lib/utils'
 
 const WIDTH = 1000
 const HEIGHT = 560
@@ -23,17 +23,19 @@ interface NodePosition {
 
 export function FlowCanvas({ orchestratorId, agents, edges }: FlowCanvasProps) {
   const nodes = useMemo<NodePosition[]>(() => {
-    const agentCount = Math.max(agents.length, 1)
+    const nonOrchestratorAgents = agents.filter((agent) => agent.id !== orchestratorId)
+    const agentCount = Math.max(nonOrchestratorAgents.length, 1)
     const orbit = Math.min(WIDTH, HEIGHT) / 2.4
+    const orchestratorSnapshot = agents.find((agent) => agent.id === orchestratorId)
     const orchestrator: NodePosition = {
       id: orchestratorId,
       x: CENTER.x,
       y: CENTER.y,
       radius: 70,
-      label: 'orchestrator',
+      label: orchestratorSnapshot?.label ?? 'orchestrator',
     }
 
-    const spokes = agents.map((agent, idx) => {
+    const spokes = nonOrchestratorAgents.map((agent, idx) => {
       const angle = (idx / agentCount) * Math.PI * 2 - Math.PI / 2
       return {
         id: agent.id,
@@ -50,11 +52,13 @@ export function FlowCanvas({ orchestratorId, agents, edges }: FlowCanvasProps) {
   const nodeMap = useMemo(() => Object.fromEntries(nodes.map((node) => [node.id, node])), [nodes])
 
   const baseEdges = useMemo(() => {
-    return agents.map((agent) => ({
-      source: orchestratorId,
-      target: agent.id,
-      color: colorForAgent(agent.id),
-    }))
+    return agents
+      .filter((agent) => agent.id !== orchestratorId)
+      .map((agent) => ({
+        source: orchestratorId,
+        target: agent.id,
+        color: colorForAgent(agent.id),
+      }))
   }, [agents, orchestratorId])
 
   const resolvedPulses = edges
@@ -121,7 +125,7 @@ export function FlowCanvas({ orchestratorId, agents, edges }: FlowCanvasProps) {
               data-agent={node.id}
             />
             <text className="node-label" y={node.radius + 28} textAnchor="middle">
-              {node.id === orchestratorId ? node.label : agentLabelFromId(node.id)}
+              {node.label}
             </text>
           </g>
         ))}

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Literal, Optional
+from typing import Dict, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -29,6 +29,7 @@ class EventPayload(BaseModel):
         json_schema_extra={"description": "Duration of the task if applicable."},
     )
     status: Literal["running", "completed", "error"] = "running"
+    meta: Optional[Dict[str, str]] = None
 
 
 class TelemetryEvent(BaseModel):
