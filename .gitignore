@@ -1,0 +1,13 @@
+# Local tooling
+.venv/
+.tools/
+
+# Node artifacts (frontend uses nested .gitignore for dist + node_modules)
+node_modules/
+
+# Python
+__pycache__/
+.pytest_cache/
+
+# OS
+.DS_Store

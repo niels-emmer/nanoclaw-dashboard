@@ -1,0 +1,93 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
+
+import { config } from '../lib/config'
+import type { AgentSnapshot, EdgePulse, TelemetryEvent } from '../lib/types'
+import { deriveAgentSnapshot } from '../lib/utils'
+
+export type ConnectionState = 'connecting' | 'connected' | 'reconnecting' | 'error'
+
+const EDGE_TTL_MS = 6500
+
+export const useEventStream = () => {
+  const [events, setEvents] = useState<TelemetryEvent[]>([])
+  const [snapshots, setSnapshots] = useState<Record<string, AgentSnapshot>>({})
+  const [edges, setEdges] = useState<EdgePulse[]>([])
+  const [connectionState, setConnectionState] = useState<ConnectionState>('connecting')
+  const wsRef = useRef<WebSocket | null>(null)
+  const retryRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    let isCancelled = false
+
+    const connect = () => {
+      if (isCancelled) return
+      setConnectionState((prev) => (prev === 'connected' ? 'reconnecting' : 'connecting'))
+      try {
+        const ws = new WebSocket(config.wsUrl)
+        wsRef.current = ws
+
+        ws.onopen = () => setConnectionState('connected')
+        ws.onerror = () => setConnectionState('error')
+        ws.onclose = () => {
+          if (!isCancelled) scheduleReconnect()
+        }
+
+        ws.onmessage = (evt) => {
+          try {
+            const parsed = JSON.parse(evt.data) as TelemetryEvent
+            handleEvent(parsed)
+          } catch (error) {
+            console.error('Failed to parse event', error)
+          }
+        }
+      } catch (error) {
+        console.error('WebSocket init error', error)
+        scheduleReconnect()
+      }
+    }
+
+    const scheduleReconnect = () => {
+      if (isCancelled) return
+      if (retryRef.current) {
+        window.clearTimeout(retryRef.current)
+      }
+      retryRef.current = window.setTimeout(connect, 1200)
+      setConnectionState('reconnecting')
+    }
+
+    const handleEvent = (event: TelemetryEvent) => {
+      setEvents((prev) => [event, ...prev].slice(0, config.maxEventHistory))
+      setSnapshots((prev) => deriveAgentSnapshot(prev, event))
+      setEdges((prev) => {
+        const now = Date.now()
+        const next = [
+          {
+            id: event.id,
+            source: event.source,
+            target: event.target,
+            type: event.type,
+            timestamp: now,
+          },
+          ...prev.filter((edge) => now - edge.timestamp < EDGE_TTL_MS),
+        ]
+        return next.slice(0, 32)
+      })
+    }
+
+    connect()
+
+    return () => {
+      isCancelled = true
+      if (retryRef.current) {
+        window.clearTimeout(retryRef.current)
+      }
+      wsRef.current?.close()
+    }
+  }, [])
+
+  const agents = useMemo(() => {
+    return Object.values(snapshots).sort((a, b) => a.label.localeCompare(b.label))
+  }, [snapshots])
+
+  return { agents, events, edges, connectionState }
+}
