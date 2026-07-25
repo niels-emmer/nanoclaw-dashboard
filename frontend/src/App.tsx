@@ -13,9 +13,7 @@ function App() {
     <div className="app-shell">
       <header className="masthead">
         <div>
-          <p className="eyebrow">Nanoclaw orchestrator</p>
-          <h1>Delegation radar</h1>
-          <p className="lede">Live flow of questions and responses as the orchestrator fans work out to its sub-agents.</p>
+          <h1>Nanoclaw Dashboard</h1>
         </div>
         <ConnectionStatus state={connectionState} />
       </header>
