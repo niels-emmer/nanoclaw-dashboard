@@ -5,6 +5,7 @@ export interface TelemetryPayload {
   summary: string
   duration_ms?: number | null
   status: 'running' | 'completed' | 'error'
+  meta?: Record<string, string>
 }
 
 export interface TelemetryEvent {
