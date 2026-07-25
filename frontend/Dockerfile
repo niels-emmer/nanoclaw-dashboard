@@ -3,7 +3,7 @@ WORKDIR /app
 
 COPY frontend/package*.json ./
 RUN npm install --include=optional \
-    && npm install --no-save @rolldown/binding-linux-x64-gnu
+    && npm install --no-save @rolldown/binding-linux-x64-gnu lightningcss-linux-x64-gnu
 
 COPY frontend/ ./
 
