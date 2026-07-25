@@ -2,7 +2,7 @@ FROM node:20.19.0 AS builder
 WORKDIR /app
 
 COPY frontend/package*.json ./
-RUN npm ci
+RUN npm install
 
 COPY frontend/ ./
 
