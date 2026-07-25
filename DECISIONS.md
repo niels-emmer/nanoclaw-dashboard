@@ -45,3 +45,12 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - Browser clients talk to the frontend container, which serves static assets and forwards WebSocket traffic to `backend:8000`, keeping URLs same-origin.
   - Future backend/ frontend env changes must be reflected in `.env` and Compose definitions.
   - CI should eventually add `docker compose build` smoke tests to ensure container images stay healthy.
+
+## 0006 – Read-only Nanoclaw telemetry tailer
+- **Status**: Accepted (2026-07-25)
+- **Context**: The dashboard needs to display real orchestrator/sub-agent activity from the host Nanoclaw instance without adding a new RPC surface.
+- **Decision**: Implement `NanoclawTelemetrySource`, which mounts the Nanoclaw checkout read-only, reads agent/session metadata from `data/v2.db`, and tails each session’s `inbound.db`/`outbound.db` pair for new rows. Events are emitted over the existing `/ws/events` channel, preserving the canonical schema.
+- **Consequences**:
+  - Requires operators to opt in via `NANOCLAW_ENABLED=true` and provide a bind mount; when absent the backend automatically falls back to the synthetic generator.
+  - Only read operations occur; no code writes to the Nanoclaw data folder, reducing risk of corrupting the host install.
+  - Threat model remains focused on the WebSocket surface; if future versions add authenticated RPCs, update the model and ADR.

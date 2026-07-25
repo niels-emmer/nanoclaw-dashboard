@@ -35,7 +35,12 @@ export const deriveAgentSnapshot = (
 ): Record<string, AgentSnapshot> => {
   const snapshot = { ...prev }
   const id = normalizeAgentId(event)
-  const label = agentLabelFromId(id)
+  const labelFromMeta = (() => {
+    if (event.source === id) return event.payload.meta?.sourceLabel
+    if (event.target === id) return event.payload.meta?.targetLabel
+    return undefined
+  })()
+  const label = labelFromMeta ?? prev[id]?.label ?? agentLabelFromId(id)
   const state: AgentState | 'unknown' = event.agent_state ?? prev[id]?.state ?? 'unknown'
   snapshot[id] = {
     id,

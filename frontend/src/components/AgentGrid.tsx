@@ -1,5 +1,5 @@
 import type { AgentSnapshot } from '../lib/types'
-import { agentLabelFromId, colorForAgent, elapsedLabel } from '../lib/utils'
+import { colorForAgent, elapsedLabel } from '../lib/utils'
 
 interface Props {
   agents: AgentSnapshot[]
@@ -30,7 +30,7 @@ export function AgentGrid({ agents }: Props) {
           <article className="agent-card" key={agent.id} style={{ borderColor: tone }}>
             <header>
               <div>
-                <p className="agent-label">{agentLabelFromId(agent.id)}</p>
+                <p className="agent-label">{agent.label}</p>
                 <small>{stateCopy[agent.state] ?? agent.state}</small>
               </div>
               <span className="agent-count">{agent.activityCount}</span>

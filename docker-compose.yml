@@ -8,6 +8,10 @@ services:
     env_file: .env
     ports:
       - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      NANOCLAW_ROOT: ${NANOCLAW_CONTAINER_DATA:-/nanoclaw}
+    volumes:
+      - ${NANOCLAW_HOST_DATA:-../nanoclaw}:${NANOCLAW_CONTAINER_DATA:-/nanoclaw}:ro
     restart: unless-stopped
 
   frontend:

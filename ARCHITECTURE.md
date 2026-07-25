@@ -8,7 +8,8 @@ The dashboard is split into a FastAPI WebSocket service (`/backend`) and a Vite 
 |--------|----------------|
 | `app/config.py` | Centralizes runtime settings via `pydantic-settings` (env prefix `NANOCLAW_`). Controls transport type, mock agent list, pacing, and client limits. |
 | `app/telemetry/models.py` | Canonical event schema shared with the frontend (type, payload, agent state, schema version). |
-| `app/telemetry/source.py` | Declares `TelemetrySource` interface + `MockTelemetrySource` generator that emits alternating question/response events with jittered delays. Swap this class when wiring the real nanoclaw feed. |
+| `app/telemetry/source.py` | Declares `TelemetrySource` interface + `MockTelemetrySource` generator that emits alternating question/response events with jittered delays. |
+| `app/telemetry/nanoclaw.py` | `NanoclawTelemetrySource` tails the Nanoclaw SQLite databases (central `v2.db` + session `inbound/outbound.db`) and emits live orchestrator/sub-agent events when enabled. |
 | `app/events.py` | `EventHub` tracks connected WebSocket clients with backpressure (max clients) and broadcasts JSON payloads. |
 | `app/main.py` | FastAPI app factory with `/health` and `/ws/events`. Lifespan task drives the telemetry loop and pushes events into `EventHub`. |
 | `app/logging.py` | structlog JSON logging config shared across modules. |
@@ -16,7 +17,7 @@ The dashboard is split into a FastAPI WebSocket service (`/backend`) and a Vite 
 
 ### Data flow
 
-1. `MockTelemetrySource.stream()` yields `TelemetryEvent` instances forever, synthesizing orchestrator questions and agent responses (with deterministic agent IDs such as `agent:navigator`).
+1. `TelemetrySource.stream()` yields `TelemetryEvent` instances forever. By default this is the mock generator; when `NANOCLAW_ENABLED=true` it becomes `NanoclawTelemetrySource`, which polls the Nanoclaw session folders for new rows.
 2. The lifespan task in `app/main.py` awaits each event and hands it to `EventHub.broadcast`, which fans it out to all registered WebSocket clients as JSON.
 3. Clients connect to `/ws/events`; the backend enforces a `max_clients` soft limit and gracefully drops sockets on send errors.
 4. Health monitoring: `/health` returns `{ "status": "ok" }` for integration tests and uptime probes.
@@ -67,6 +68,12 @@ When new telemetry attributes are required, bump `schema_version`, update both t
 - Frontend config relies on Vite env vars: `VITE_BACKEND_WS_URL`, `VITE_EVENT_HISTORY` (default 50).
 - Node `20.19.0` is required; we vendor the tarball under `.tools/node` for deterministic teams.
 
+## Nanoclaw integration
+
+- Enabling: set `NANOCLAW_ENABLED=true` and point `NANOCLAW_ROOT` (CLI/dev) or the compose bind (`NANOCLAW_HOST_DATA` → `NANOCLAW_CONTAINER_DATA`) at the Nanoclaw checkout. The backend mounts the folder read-only.
+- Data sources: `NanoclawTelemetrySource` reads `data/v2.db` for agent/session metadata and tails each session’s `inbound.db` / `outbound.db` pair for fresh rows. It maps `messages_in.source_session_id` to discover agent-to-agent traffic and correlates `messages_out.in_reply_to` with the cached inbound rows for response edges.
+- Safety: only read operations are performed. If the mount is missing/unreadable the backend logs a warning and falls back to the mock generator.
+
 ## Observability + debugging
 
 - Backend logs: JSON via structlog, ready for ingestion.
@@ -80,6 +87,5 @@ When new telemetry attributes are required, bump `schema_version`, update both t
 
 ## Future extensions
 
-- Swap `MockTelemetrySource` with the real nanoclaw feed (likely SSE/WebSocket). Add an ADR entry documenting auth + transport security.
 - Wire SBOM generation (Syft recommended) into CI for both stacks.
 - Add integration tests that spin up the backend, run the frontend in headless mode (Playwright/Cypress), and assert render correctness.

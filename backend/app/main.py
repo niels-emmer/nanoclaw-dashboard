@@ -11,12 +11,21 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from .config import settings
 from .events import EventHub
 from .logging import get_logger
+from .telemetry.nanoclaw import NanoclawTelemetrySource
 from .telemetry.source import MockTelemetrySource, TelemetrySource
 
 log = get_logger(__name__)
 
 
 def build_source() -> TelemetrySource:
+    if settings.enabled:
+        try:
+            log.info("nanoclaw_source_enabled", root=str(settings.root_path))
+            return NanoclawTelemetrySource(settings)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("nanoclaw_source_fallback", error=str(exc))
+
+    log.info("mock_source_active")
     return MockTelemetrySource(
         agent_names=settings.mock_agent_names,
         base_interval_ms=settings.base_interval_ms,
