@@ -4,11 +4,10 @@ import { EventFeed } from './components/EventFeed'
 import { DebugPanel } from './components/DebugPanel'
 import { ConnectionStatus } from './components/ConnectionStatus'
 import { useEventStream } from './hooks/useEventStream'
-import { config } from './lib/config'
 import './App.css'
 
 function App() {
-  const { agents, events, edges, connectionState } = useEventStream()
+  const { agents, events, edges, connectionState, orchestratorId } = useEventStream()
 
   return (
     <div className="app-shell">
@@ -23,7 +22,7 @@ function App() {
 
       <main className="main-grid">
         <section className="panel canvas-panel">
-          <FlowCanvas orchestratorId={config.orchestratorId} agents={agents} edges={edges} />
+          <FlowCanvas orchestratorId={orchestratorId} agents={agents} edges={edges} />
         </section>
         <section className="panel agents-panel">
           <div className="panel-header">

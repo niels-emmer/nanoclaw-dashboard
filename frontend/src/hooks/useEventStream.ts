@@ -13,8 +13,10 @@ export const useEventStream = () => {
   const [snapshots, setSnapshots] = useState<Record<string, AgentSnapshot>>({})
   const [edges, setEdges] = useState<EdgePulse[]>([])
   const [connectionState, setConnectionState] = useState<ConnectionState>('connecting')
+  const [orchestratorId, setOrchestratorId] = useState(config.orchestratorId)
   const wsRef = useRef<WebSocket | null>(null)
   const retryRef = useRef<number | null>(null)
+  const orchestratorRef = useRef(config.orchestratorId)
 
   useEffect(() => {
     let isCancelled = false
@@ -56,6 +58,11 @@ export const useEventStream = () => {
     }
 
     const handleEvent = (event: TelemetryEvent) => {
+      const orchestratorMeta = event.payload.meta?.orchestratorId
+      if (orchestratorMeta && orchestratorMeta !== orchestratorRef.current) {
+        orchestratorRef.current = orchestratorMeta
+        setOrchestratorId(orchestratorMeta)
+      }
       setEvents((prev) => [event, ...prev].slice(0, config.maxEventHistory))
       setSnapshots((prev) => deriveAgentSnapshot(prev, event))
       setEdges((prev) => {
@@ -89,5 +96,5 @@ export const useEventStream = () => {
     return Object.values(snapshots).sort((a, b) => a.label.localeCompare(b.label))
   }, [snapshots])
 
-  return { agents, events, edges, connectionState }
+  return { agents, events, edges, connectionState, orchestratorId }
 }
