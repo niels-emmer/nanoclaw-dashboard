@@ -26,3 +26,4 @@
 - Add/extend threat models for new interfaces, then reference them from `DECISIONS.md`.
 - Document any new commands or operational steps in `README.md` + `ARCHITECTURE.md` immediately.
 - Prefer using `./scripts/install_dashboard.sh` to provision deps + run verification; update the script whenever workflows change.
+- Container workflow: `docker compose up --build` reads `.env` defaults (ports + backend config). Update Compose + nginx proxy if you change transport paths.

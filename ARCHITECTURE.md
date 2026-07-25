@@ -72,6 +72,12 @@ When new telemetry attributes are required, bump `schema_version`, update both t
 - Backend logs: JSON via structlog, ready for ingestion.
 - Frontend: connection status chip, live edge pulses, and a collapsible debug panel that dumps the latest raw event payload for onboarding/troubleshooting.
 
+## Containerization
+
+- `backend/Dockerfile` packages the FastAPI app on top of `python:3.11-slim` and exposes port `8000`.
+- `frontend/Dockerfile` builds the SPA with `node:20.19.0`, then serves the `dist/` bundle via nginx. `frontend/nginx.conf` proxies `/ws/` traffic to the backend container, so browsers can use same-origin WebSocket URLs.
+- `docker-compose.yml` wires both services together, reading defaults from `.env` and exposing ports `BACKEND_PORT` (default `8000`) and `FRONTEND_PORT` (default `4173`).
+
 ## Future extensions
 
 - Swap `MockTelemetrySource` with the real nanoclaw feed (likely SSE/WebSocket). Add an ADR entry documenting auth + transport security.

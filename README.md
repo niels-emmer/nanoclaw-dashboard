@@ -44,6 +44,20 @@ PATH=$PWD/.tools/node/bin:$PATH npm --prefix frontend run dev
 
 The frontend auto-connects to `ws://localhost:8000/ws/events` when it detects the Vite dev port (`5173`). Override with `VITE_BACKEND_WS_URL` if you proxy or deploy elsewhere.
 
+## Docker workflow
+
+1. Adjust `.env` if you want different exposed ports or backend settings.
+2. Build + run both services:
+
+```bash
+docker compose up --build
+```
+
+- Frontend is available at `http://localhost:${FRONTEND_PORT}` (default `4173`).
+- Backend health check lives at `http://localhost:${BACKEND_PORT}/health` (default `8000`).
+
+The frontend container serves the built SPA via nginx and proxies `/ws/*` to the backend service, so same-origin WebSocket URLs just work. Rebuild after changing frontend env vars (`docker compose build frontend`).
+
 ## Build + verification
 
 - **Backend tests**: `cd backend && pytest`

@@ -36,3 +36,12 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - Frontend hook (`useEventStream`) owns connection/retry logic; any stateful additions should extend this hook rather than reimplement WebSocket wiring.
   - Layout + color tokens live in `src/index.css` / `App.css`; keep them cohesive when extending the design.
   - Document Node requirement in README and ensure CI uses the same version.
+
+## 0005 – Containerized deployment via Docker Compose
+- **Status**: Accepted (2026-07-25)
+- **Context**: Operators requested an easier way to run the dashboard on nanoclaw hosts without managing Python/Node manually.
+- **Decision**: Provide a Docker-based workflow: `backend/Dockerfile` (Python 3.11 slim + uvicorn), `frontend/Dockerfile` (Node 20.19.0 build → nginx runtime), `frontend/nginx.conf` (proxies `/ws/` to backend), `.env` for defaults, and `docker-compose.yml` to orchestrate both services.
+- **Consequences**:
+  - Browser clients talk to the frontend container, which serves static assets and forwards WebSocket traffic to `backend:8000`, keeping URLs same-origin.
+  - Future backend/ frontend env changes must be reflected in `.env` and Compose definitions.
+  - CI should eventually add `docker compose build` smoke tests to ensure container images stay healthy.
