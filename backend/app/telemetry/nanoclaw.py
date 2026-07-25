@@ -9,7 +9,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import AsyncIterator, Dict, Iterable, List, Optional
+from typing import Any, AsyncIterator, Dict, Iterable, List, Optional
 from uuid import uuid4
 
 from ..config import Settings
@@ -202,7 +202,7 @@ class NanoclawTelemetrySource(TelemetrySource):
         source_agent_id = None
         source_label = "User"
         source = None
-        source_session_id = row.get("source_session_id")
+        source_session_id = self._row_value(row, "source_session_id")
         if source_session_id:
             source_record = self._session_map.get(source_session_id)
             if source_record:
@@ -211,7 +211,7 @@ class NanoclawTelemetrySource(TelemetrySource):
             source = f"agent:{source_agent_id}"
             source_label = self._agent_label(source_agent_id)
         else:
-            channel = row.get("channel_type") or "user"
+            channel = self._row_value(row, "channel_type") or "user"
             source = f"channel:{channel}"
             source_label = channel.title()
 
@@ -224,10 +224,10 @@ class NanoclawTelemetrySource(TelemetrySource):
         if orchestrator_node:
             meta["orchestratorId"] = orchestrator_node
 
-        summary = self._summarize(row.get("content"))
+        summary = self._summarize(self._row_value(row, "content"))
         event = TelemetryEvent(
             id=str(uuid4()),
-            timestamp=row.get("timestamp") or self._now(),
+            timestamp=self._row_value(row, "timestamp") or self._now(),
             type=EventType.QUESTION,
             source=source,
             target=target_agent,
@@ -240,7 +240,7 @@ class NanoclawTelemetrySource(TelemetrySource):
                 message_id=row["id"],
                 agent_group_id=watcher.agent_group_id,
                 source_agent_id=source_agent_id,
-                channel_type=row.get("channel_type"),
+                channel_type=self._row_value(row, "channel_type"),
                 summary=summary,
             )
         )
@@ -253,10 +253,10 @@ class NanoclawTelemetrySource(TelemetrySource):
         target_label = None
         target = None
 
-        if channel := row.get("channel_type"):
+        if channel := self._row_value(row, "channel_type"):
             target = f"channel:{channel}"
             target_label = channel.title()
-        elif reply_id := row.get("in_reply_to"):
+        elif reply_id := self._row_value(row, "in_reply_to"):
             cached = self._inbound_cache.get(reply_id)
             if cached:
                 if cached.source_agent_id:
@@ -282,7 +282,7 @@ class NanoclawTelemetrySource(TelemetrySource):
 
         duration_ms = None
         payload = EventPayload(
-            summary=self._summarize(row.get("content")),
+            summary=self._summarize(self._row_value(row, "content")),
             duration_ms=duration_ms,
             status="completed",
             meta=meta,
@@ -290,7 +290,7 @@ class NanoclawTelemetrySource(TelemetrySource):
 
         return TelemetryEvent(
             id=str(uuid4()),
-            timestamp=row.get("timestamp") or self._now(),
+            timestamp=self._row_value(row, "timestamp") or self._now(),
             type=EventType.RESPONSE,
             source=source,
             target=target,
@@ -329,6 +329,13 @@ class NanoclawTelemetrySource(TelemetrySource):
         if not self._orchestrator_id:
             return None
         return f"agent:{self._orchestrator_id}"
+
+    def _row_value(self, row: sqlite3.Row, column: str, default: Optional[Any] = None) -> Optional[Any]:
+        try:
+            value = row[column]
+        except (KeyError, IndexError):
+            return default
+        return value if value is not None else default
 
     def _query(self, db_path: Path, sql: str) -> Iterable[sqlite3.Row]:
         try:
