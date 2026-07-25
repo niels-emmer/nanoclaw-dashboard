@@ -25,3 +25,4 @@
 - Keep `THIRD_PARTY.md` in sync with any new dependencies (exact version + license) and note modifications.
 - Add/extend threat models for new interfaces, then reference them from `DECISIONS.md`.
 - Document any new commands or operational steps in `README.md` + `ARCHITECTURE.md` immediately.
+- Prefer using `./scripts/install_dashboard.sh` to provision deps + run verification; update the script whenever workflows change.

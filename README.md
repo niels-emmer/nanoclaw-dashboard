@@ -18,23 +18,28 @@ Live, single-screen telemetry dashboard that shows the nanoclaw orchestrator del
 
 ## Quick start
 
+**One-shot installer (recommended):**
+
 ```bash
-# 1) Backend virtual environment
-python3 -m venv .venv
-. .venv/bin/activate
+./scripts/install_dashboard.sh
+```
+
+The script provisions `.venv`, installs backend deps, fetches Node **20.19.0** into `.tools/node`, installs frontend deps, then runs `pytest`, `npm run lint`, and `npm run build`. When it finishes you can start the dev servers:
+
+```bash
+source .venv/bin/activate && cd backend && uvicorn app.main:app --reload --port 8000
+PATH=$PWD/.tools/node/bin:$PATH cd frontend && npm run dev
+```
+
+**Manual setup (if you can’t run the script):**
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r backend/requirements.txt
+cd backend && pytest && uvicorn app.main:app --reload --port 8000
 
-# 2) Run tests + dev server
-cd backend
-pytest
-uvicorn app.main:app --reload --port 8000
-
-# 3) Frontend in another terminal (Node 20.19)
-PATH="$PWD/.tools/node/bin:$PATH" cd frontend && npm install
-PATH="$PWD/.tools/node/bin:$PATH" cd frontend && npm run dev
-
-# 4) Visit the dashboard
-open http://localhost:5173
+PATH=$PWD/.tools/node/bin:$PATH npm --prefix frontend install
+PATH=$PWD/.tools/node/bin:$PATH npm --prefix frontend run dev
 ```
 
 The frontend auto-connects to `ws://localhost:8000/ws/events` when it detects the Vite dev port (`5173`). Override with `VITE_BACKEND_WS_URL` if you proxy or deploy elsewhere.
