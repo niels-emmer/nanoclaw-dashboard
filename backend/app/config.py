@@ -1,15 +1,44 @@
 """Application settings using Pydantic BaseSettings."""
 
+import json
 from typing import Literal
 
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, EnvSettingsSource, SettingsConfigDict
+
+
+class LenientEnvSource(EnvSettingsSource):
+    """Env source that falls back to raw strings when JSON parsing fails."""
+
+    def decode_complex_value(self, field_name, field, value):  # type: ignore[override]
+        if isinstance(value, str):
+            try:
+                return json.loads(value)
+            except json.JSONDecodeError:
+                return value
+        return super().decode_complex_value(field_name, field, value)
 
 
 class Settings(BaseSettings):
     """Runtime configuration loaded from environment variables."""
 
     model_config = SettingsConfigDict(env_prefix="NANOCLAW_", env_file=".env", env_file_encoding="utf-8")
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls,
+        init_settings,
+        env_settings,
+        dotenv_settings,
+        file_secret_settings,
+    ):
+        return (
+            init_settings,
+            LenientEnvSource(settings_cls),
+            dotenv_settings,
+            file_secret_settings,
+        )
 
     app_name: str = Field(default="Nanoclaw Dashboard Backend")
     transport: Literal["websocket", "sse"] = Field(default="websocket")
