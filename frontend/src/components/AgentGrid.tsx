@@ -48,7 +48,7 @@ export function AgentGrid({ agents }: Props) {
             <div className="flex flex-wrap items-center gap-1 text-xs">
               <span className="text-muted font-medium shrink-0 uppercase">{agent.lastEventType}:</span>
               <Chip size="sm" variant="soft" color="warning" className="text-[0.65rem]">
-                {agentWasSource ? 'TO:' : 'FROM:'}
+                {agentWasSource ? '>' : '<'}
               </Chip>
               <Chip size="sm" variant="soft" color="accent" className="text-[0.65rem]">
                 {partnerLabel}
