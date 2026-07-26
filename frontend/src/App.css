@@ -145,8 +145,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(120, 96, 216, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(120, 96, 216, 0.06) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
   background-size: 120px 120px;
   animation: drift 16s linear infinite;
   opacity: 0.3;
@@ -164,58 +164,61 @@
 
 .node-orbit {
   fill: none;
-  stroke: rgba(120, 96, 216, 0.15);
-  stroke-width: 2;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1;
 }
 
 .node-core {
-  stroke: rgba(120, 96, 216, 0.3);
-  stroke-width: 2;
+  stroke: #fff;
+  stroke-width: 3px;
+  transition: filter 0.3s ease;
 }
 
 .node-core.orchestrator {
-  fill: #7860d8;
-  filter: drop-shadow(0 0 40px rgba(120, 96, 216, 0.4));
+  filter: drop-shadow(0 0 30px rgba(232, 197, 71, 0.5));
 }
 
-.node-core.agent {
-  fill: rgba(96, 72, 192, 0.55);
+.node-icon {
+  fill: #fff;
+  font-size: 72px;
+  pointer-events: none;
+  user-select: none;
 }
 
 .node-label {
-  fill: #c8c8d8;
-  font-size: 22px;
+  fill: #fff;
+  font-size: 20px;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.15em;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
 }
 
 .edge-spine {
-  stroke-width: 2;
+  stroke: rgba(255, 255, 255, 0.2);
+  stroke-width: 3;
+  stroke-dasharray: 8, 6;
   stroke-linecap: round;
 }
 
 .edge-pulse {
+  stroke: #fff;
   stroke-width: 4;
   stroke-linecap: round;
-  animation: pulse 1.4s ease-out forwards;
+  animation: pulse-draw 1.4s ease-out forwards;
 }
 
-.edge-pulse.pulse-question { stroke: #a78bfa; }
-.edge-pulse.pulse-response { stroke: #7860d8; }
-.edge-pulse.pulse-agent_status { stroke: #c084fc; }
-
-@keyframes pulse {
+@keyframes pulse-draw {
   0% {
-    stroke-dasharray: 0, 400;
+    stroke-dasharray: 0, 600;
     stroke-opacity: 1;
   }
-  80% {
-    stroke-dasharray: 400, 0;
+  75% {
+    stroke-dasharray: 600, 0;
     stroke-opacity: 0.9;
   }
   100% {
-    stroke-dasharray: 400, 0;
+    stroke-dasharray: 600, 0;
     stroke-opacity: 0;
   }
 }
