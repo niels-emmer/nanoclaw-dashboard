@@ -1,10 +1,11 @@
+import { Chip } from '@heroui/react'
 import type { ConnectionState } from '../hooks/useEventStream'
 
-const copy: Record<ConnectionState, { label: string; tone: string }> = {
-  connecting: { label: 'Connecting', tone: 'amber' },
-  connected: { label: 'Live', tone: 'emerald' },
-  reconnecting: { label: 'Reconnecting', tone: 'amber' },
-  error: { label: 'Signal lost', tone: 'rose' },
+const config: Record<ConnectionState, { label: string; color: 'success' | 'warning' | 'danger' }> = {
+  connecting: { label: 'Connecting', color: 'warning' },
+  connected: { label: 'Live', color: 'success' },
+  reconnecting: { label: 'Reconnecting', color: 'warning' },
+  error: { label: 'Signal lost', color: 'danger' },
 }
 
 interface Props {
@@ -12,11 +13,10 @@ interface Props {
 }
 
 export function ConnectionStatus({ state }: Props) {
-  const { label, tone } = copy[state]
+  const { label, color } = config[state]
   return (
-    <div className={`connection-chip tone-${tone}`} data-state={state}>
-      <span className="ping" aria-hidden />
-      <span>{label}</span>
-    </div>
+    <Chip color={color} variant="primary" size="sm" data-state={state}>
+      {label}
+    </Chip>
   )
 }
