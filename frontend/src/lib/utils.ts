@@ -44,6 +44,8 @@ export const readableNodeLabel = (id: string) => {
   return id
 }
 
+export const ORCHESTRATOR_COLOR = '#f59e0b'
+
 const palette = ['#f97316', '#38bdf8', '#a855f7', '#22d3ee', '#ef4444', '#eab308']
 
 const eventTypeColors: Record<string, string> = {
