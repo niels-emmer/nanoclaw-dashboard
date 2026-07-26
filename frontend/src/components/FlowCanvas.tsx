@@ -410,7 +410,7 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles }: FlowCanva
           if (bx + 220 > WIDTH - 10) {
             bx = node.x - node.radius - 14 - 220
           }
-          const by = Math.max(8, Math.min(HEIGHT - 78, node.y - 32))
+          const by = Math.max(8, Math.min(HEIGHT - 100, node.y - 40))
           const tailSide = bx > node.x ? 'left' : 'right'
           const accentColor =
             bubble.type === 'question' ? '#a78bfa' : bubble.type === 'response' ? '#7860d8' : '#c084fc'
@@ -420,7 +420,7 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles }: FlowCanva
               x={bx}
               y={by}
               width={220}
-              height={70}
+              height={88}
               className="chat-bubble-fo"
             >
               <div

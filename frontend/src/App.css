@@ -226,17 +226,17 @@
   position: relative;
   display: flex;
   align-items: flex-start;
-  gap: 6px;
-  padding: 8px 10px;
-  background: rgba(23, 23, 25, 0.88);
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(23, 23, 25, 0.72);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-left: 3px solid #a78bfa;
   border-radius: 12px;
-  font-size: 11px;
+  font-size: 17px;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.92);
   animation: bubble-life 5s ease forwards;
   pointer-events: none;
   overflow: hidden;
@@ -252,17 +252,17 @@
 
 .chat-bubble.tail-left::before {
   left: -13px;
-  border-right-color: rgba(23, 23, 25, 0.88);
+  border-right-color: rgba(23, 23, 25, 0.72);
 }
 
 .chat-bubble.tail-right::before {
   right: -13px;
-  border-left-color: rgba(23, 23, 25, 0.88);
+  border-left-color: rgba(23, 23, 25, 0.72);
 }
 
 .bubble-direction {
   flex-shrink: 0;
-  font-size: 13px;
+  font-size: 20px;
   line-height: 1.4;
   opacity: 0.6;
 }
