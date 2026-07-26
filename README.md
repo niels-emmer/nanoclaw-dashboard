@@ -11,8 +11,10 @@ time — questions pulse outward, responses flow back — all on a single
 1080p display.
 
 <p align="center">
-  <img src="docs/screenshot.png" alt="Nanoclaw Dashboard screenshot"
-       width="720" style="border-radius: 8px" />
+  <a href="docs/screenshot.png" target="_blank">
+    <img src="docs/screenshot.png" alt="Nanoclaw Dashboard screenshot"
+         width="720" style="border-radius: 8px" />
+  </a>
   <br />
   <em>Orbit canvas, agent grid, and event feed — everything fits on one screen.</em>
 </p>
