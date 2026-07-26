@@ -15,6 +15,24 @@ export const elapsedLabel = (maybeMs: number) => {
   return `${Math.floor(delta / 3_600_000)}h ago`
 }
 
+export const compactAge = (maybeMs: number) => {
+  const ms = Number.isNaN(maybeMs) ? Date.now() : maybeMs
+  const delta = Date.now() - ms
+  if (delta < 1000) return 'now'
+  if (delta < 60_000) return `${Math.floor(delta / 1000)}s`
+  if (delta < 3_600_000) {
+    const m = Math.floor(delta / 60_000)
+    const s = Math.floor((delta % 60_000) / 1000)
+    return `${m}m${s}s`
+  }
+  if (delta < 86_400_000) {
+    const h = Math.floor(delta / 3_600_000)
+    const m = Math.floor((delta % 3_600_000) / 60_000)
+    return `${h}h${m}m`
+  }
+  return `${Math.floor(delta / 86_400_000)}d`
+}
+
 export const agentLabelFromId = (id: string) => id.replace(/^agent:/, '')
 
 const palette = ['#f97316', '#38bdf8', '#a855f7', '#22d3ee', '#ef4444', '#eab308']
@@ -42,13 +60,15 @@ export const deriveAgentSnapshot = (
   })()
   const label = labelFromMeta ?? prev[id]?.label ?? agentLabelFromId(id)
   const state: AgentState | 'unknown' = event.agent_state ?? prev[id]?.state ?? 'unknown'
+  const ts = Date.parse(event.timestamp) || Date.now()
   snapshot[id] = {
     id,
     label,
     state,
     lastSummary: event.payload.summary,
     lastEventType: event.type,
-    lastUpdated: Date.parse(event.timestamp) || Date.now(),
+    lastUpdated: ts,
+    firstSeen: prev[id]?.firstSeen ?? ts,
     activityCount: (prev[id]?.activityCount ?? 0) + 1,
   }
   return snapshot
