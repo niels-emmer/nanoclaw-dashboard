@@ -35,7 +35,7 @@ The dashboard is split into a FastAPI WebSocket service (`/backend`) and a Vite 
 | Event ingestion | `src/hooks/useEventStream.ts`, `src/lib/config.ts`, `src/lib/types.ts`, `src/lib/utils.ts` | Custom hook manages the WebSocket connection (auto-reconnect, edge TTLs, snapshots). Config infers backend URL, with overrides via `VITE_BACKEND_WS_URL`. |
 | Visualization | `src/components/FlowCanvas.tsx` | SVG orbit layout with orchestrator at center, deterministic spokes for agents, and animated edge pulses keyed by the telemetry stream. |
 | Details panes | `AgentGrid.tsx`, `EventFeed.tsx`, `DebugPanel.tsx`, `ConnectionStatus.tsx` | Present agent states, recent events, raw payloads, and connection indicators with purposeful typography and color tokens. |
-| Shell | `App.tsx`, `App.css`, `index.css` | Layout tuned for 1080p TVs: gradient background, Atmosphere overlay, responsive columns that collapse to single-column on narrow viewports. |
+| Shell | `App.tsx`, `App.css`, `index.css` | Hero masthead with capability pill rail, streaming legend, and "Interface tenets" panel informed by Fast.io's 2026 UI framework guide; still tuned for 1080p TVs with responsive collapse + atmospheric gradients. |
 
 `npm run dev` starts Vite on `5173`. When the dev server runs on `5173`, the SPA automatically targets `ws://localhost:8000/ws/events`; otherwise set `VITE_BACKEND_WS_URL`.
 
