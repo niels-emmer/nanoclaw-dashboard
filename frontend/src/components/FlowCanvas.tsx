@@ -281,7 +281,7 @@ export function FlowCanvas({ orchestratorId, agents, edges }: FlowCanvasProps) {
   const nodes = useMemo<NodePosition[]>(() => {
     const nonOrchestratorAgents = agents.filter((agent) => agent.id !== orchestratorId)
     const agentCount = Math.max(nonOrchestratorAgents.length, 1)
-    const orbit = Math.min(WIDTH, HEIGHT) / 2.4
+    const orbit = Math.min(WIDTH, HEIGHT) / 2.7
     const orchestratorSnapshot = agents.find((agent) => agent.id === orchestratorId)
     const orchestrator: NodePosition = {
       id: orchestratorId,
