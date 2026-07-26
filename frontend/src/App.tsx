@@ -81,24 +81,24 @@ function App() {
         </div>
 
         <aside className="detail-stack">
-          <div className="flex flex-col min-h-0 rounded-[20px] border border-accent/10 bg-surface shadow-surface overflow-hidden">
-            <div className="flex items-center justify-between px-4 pt-4 pb-2">
+          <div className="flex flex-col min-h-0 h-full rounded-[20px] border border-accent/10 bg-surface shadow-surface overflow-hidden">
+            <div className="flex items-center justify-between px-4 pt-4 pb-2 shrink-0">
               <span className="text-sm font-semibold text-foreground">Agents</span>
               <Chip color="accent" variant="soft" size="sm">{agents.length}</Chip>
             </div>
-            <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
+            <div className="flex flex-col flex-1 min-h-0 overflow-y-auto px-4 pb-4">
               <AgentGrid agents={agents} />
             </div>
           </div>
 
-          <div className="flex flex-col min-h-0 rounded-[20px] border border-accent/10 bg-surface shadow-surface overflow-hidden">
-            <div className="flex items-center justify-between px-4 pt-4 pb-2">
+          <div className="flex flex-col min-h-0 h-full rounded-[20px] border border-accent/10 bg-surface shadow-surface overflow-hidden">
+            <div className="flex items-center justify-between px-4 pt-4 pb-2 shrink-0">
               <span className="text-sm font-semibold text-foreground">Latest traffic</span>
               <Chip color="accent" variant="soft" size="sm">
                 {events.length ? 'streaming' : 'idle'}
               </Chip>
             </div>
-            <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
+            <div className="flex flex-col flex-1 min-h-0 overflow-y-auto px-4 pb-4">
               <EventFeed events={events} />
             </div>
           </div>
