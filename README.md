@@ -7,7 +7,7 @@ Live, single-screen telemetry dashboard that shows the nanoclaw orchestrator del
 | Layer     | Tech                                                          | Notes |
 |-----------|---------------------------------------------------------------|-------|
 | Backend   | FastAPI + Uvicorn, structlog, Pydantic Settings               | Provides `/health` + `/ws/events` WebSocket streaming mock telemetry by default (or live Nanoclaw data when enabled). |
-| Frontend  | Vite + React + TypeScript                                     | Full-screen flow canvas, agent grid, event log, toggleable debug panel. |
+| Frontend  | Vite + React + TypeScript + Tailwind CSS v4 + HeroUI v3       | Full-screen flow canvas, agent grid, event log, toggleable debug panel. HeroUI provides Card, Chip, Typography components. |
 | Tooling   | pytest + pytest-asyncio, npm scripts, Node 20.19, Python 3.11 | Both stacks pin dependencies per governance. |
 
 ## Prerequisites
