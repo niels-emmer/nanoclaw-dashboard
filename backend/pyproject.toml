@@ -7,7 +7,7 @@ requires-python = ">=3.11"
 authors = [{name = "Nanoclaw Ops"}]
 dependencies = [
     "fastapi==0.112.0",
-    "uvicorn[standard]==0.30.3",
+    "uvicorn[standard]==0.51.0",
     "pydantic-settings==2.4.0",
     "orjson==3.10.7",
     "structlog==24.2.0",
