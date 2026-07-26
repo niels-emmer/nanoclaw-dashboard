@@ -11,7 +11,7 @@
   --sans: 'IBM Plex Sans', 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --display: 'Space Grotesk', 'IBM Plex Sans', sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
-  font-size: clamp(18px, 1.05vw, 20px);
+  font-size: clamp(17px, 1.1vw, 20px);
   color: var(--fg);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
