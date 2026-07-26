@@ -108,6 +108,7 @@ Keep the schema versioned and update `DECISIONS.md` whenever the payload changes
 - Hero masthead introduces a capability pill rail (real-time streaming, observability, multimodal readiness) inspired by the [Fast.io "Best UI Frameworks for AI Agents" (2026)](https://fast.io/resources/best-ui-frameworks-ai-agents/) guidance.
 - Agent grid cards summarize last summary/state/timestamp for each agent, while a new status block in the masthead surfaces active agents, live pulses, and the last signal.
 - Event feed still streams the latest eight events with timestamps, and the new "Interface tenets" panel documents the same transparency/streaming tenets called out in the Fast.io article.
+- Layout locks into a two-column orbit canvas + insight stack so everything fits on a bezel-less 1080p TV without scrolling, matching the Nanoclaw operations requirement.
 - Debug panel (toggle at bottom) dumps the most recent raw event for troubleshooting.
 
 Typography uses Space Grotesk + IBM Plex Sans, with a refreshed multi-stop gradient background tuned for 1080p displays. Avoid introducing new fonts/colors without updating the shared tokens in `src/index.css`.
