@@ -50,18 +50,18 @@ export function AgentGrid({ agents }: Props) {
               <Chip size="sm" variant="soft" color="warning" className="text-[0.65rem]">
                 {agentWasSource ? '>' : '<'}
               </Chip>
-              <Chip size="sm" variant="soft" color="accent" className="text-[0.65rem]">
+              <span className="text-[0.65rem] font-medium px-1.5 py-0.5 rounded" style={{ background: tone, color: '#fff' }}>
                 {partnerLabel}
-              </Chip>
+              </span>
             </div>
 
             {agent.outboundTargets.length > 0 && (
               <div className="flex flex-wrap items-center gap-1 text-xs">
                 <span className="text-muted font-medium shrink-0">TO:</span>
                 {agent.outboundTargets.map((tgt) => (
-                  <Chip key={tgt} size="sm" variant="soft" color="accent" className="text-[0.65rem]">
+                  <span key={tgt} className="text-[0.65rem] font-medium px-1.5 py-0.5 rounded" style={{ background: tone, color: '#fff' }}>
                     {tgt}
-                  </Chip>
+                  </span>
                 ))}
               </div>
             )}
@@ -70,9 +70,9 @@ export function AgentGrid({ agents }: Props) {
               <div className="flex flex-wrap items-center gap-1 text-xs">
                 <span className="text-muted font-medium shrink-0">FR:</span>
                 {agent.inboundSources.map((src) => (
-                  <Chip key={src} size="sm" variant="soft" color="accent" className="text-[0.65rem]">
+                  <span key={src} className="text-[0.65rem] font-medium px-1.5 py-0.5 rounded" style={{ background: tone, color: '#fff' }}>
                     {src}
-                  </Chip>
+                  </span>
                 ))}
               </div>
             )}
