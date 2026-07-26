@@ -14,6 +14,7 @@ Record every external dependency here with license info and notes on local modif
 | @heroui/react | 3.x | Apache-2.0 | UI component library (Card, Chip, Typography) | None |
 | @heroui/styles | 3.x | Apache-2.0 | HeroUI pre-built component styles | None |
 | @tailwindcss/vite | 4.x | MIT | Tailwind Vite integration plugin | None |
+| lucide-react | 1.27.0 | MIT | SVG icon library for agent graph node icons | None |
 | Space Grotesk / IBM Plex Sans / JetBrains Mono | Google Fonts | Open Font License | Typography per design spec | Served via Google Fonts CDN |
 
 Guidance:
