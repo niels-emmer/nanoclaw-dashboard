@@ -10,7 +10,6 @@ import './App.css'
 function App() {
   const { agents, events, edges, connectionState, orchestratorId } = useEventStream()
   const lastEvent = events[0]
-  const lastEventSummary = lastEvent?.payload.summary ?? 'Standing by for telemetry'
   const lastEventTimestamp = lastEvent ? formatTime(Date.parse(lastEvent.timestamp)) : '--'
 
   const capabilityHighlights = [
@@ -57,10 +56,6 @@ function App() {
               </div>
             </dl>
           </div>
-          <Chip color="accent" variant="soft" size="sm" className="max-w-[360px] truncate">
-            <span className="text-[0.65rem] uppercase tracking-wider shrink-0">Now streaming</span>
-            <span className="text-xs truncate">{lastEventSummary}</span>
-          </Chip>
         </div>
       </header>
 
