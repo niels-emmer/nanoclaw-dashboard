@@ -60,7 +60,7 @@ function App() {
       </header>
 
       <main className="main-grid">
-        <Card className="canvas-panel">
+        <div className="canvas-panel rounded-[28px] border border-accent/10 bg-surface shadow-surface overflow-hidden">
           <FlowCanvas orchestratorId={orchestratorId} agents={agents} edges={edges} />
           <div className="signal-legend" aria-hidden>
             <div className="legend-items">
@@ -78,7 +78,7 @@ function App() {
               </span>
             </div>
           </div>
-        </Card>
+        </div>
 
         <aside className="detail-stack">
           <Card className="flex flex-col min-h-0">
