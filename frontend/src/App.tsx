@@ -25,7 +25,6 @@ function App() {
     <div className="app-shell">
       <header className="masthead">
         <div className="masthead-copy">
-          <p className="eyebrow">Live orchestrator · /ws/events</p>
           <h1>Nanoclaw Command Surface</h1>
           <ul className="framework-pill-list">
             {capabilityHighlights.map((highlight) => (

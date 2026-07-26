@@ -1,13 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg: radial-gradient(circle at 10% 20%, rgba(15, 118, 188, 0.25), transparent 45%),
-    radial-gradient(circle at 85% 5%, rgba(236, 72, 153, 0.25), transparent 50%),
-    radial-gradient(circle at 50% 80%, rgba(6, 182, 212, 0.18), transparent 55%),
-    linear-gradient(120deg, #02040d, #04010a 60%);
-  --fg: #f8fafc;
-  --fg-muted: rgba(248, 250, 252, 0.78);
-  --muted: rgba(148, 163, 184, 0.85);
+  --bg: #000000;
+  --fg: #e8e8e8;
+  --fg-muted: rgba(232, 232, 232, 0.7);
+  --muted: rgba(148, 148, 160, 0.85);
   --sans: 'IBM Plex Sans', 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --display: 'Space Grotesk', 'IBM Plex Sans', sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
@@ -25,7 +22,7 @@ body {
   margin: 0;
   font-family: var(--sans);
   background-image: var(--bg);
-  background-color: #02040d;
+  background-color: #000000;
   background-attachment: fixed;
   background-size: cover;
   color: var(--fg);
