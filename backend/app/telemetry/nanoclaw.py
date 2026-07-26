@@ -295,7 +295,7 @@ class NanoclawTelemetrySource(TelemetrySource):
             source=source,
             target=target,
             payload=payload,
-            agent_state=AgentState.RUNNING,
+            agent_state=AgentState.IDLE,
         )
 
     # ------------------------------------------------------------------
