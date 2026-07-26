@@ -1,134 +1,288 @@
 # Nanoclaw Dashboard
 
-Live, single-screen telemetry dashboard that shows the nanoclaw orchestrator delegating work to sub-agents. The backend (FastAPI) emits canonical events over WebSocket, and the frontend (Vite + React + TS) renders an animated flow-map tuned for 1080p displays with directional edge pulses for questions vs. responses.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python)](backend/pyproject.toml)
+[![Node 20.19](https://img.shields.io/badge/Node-20.19-blue?logo=node.js)](frontend/package.json)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-## Stack at a glance
+Live, single-screen telemetry dashboard for **nanoclaw**, an AI agent
+orchestrator. Watch the orchestrator delegate work to sub-agents in real
+time — questions pulse outward, responses flow back — all on a single
+1080p display.
 
-| Layer     | Tech                                                          | Notes |
-|-----------|---------------------------------------------------------------|-------|
-| Backend   | FastAPI + Uvicorn, structlog, Pydantic Settings               | Provides `/health` + `/ws/events` WebSocket streaming mock telemetry by default (or live Nanoclaw data when enabled). |
-| Frontend  | Vite + React + TypeScript + Tailwind CSS v4 + HeroUI v3       | Full-screen flow canvas, agent grid, event log, toggleable debug panel. HeroUI provides Card, Chip, Typography components. |
-| Tooling   | pytest + pytest-asyncio, npm scripts, Node 20.19, Python 3.11 | Both stacks pin dependencies per governance. |
+<p align="center">
+  <img src="docs/screenshot.png" alt="Nanoclaw Dashboard screenshot"
+       width="720" style="border-radius: 8px" />
+  <br />
+  <em>Orbit canvas, agent grid, and event feed — everything fits on one screen.</em>
+</p>
 
-## Prerequisites
+## Features
 
-- Python **3.11+** (backend uses newer typing + Pydantic v2).
-- Node.js **20.19.0** (Vite 8 + rolldown require ≥20.19). Local installs live under `.tools/node` for reproducibility.
-- A POSIX shell; macOS Ventura+ tested.
+- **Orbit visualization** — SVG-based flow canvas with animated directional
+  pulses (questions → agents, responses ← agents)
+- **Live agent grid** — per-agent last summary, state, uptime, activity count
+- **Event feed** — streaming log of the latest telemetry events
+- **Debug panel** — toggleable raw event inspector
+- **Mock mode out of the box** — works immediately without nanoclaw installed
+- **Real nanoclaw integration** — read-only tail of the nanoclaw SQLite
+  database for live production data
+- **Docker support** — one `docker compose up` for the full stack
 
-## Quick start
+## Table of Contents
 
-**One-shot installer (recommended):**
+- [Quick Start](#quick-start)
+- [Manual Setup](#manual-setup)
+- [Docker](#docker)
+- [Connect to a Real Nanoclaw Host](#connect-to-a-real-nanoclaw-host)
+- [Debugging](#debugging)
+- [Project Structure](#project-structure)
+- [Documentation Map](#documentation-map)
+- [Contributing](#contributing)
+- [License](#license)
+- [Security](#security)
+
+## Quick Start
+
+The fastest way to get running:
 
 ```bash
 ./scripts/install_dashboard.sh
 ```
 
-The script provisions `.venv`, installs backend deps, fetches Node **20.19.0** into `.tools/node`, installs frontend deps, then runs `pytest`, `npm run lint`, and `npm run build`. When it finishes you can start the dev servers:
+This single script:
+1. Creates a Python virtual environment (`.venv`)
+2. Installs backend dependencies
+3. Downloads Node **20.19.0** into `.tools/node`
+4. Installs frontend dependencies
+5. Runs backend tests, frontend lint, and frontend build
+
+When it finishes, start the dev servers in **two terminals**:
 
 ```bash
-source .venv/bin/activate && cd backend && uvicorn app.main:app --reload --port 8000
-PATH=$PWD/.tools/node/bin:$PATH cd frontend && npm run dev
+# Terminal 1 — Backend (FastAPI WebSocket server)
+source .venv/bin/activate
+cd backend
+uvicorn app.main:app --reload --port 8000
+
+# Terminal 2 — Frontend (Vite dev server)
+PATH=$PWD/.tools/node/bin:$PATH
+cd frontend
+npm run dev
 ```
 
-**Manual setup (if you can’t run the script):**
+Then open **http://localhost:5173** in your browser. The dashboard connects
+to `ws://localhost:8000/ws/events` and starts displaying mock telemetry
+immediately.
+
+## Manual Setup
+
+If you prefer to set up manually or can't run the install script:
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
+# Backend
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r backend/requirements.txt
 cd backend && pytest && uvicorn app.main:app --reload --port 8000
 
-PATH=$PWD/.tools/node/bin:$PATH npm --prefix frontend install
-PATH=$PWD/.tools/node/bin:$PATH npm --prefix frontend run dev
+# Frontend (separate terminal, requires Node 20.19.0)
+npm --prefix frontend install
+npm --prefix frontend run dev
 ```
 
-The frontend auto-connects to `ws://localhost:8000/ws/events` when it detects the Vite dev port (`5173`). Override with `VITE_BACKEND_WS_URL` if you proxy or deploy elsewhere.
+### Prerequisites
 
-### Connect to a local Nanoclaw host
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| Python | 3.11+ | Uses newer typing + Pydantic v2 |
+| Node.js | 20.19.0 | Vite 8 + rolldown require this exact version |
+| OS | macOS / Linux | Tested on macOS Ventura+ and Ubuntu 24.04 |
 
-1. Ensure the Nanoclaw checkout (the directory that contains `data/v2.db`) is readable from this repo. The default assumes `../nanoclaw` relative to the dashboard root.
-2. Update `.env`:
-   - `NANOCLAW_ENABLED=true`
-   - `NANOCLAW_HOST_DATA` → absolute path to your Nanoclaw checkout (e.g. `/home/niels/nanoclaw`).
-   - `NANOCLAW_CONTAINER_DATA` → mount point inside the backend container (default `/nanoclaw`).
-   - Optionally set `NANOCLAW_ORCHESTRATOR_GROUP` to the agent group id or name you want centered in the orbit (falls back to the first group or the one containing "orchestrator").
-3. Rebuild/restart the backend (`docker compose up --build backend` or `uvicorn` locally). The backend mounts the Nanoclaw data folder read-only and tails `data/v2.db` plus the per-session `inbound.db`/`outbound.db` files to emit real events.
+> **Node version**: If you don't have Node 20.19.0, the install script
+> downloads it automatically to `.tools/node`. You can also use
+> [nvm](https://github.com/nvm-sh/nvm):
+> ```bash
+> nvm install 20.19.0 && nvm use 20.19.0
+> ```
 
-The integration is read-only: the backend never mutates Nanoclaw files, and all access stays within the mounted checkout. If the mount is missing or unreadable, the backend automatically falls back to the synthetic telemetry source.
+## Docker
 
-## Docker workflow
-
-1. Adjust `.env` if you want different exposed ports or backend settings.
-2. Build + run both services:
+For a containerized setup that doesn't require any local tooling:
 
 ```bash
 docker compose up --build
 ```
 
-- Frontend is available at `http://localhost:${FRONTEND_PORT}` (default `4173`).
-- Backend health check lives at `http://localhost:${BACKEND_PORT}/health` (default `8000`).
+- Frontend: **http://localhost:4173**
+- Backend health: **http://localhost:8000/health**
 
-The frontend container serves the built SPA via nginx and proxies `/ws/*` to the backend service, so same-origin WebSocket URLs just work. Rebuild after changing frontend env vars (`docker compose build frontend`).
+The frontend container serves the production build via nginx and proxies
+WebSocket traffic to the backend automatically. Adjust ports in `.env`.
 
-## Build + verification
+## Connect to a Real Nanoclaw Host
 
-- **Backend tests**: `cd backend && pytest`
-- **Frontend build**: `PATH=$PWD/.tools/node/bin:$PATH && cd frontend && npm run build`
-- **Frontend lint**: `npm run lint` (oxlint)
+By default, the dashboard uses mock telemetry. To connect to a live nanoclaw
+instance:
 
-Add regression tests for every bug fix and include SBOM generation steps in CI (Syft recommended; see `DECISIONS.md`).
+1. Update `.env`:
+   ```ini
+   NANOCLAW_ENABLED=true
+   NANOCLAW_HOST_DATA=/absolute/path/to/your/nanoclaw/checkout
+   ```
+2. Restart the backend:
+   ```bash
+   docker compose up --build backend   # Docker
+   # or
+   source .venv/bin/activate && cd backend && uvicorn app.main:app --reload --port 8000
+   ```
 
-## Telemetry model
+The backend mounts the nanoclaw data folder **read-only** and tails the
+SQLite databases (`data/v2.db`, per-session `inbound.db`/`outbound.db`)
+for live events. If the mount is missing or unreadable, it falls back to
+mock telemetry automatically.
 
-Canonical event schema is defined in `backend/app/telemetry/models.py` and mirrored for the client in `frontend/src/lib/types.ts`. Each event carries:
+## Debugging
+
+### Backend isn't starting
+
+- Check that port 8000 isn't already in use: `lsof -i :8000`
+- Verify your Python version: `python3 --version` (needs 3.11+)
+- Run tests to isolate issues: `cd backend && pytest -v`
+
+### Frontend shows blank screen or "Connection failed"
+
+- Is the backend running? Check `http://localhost:8000/health`
+- Is the WebSocket endpoint correct? The frontend looks for
+  `ws://localhost:8000/ws/events`. Override with:
+  ```bash
+  VITE_BACKEND_WS_URL=ws://myhost:8000/ws/events npm run dev
+  ```
+- Check the browser's developer console for WebSocket errors
+- Toggle the **Debug Panel** (button at the bottom of the dashboard) to
+  inspect the latest raw event
+
+### Nothing appears on the orbit canvas
+
+- With mock telemetry (default), events appear after ~1 second
+- If you're using nanoclaw integration, verify `NANOCLAW_ENABLED=true` and
+  the data path exists
+- Check the backend logs for errors:
+  ```bash
+  source .venv/bin/activate && cd backend && uvicorn app.main:app --reload --port 8000 --log-level debug
+  ```
+
+### Docker issues
+
+- Rebuild after changing environment variables:
+  ```bash
+  docker compose build --no-cache
+  ```
+- Check container logs: `docker compose logs -f backend` or `frontend`
+- Ensure no other services are using ports 8000 or 4173
+
+## Project Structure
+
+```
+nanoclaw-dashboard/
+├── backend/                    # FastAPI WebSocket server
+│   ├── app/
+│   │   ├── main.py             # App factory, lifespan, routes
+│   │   ├── config.py           # Pydantic settings (env-driven)
+│   │   ├── events.py           # EventHub — broadcast to WS clients
+│   │   ├── logging.py          # structlog JSON configuration
+│   │   ├── cli.py              # CLI entry point
+│   │   └── telemetry/
+│   │       ├── models.py       # Canonical event schema
+│   │       ├── source.py       # TelemetrySource interface + MockTelemetrySource
+│   │       └── nanoclaw.py     # NanoclawTelemetrySource (live data)
+│   ├── tests/
+│   ├── Dockerfile
+│   └── requirements.txt
+├── frontend/                   # Vite + React + TypeScript SPA
+│   ├── src/
+│   │   ├── components/         # FlowCanvas, AgentGrid, EventFeed, DebugPanel, ...
+│   │   ├── hooks/
+│   │   │   └── useEventStream.ts  # WebSocket ingest + retry logic
+│   │   ├── lib/
+│   │   │   ├── types.ts        # Telemetry types (mirrors backend)
+│   │   │   ├── config.ts       # Backend URL resolution
+│   │   │   └── utils.ts        # Shared utilities
+│   │   ├── App.tsx
+│   │   ├── App.css
+│   │   └── index.css           # Typography + color tokens
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── package.json
+├── docs/
+│   └── threat-models/          # STRIDE analyses
+├── scripts/
+│   └── install_dashboard.sh    # One-shot setup script
+├── docker-compose.yml
+├── .env                        # Environment defaults
+├── LICENSE
+├── README.md
+├── ARCHITECTURE.md
+├── CONTRIBUTING.md
+├── CODE_OF_CONDUCT.md
+├── SECURITY.md
+├── THIRD_PARTY.md
+├── DECISIONS.md
+└── AGENTS.md                   # Agentic coding checklist
+```
+
+## Documentation Map
+
+| File | Purpose |
+|------|---------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | System design, data flow, component responsibilities |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute — setup, guidelines, PR process |
+| [SECURITY.md](SECURITY.md) | Security controls, threat models, vulnerability reporting |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards |
+| [THIRD_PARTY.md](THIRD_PARTY.md) | Dependency provenance ledger (exact versions + licenses) |
+| [DECISIONS.md](DECISIONS.md) | Architecture Decision Record (ADR) log |
+| [docs/threat-models/](docs/threat-models/) | STRIDE analyses for exposed interfaces |
+| [AGENTS.md](AGENTS.md) | Condensed playbook for AI coding agents |
+| [frontend/README.md](frontend/README.md) | Frontend-specific development notes |
+
+## Telemetry Schema
+
+The canonical event format (defined in `backend/app/telemetry/models.py`,
+mirrored in `frontend/src/lib/types.ts`):
 
 ```json
 {
-  "id": "uuid",
-  "timestamp": "ISO-8601",
-  "type": "question|response|agent_status",
-  "source": "orchestrator|agent:<name>",
-  "target": "agent:<name>|orchestrator",
-  "payload": { "summary": "...", "duration_ms": 1200, "status": "running" },
-  "agent_state": "idle|running|spinning_up|error"
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "timestamp": "2026-07-26T12:34:56.789Z",
+  "type": "question | response | agent_status",
+  "source": "orchestrator | agent:<name>",
+  "target": "agent:<name> | orchestrator",
+  "payload": {
+    "summary": "Delegating research task to seer",
+    "duration_ms": 1200,
+    "status": "running | completed | error"
+  },
+  "agent_state": "spinning_up | idle | running | error | null",
+  "schema_version": "0.1.0"
 }
 ```
 
-Mock telemetry (`MockTelemetrySource`) emits alternating question/response pairs, seeded with deterministic agent names until the real Nanoclaw feed is connected. When `NANOCLAW_ENABLED=true`, the backend switches to `NanoclawTelemetrySource`, which:
+## Contributing
 
-- Reads agent metadata from `data/v2.db`.
-- Tails each session’s `inbound.db` / `outbound.db` pairs to detect new inter-agent messages and channel traffic.
-- Emits the same canonical events with additional metadata (friendly labels) so the frontend animates the actual orchestrator/sub-agent conversations.
+We welcome contributions! Please read:
 
-Keep the schema versioned and update `DECISIONS.md` whenever the payload changes.
+- [CONTRIBUTING.md](CONTRIBUTING.md) — setup, guidelines, PR process
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — community standards
 
-## Layout + UX highlights
+Check the [issue tracker](https://github.com/nanoclaw/nanoclaw-dashboard/issues)
+for open issues. For major changes, open an issue or discussion first to
+discuss what you'd like to change.
 
-- Flow canvas keeps the orchestrator centered with sub-agents on a deterministic orbit, now paired with a contextual legend that mirrors the Fast.io streaming vs. response vs. status split.
-- Hero masthead introduces a capability pill rail (real-time streaming, observability, multimodal readiness) inspired by the [Fast.io "Best UI Frameworks for AI Agents" (2026)](https://fast.io/resources/best-ui-frameworks-ai-agents/) guidance.
-- Agent grid cards summarize last summary/state/timestamp for each agent, while a new status block in the masthead surfaces active agents, live pulses, and the last signal.
-- Event feed still streams the latest eight events with timestamps, and the new "Interface tenets" panel documents the same transparency/streaming tenets called out in the Fast.io article.
-- Layout locks into a two-column orbit canvas + insight stack so everything fits on a bezel-less 1080p TV without scrolling, matching the Nanoclaw operations requirement.
-- Debug panel (toggle at bottom) dumps the most recent raw event for troubleshooting.
+## License
 
-Typography uses Space Grotesk + IBM Plex Sans, with a refreshed multi-stop gradient background tuned for 1080p displays. Avoid introducing new fonts/colors without updating the shared tokens in `src/index.css`.
+This project is licensed under the MIT License — see [LICENSE](LICENSE).
 
-## Documentation map
+## Security
 
-- `AGENTS.md` – high-signal instructions + day-one checklist.
-- `ARCHITECTURE.md` – system design, flow, and component responsibilities.
-- `SECURITY.md` – controls + threat model hooks.
-- `THIRD_PARTY.md` – ledger for dependencies + licenses.
-- `DECISIONS.md` – ADR log (transport choice, schema revs, etc.).
-- `docs/threat-models/` – STRIDE analyses for exposed interfaces (latest: `2026-07-25.md`).
-
-## Governance alignment
-
-The repo inherits `agent-governance/GOVERNANCE.md`. Expectations:
-
-- Threat model any new network surface or data store; link the artifact from `DECISIONS.md`.
-- Pin dependencies, commit lockfiles, and block releases on unresolved CVEs unless risk-accepted in writing.
-- Generate SBOMs for backend + frontend builds before deployment.
-- Keep README/ARCHITECTURE/SECURITY/THIRD_PARTY/DECISIONS current with every change.
-
-Refer to `AGENTS.md` for the condensed playbook when opening new sessions.
+Found a vulnerability? See [SECURITY.md](SECURITY.md) for our disclosure
+process. Do **not** open public issues for security vulnerabilities.

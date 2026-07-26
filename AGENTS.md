@@ -3,7 +3,7 @@
 - Backend already streams mock telemetry over WebSocket; frontend SPA renders the orbit canvas + agent/event panes. Maintain that experience (centered orchestrator, directional pulses, 1080p-friendly layout).
 
 # Governance + Required Docs
-- `agent-governance/GOVERNANCE.md` is normative: threat modeling, dependency pinning, SBOMs, ADRs, and documentation are mandatory.
+- Governance is normative: threat modeling, dependency pinning, SBOMs, ADRs, and documentation are mandatory.
 - Keep `README.md`, `ARCHITECTURE.md`, `SECURITY.md`, `THIRD_PARTY.md`, and `DECISIONS.md` up to date before merging.
 - Threat model every new network interface or data store and link the artifact in `DECISIONS.md`.
 - Current threat model: `docs/threat-models/2026-07-25.md` (WebSocket surface). Update it or add a new entry when interfaces change.

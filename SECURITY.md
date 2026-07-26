@@ -1,42 +1,48 @@
-# Security Plan
+# Security Policy
 
-The repository follows `agent-governance/GOVERNANCE.md`. This document captures repo-specific actions for each requirement.
+## Reporting a Vulnerability
 
-## Threat Modeling
-- STRIDE analysis for the current WebSocket surface lives in `docs/threat-models/2026-07-25.md` (covers asset inventory, trust boundaries, and mitigations for spoofed clients / data poisoning / DoS).
-- Model every new interface (additional routes, SSE, persistence) and link the artifact into `DECISIONS.md`.
-- Key assets today: orchestrator telemetry stream, agent roster derived in-browser, WebSocket transport, deployment host.
+We take the security of Nanoclaw Dashboard seriously. If you discover a
+security vulnerability, please **do not** open a public GitHub issue.
 
-## Input + Transport Handling
-- Treat nanoclaw telemetry and WebSocket clients as untrusted.
-- Validation happens at the `TelemetryEvent` model boundary; malformed payloads never reach connected clients.
-- `EventHub` enforces `max_clients` (default 50) to provide coarse backpressure; fine-grained per-IP throttling is a TODO before internet exposure.
-- Frontend renders payloads via React, which escapes HTML by default; keep summaries text-only and avoid `dangerouslySetInnerHTML` unless sanitized.
-- When the real nanoclaw feed replaces the mock, re-run the threat model to cover authentication, replay protection, and data provenance.
+Instead, report it privately by emailing the maintainers or opening a
+[GitHub Security Advisory][gh-advisory] on this repository.
 
-## Secrets + Configuration
-- No secrets committed. Use `.env.example` for documentation only; real secrets supplied via environment variables or OS keychain.
-- Backend configuration loaded via Pydantic `BaseSettings`; avoid environment-specific branches.
-- When `NANOCLAW_ENABLED=true`, bind-mount the Nanoclaw checkout read-only (see `.env`). The dashboard never writes to that folder; treat it as sensitive host data and restrict filesystem permissions accordingly.
+Please include:
+- A brief description of the issue
+- Steps to reproduce or a proof of concept
+- Affected versions (if known)
+- Any suggested mitigations
 
-## Cryptography
-- Use only standard libraries (Python `cryptography`, `ssl` module) when TLS or signing is required.
-- Rely on platform TLS termination if behind a proxy; otherwise configure uvicorn + certs explicitly.
+You should receive a response within **48 hours**. If you don't, please
+follow up to ensure we received your original message.
 
-## Dependencies + Provenance
-- Pin Python and frontend dependencies (exact versions) + commit lockfiles (`poetry.lock`, `package-lock.json`/`pnpm-lock.yaml`).
-- Run automated CVE scanning (e.g., `pip-audit`, `npm audit`) in CI; document risk acceptance in `DECISIONS.md` if needed.
-- Generate SBOM (Syft or similar) for each release artifact and archive it.
+We ask that you give us a reasonable window to investigate and release a fix
+before public disclosure.
 
-## Logging + Monitoring
-- Backend logs use structlog JSON. Bind correlation IDs if you add multi-request workflows.
-- Frontend exposes an opt-in debug panel (button toggle). Disable it for production builds if sensitive data will traverse the UI.
+[gh-advisory]: https://github.com/nanoclaw/nanoclaw-dashboard/security/advisories
 
-## Testing Expectations
-- Unit tests cover schema validation + telemetry sequencing; extend coverage to connection limits once rate limiting lands.
-- Add integration/e2e suites (Playwright or Cypress) before shipping widely to ensure rendering + reconnection logic cannot regress silently.
+## Supported Versions
 
-## Incident Response Stubs
-- Capture known issues + mitigations in `SECURITY.md` once the system is live.
-- Document contact path for operational incidents in README when production workflow is defined.
-- Until auth is added, deploy behind a VPN or trusted network segment; the stream is currently unauthenticated and should not be internet-exposed.
+| Version | Supported |
+|---------|-----------|
+| latest  | yes       |
+
+## Known Security Controls
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for the system design and
+[THIRD_PARTY.md](./THIRD_PARTY.md) for dependency provenance.
+
+The WebSocket interface is currently **unauthenticated** and intended for
+**trusted LAN / VPN** deployments only. Threat models for all exposed
+surfaces live in `docs/threat-models/`. Review them before deploying
+outside a controlled network.
+
+## Governance
+
+This repository follows strict governance principles. Key requirements:
+
+- Threat model every new network surface or data store
+- Pin dependencies and commit lockfiles
+- Generate SBOMs before releases
+- Keep documentation up to date with every change
