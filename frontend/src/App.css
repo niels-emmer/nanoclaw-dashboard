@@ -50,10 +50,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(120, 96, 216, 0.2);
   border-radius: 999px;
   padding: 0.35rem 1rem;
-  background: rgba(9, 13, 22, 0.55);
+  background: rgba(120, 96, 216, 0.06);
   max-width: 360px;
   white-space: nowrap;
   overflow: hidden;
@@ -84,14 +84,6 @@
   line-height: 1.15;
 }
 
-.eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.3em;
-  font-size: 0.75rem;
-  margin: 0 0 0.35rem;
-  color: var(--muted);
-}
-
 .framework-pill-list {
   list-style: none;
   margin: 0.6rem 0 0;
@@ -102,10 +94,10 @@
 }
 
 .framework-pill {
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(120, 96, 216, 0.25);
   border-radius: 999px;
   padding: 0.3rem 0.85rem;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(120, 96, 216, 0.08);
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -131,14 +123,14 @@
 }
 
 .panel {
-  background: rgba(5, 8, 18, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(20, 20, 26, 0.92);
+  border: 1px solid rgba(120, 96, 216, 0.12);
   border-radius: 28px;
   padding: 1.25rem 1.5rem;
   position: relative;
   overflow: hidden;
   backdrop-filter: blur(16px);
-  box-shadow: 0 45px 90px rgba(6, 8, 20, 0.45);
+  box-shadow: 0 45px 90px rgba(120, 96, 216, 0.08);
 }
 
 .detail-stack {
@@ -218,15 +210,15 @@
 }
 
 .legend-dot.question {
-  background: #f97316;
+  background: #a78bfa;
 }
 
 .legend-dot.response {
-  background: #38bdf8;
+  background: #7860d8;
 }
 
 .legend-dot.status {
-  background: #a855f7;
+  background: #c084fc;
 }
 
 .agents-panel,
@@ -238,7 +230,8 @@
 
 .flow-canvas {
   position: relative;
-  background: radial-gradient(circle at center, rgba(18, 24, 44, 0.8), rgba(5, 6, 16, 0.9));
+  background: radial-gradient(circle at 40% 50%, rgba(120, 96, 216, 0.08), transparent 55%),
+    #171719;
   border-radius: 28px;
   flex: 1;
   height: auto;
@@ -260,13 +253,13 @@
   position: absolute;
   inset: 0;
   background-image: linear-gradient(
-      rgba(255, 255, 255, 0.04) 1px,
+      rgba(120, 96, 216, 0.06) 1px,
       transparent 1px
     ),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    linear-gradient(90deg, rgba(120, 96, 216, 0.06) 1px, transparent 1px);
   background-size: 120px 120px;
   animation: drift 16s linear infinite;
-  opacity: 0.2;
+  opacity: 0.3;
 }
 
 .canvas-overlay .grid-lines:nth-child(2) {
@@ -285,26 +278,26 @@
 
 .node-orbit {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.08);
+  stroke: rgba(120, 96, 216, 0.15);
   stroke-width: 2;
 }
 
 .node-core {
-  stroke: rgba(255, 255, 255, 0.2);
+  stroke: rgba(120, 96, 216, 0.3);
   stroke-width: 2;
-  filter: drop-shadow(0 0 30px rgba(14, 165, 233, 0.25));
 }
 
 .node-core.orchestrator {
-  fill: #facc15;
+  fill: #7860d8;
+  filter: drop-shadow(0 0 40px rgba(120, 96, 216, 0.4));
 }
 
 .node-core.agent {
-  fill: rgba(56, 189, 248, 0.4);
+  fill: rgba(96, 72, 192, 0.55);
 }
 
 .node-label {
-  fill: rgba(255, 255, 255, 0.9);
+  fill: #c8c8d8;
   font-size: 22px;
   font-weight: 500;
   text-transform: uppercase;
@@ -312,26 +305,26 @@
 }
 
 .edge-spine {
-  stroke-width: 3;
+  stroke-width: 2;
   stroke-linecap: round;
 }
 
 .edge-pulse {
-  stroke-width: 5;
+  stroke-width: 4;
   stroke-linecap: round;
   animation: pulse 1.4s ease-out forwards;
 }
 
 .edge-pulse.pulse-question {
-  stroke: #f97316;
+  stroke: #a78bfa;
 }
 
 .edge-pulse.pulse-response {
-  stroke: #38bdf8;
+  stroke: #7860d8;
 }
 
 .edge-pulse.pulse-agent_status {
-  stroke: #a855f7;
+  stroke: #c084fc;
 }
 
 @keyframes pulse {
@@ -360,9 +353,9 @@
 
 .agent-card {
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(120, 96, 216, 0.12);
   padding: 1rem 1.2rem;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(120, 96, 216, 0.04);
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
@@ -467,7 +460,7 @@
   gap: 0.5rem;
   padding: 0.35rem 0.9rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(120, 96, 216, 0.1);
   font-size: 0.95rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -502,13 +495,13 @@
 }
 
 .tone-emerald {
-  color: #34d399;
+  color: #a78bfa;
 }
 .tone-amber {
-  color: #fbbf24;
+  color: #c084fc;
 }
 .tone-rose {
-  color: #fb7185;
+  color: #7c3aed;
 }
 
 @media (max-width: 1200px) {

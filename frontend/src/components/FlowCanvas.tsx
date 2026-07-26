@@ -1,11 +1,12 @@
 import { useMemo } from 'react'
 
 import type { AgentSnapshot, EdgePulse } from '../lib/types'
-import { colorForAgent } from '../lib/utils'
 
 const WIDTH = 1000
 const HEIGHT = 560
 const CENTER = { x: WIDTH / 2, y: HEIGHT / 2 }
+
+const ACCENT = '#7860d8'
 
 interface FlowCanvasProps {
   orchestratorId: string
@@ -57,7 +58,7 @@ export function FlowCanvas({ orchestratorId, agents, edges }: FlowCanvasProps) {
       .map((agent) => ({
         source: orchestratorId,
         target: agent.id,
-        color: colorForAgent(agent.id),
+        color: ACCENT,
       }))
   }, [agents, orchestratorId])
 
@@ -79,8 +80,8 @@ export function FlowCanvas({ orchestratorId, agents, edges }: FlowCanvasProps) {
       <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="presentation" aria-hidden>
         <defs>
           <radialGradient id="orchestratorGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#fef9c3" stopOpacity="0.85" />
-            <stop offset="100%" stopColor="#facc15" stopOpacity="0" />
+            <stop offset="0%" stopColor={ACCENT} stopOpacity="0.5" />
+            <stop offset="100%" stopColor={ACCENT} stopOpacity="0" />
           </radialGradient>
         </defs>
         {baseEdges.map((edge) => {
