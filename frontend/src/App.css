@@ -178,13 +178,6 @@
   filter: drop-shadow(0 0 30px rgba(232, 197, 71, 0.5));
 }
 
-.node-icon {
-  fill: #fff;
-  font-size: 72px;
-  pointer-events: none;
-  user-select: none;
-}
-
 .node-label {
   fill: #fff;
   font-size: 20px;

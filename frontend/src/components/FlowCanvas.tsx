@@ -1,4 +1,28 @@
 import { useMemo } from 'react'
+import {
+  Backpack,
+  BarChart3,
+  BookOpen,
+  Bot,
+  BrainCircuit,
+  ClipboardList,
+  Clock,
+  Compass,
+  Database,
+  Eye,
+  FlaskConical,
+  Globe,
+  Hammer,
+  MessageSquare,
+  Music,
+  Palette,
+  PenLine,
+  Search,
+  Shield,
+  Wallet,
+  Wrench,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 import type { AgentSnapshot, EdgePulse } from '../lib/types'
 import { colorForAgent } from '../lib/utils'
@@ -8,188 +32,212 @@ const HEIGHT = 560
 const CENTER = { x: WIDTH / 2, y: HEIGHT / 2 }
 
 const ORCHESTRATOR_COLOR = '#e8c547'
-const ORCHESTRATOR_ICON = '\u{1F916}'
-const FALLBACK_ICON = '\u2699'
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  backpack: Backpack,
+  chart: BarChart3,
+  book: BookOpen,
+  bot: Bot,
+  brain: BrainCircuit,
+  clipboard: ClipboardList,
+  clock: Clock,
+  compass: Compass,
+  database: Database,
+  eye: Eye,
+  flask: FlaskConical,
+  globe: Globe,
+  hammer: Hammer,
+  message: MessageSquare,
+  music: Music,
+  palette: Palette,
+  pen: PenLine,
+  search: Search,
+  shield: Shield,
+  wallet: Wallet,
+  wrench: Wrench,
+}
+
+const FALLBACK_ICON_NAME = 'bot'
 
 const ICON_KEYWORDS: [string, string][] = [
-  ['\u{1F441}', 'lookout'],
-  ['\u{1F441}', 'foresight'],
-  ['\u{1F441}', 'observer'],
-  ['\u{1F441}', 'spotter'],
-  ['\u{1F441}', 'oracle'],
-  ['\u{1F441}', 'vision'],
-  ['\u{1F441}', 'seer'],
-  ['\u{1F441}', 'scout'],
+  ['eye', 'lookout'],
+  ['eye', 'foresight'],
+  ['eye', 'observer'],
+  ['eye', 'spotter'],
+  ['eye', 'oracle'],
+  ['eye', 'vision'],
+  ['eye', 'seer'],
+  ['eye', 'scout'],
 
-  ['\u{1F9ED}', 'wayfinder'],
-  ['\u{1F9ED}', 'direction'],
-  ['\u{1F9ED}', 'compass'],
-  ['\u{1F9ED}', 'navigat'],
-  ['\u{1F9ED}', 'pilot'],
-  ['\u{1F9ED}', 'route'],
-  ['\u{1F9ED}', 'guide'],
-  ['\u{1F9ED}', 'path'],
+  ['compass', 'wayfinder'],
+  ['compass', 'direction'],
+  ['compass', 'compass'],
+  ['compass', 'navigat'],
+  ['compass', 'pilot'],
+  ['compass', 'route'],
+  ['compass', 'guide'],
+  ['compass', 'path'],
 
-  ['\u{270D}', 'chronicle'],
-  ['\u{270D}', 'notebook'],
-  ['\u{270D}', 'memoir'],
-  ['\u{270D}', 'diary'],
-  ['\u{270D}', 'journal'],
-  ['\u{270D}', 'reporter'],
-  ['\u{270D}', 'scribe'],
-  ['\u{270D}', 'author'],
-  ['\u{270D}', 'writer'],
-  ['\u{270D}', 'editor'],
-  ['\u{270D}', 'content'],
-  ['\u{270D}', 'article'],
-  ['\u{270D}', 'document'],
-  ['\u{270D}', 'blog'],
-  ['\u{270D}', 'log'],
-  ['\u{270D}', 'record'],
-  ['\u{270D}', 'copy'],
+  ['pen', 'chronicle'],
+  ['pen', 'notebook'],
+  ['pen', 'memoir'],
+  ['pen', 'diary'],
+  ['pen', 'journal'],
+  ['pen', 'reporter'],
+  ['pen', 'scribe'],
+  ['pen', 'author'],
+  ['pen', 'writer'],
+  ['pen', 'editor'],
+  ['pen', 'content'],
+  ['pen', 'article'],
+  ['pen', 'document'],
+  ['pen', 'blog'],
+  ['pen', 'log'],
+  ['pen', 'record'],
+  ['pen', 'copy'],
 
-  ['\u{1F528}', 'fabricat'],
-  ['\u{1F528}', 'construct'],
-  ['\u{1F528}', 'hammer'],
-  ['\u{1F528}', 'forge'],
-  ['\u{1F528}', 'builder'],
-  ['\u{1F528}', 'architect'],
-  ['\u{1F528}', 'engineer'],
-  ['\u{1F528}', 'developer'],
-  ['\u{1F528}', 'craft'],
-  ['\u{1F528}', 'maker'],
-  ['\u{1F528}', 'smith'],
+  ['hammer', 'fabricat'],
+  ['hammer', 'construct'],
+  ['hammer', 'hammer'],
+  ['hammer', 'forge'],
+  ['hammer', 'builder'],
+  ['hammer', 'architect'],
+  ['hammer', 'engineer'],
+  ['hammer', 'developer'],
+  ['hammer', 'craft'],
+  ['hammer', 'maker'],
+  ['hammer', 'smith'],
 
-  ['\u{1F6E1}', 'safeguard'],
-  ['\u{1F6E1}', 'sentinel'],
-  ['\u{1F6E1}', 'protector'],
-  ['\u{1F6E1}', 'defender'],
-  ['\u{1F6E1}', 'guardian'],
-  ['\u{1F6E1}', 'sentry'],
-  ['\u{1F6E1}', 'warden'],
-  ['\u{1F6E1}', 'shield'],
-  ['\u{1F6E1}', 'security'],
-  ['\u{1F6E1}', 'guard'],
-  ['\u{1F6E1}', 'watch'],
+  ['shield', 'safeguard'],
+  ['shield', 'sentinel'],
+  ['shield', 'protector'],
+  ['shield', 'defender'],
+  ['shield', 'guardian'],
+  ['shield', 'sentry'],
+  ['shield', 'warden'],
+  ['shield', 'shield'],
+  ['shield', 'security'],
+  ['shield', 'guard'],
+  ['shield', 'watch'],
 
-  ['\u{1F4DA}', 'librarian'],
-  ['\u{1F4DA}', 'archivist'],
-  ['\u{1F4DA}', 'investigator'],
-  ['\u{1F4DA}', 'scientist'],
-  ['\u{1F4DA}', 'scholar'],
-  ['\u{1F4DA}', 'researcher'],
-  ['\u{1F4DA}', 'research'],
-  ['\u{1F4DA}', 'explorer'],
-  ['\u{1F4DA}', 'analyst'],
-  ['\u{1F4DA}', 'study'],
-  ['\u{1F4DA}', 'learn'],
+  ['book', 'librarian'],
+  ['book', 'archivist'],
+  ['book', 'investigator'],
+  ['book', 'scientist'],
+  ['book', 'scholar'],
+  ['book', 'researcher'],
+  ['book', 'research'],
+  ['book', 'explorer'],
+  ['book', 'analyst'],
+  ['book', 'study'],
+  ['book', 'learn'],
 
-  ['\u{1F9F3}', 'hospitality'],
-  ['\u{1F9F3}', 'itinerary'],
-  ['\u{1F9F3}', 'vacation'],
-  ['\u{1F9F3}', 'holiday'],
-  ['\u{1F9F3}', 'journey'],
-  ['\u{1F9F3}', 'voyage'],
-  ['\u{1F9F3}', 'excursion'],
-  ['\u{1F9F3}', 'travel'],
-  ['\u{1F9F3}', 'concierge'],
-  ['\u{1F9F3}', 'tour'],
-  ['\u{1F9F3}', 'trip'],
-  ['\u{1F9F3}', 'planner'],
+  ['backpack', 'hospitality'],
+  ['backpack', 'itinerary'],
+  ['backpack', 'vacation'],
+  ['backpack', 'holiday'],
+  ['backpack', 'journey'],
+  ['backpack', 'voyage'],
+  ['backpack', 'excursion'],
+  ['backpack', 'travel'],
+  ['backpack', 'concierge'],
+  ['backpack', 'tour'],
+  ['backpack', 'trip'],
+  ['backpack', 'planner'],
 
-  ['\u{1F4CB}', 'supervisor'],
-  ['\u{1F4CB}', 'regulator'],
-  ['\u{1F4CB}', 'governor'],
-  ['\u{1F4CB}', 'operator'],
-  ['\u{1F4CB}', 'controller'],
-  ['\u{1F4CB}', 'control'],
-  ['\u{1F4CB}', 'manager'],
+  ['clipboard', 'supervisor'],
+  ['clipboard', 'regulator'],
+  ['clipboard', 'governor'],
+  ['clipboard', 'operator'],
+  ['clipboard', 'controller'],
+  ['clipboard', 'control'],
+  ['clipboard', 'manager'],
 
-  ['\u{1F4E3}', 'spokesperson'],
-  ['\u{1F4E3}', 'announcer'],
-  ['\u{1F4E3}', 'broadcast'],
-  ['\u{1F4E3}', 'messenger'],
-  ['\u{1F4E3}', 'communicat'],
-  ['\u{1F4E3}', 'liaison'],
-  ['\u{1F4E3}', 'notify'],
+  ['message', 'spokesperson'],
+  ['message', 'announcer'],
+  ['message', 'broadcast'],
+  ['message', 'messenger'],
+  ['message', 'communicat'],
+  ['message', 'liaison'],
+  ['message', 'notify'],
 
-  ['\u{1F310}', 'connector'],
-  ['\u{1F310}', 'network'],
-  ['\u{1F310}', 'bridge'],
-  ['\u{1F310}', 'hub'],
-  ['\u{1F310}', 'link'],
+  ['globe', 'connector'],
+  ['globe', 'network'],
+  ['globe', 'bridge'],
+  ['globe', 'hub'],
+  ['globe', 'link'],
 
-  ['\u{1F4CA}', 'dashboard'],
-  ['\u{1F4CA}', 'insight'],
-  ['\u{1F4CA}', 'statistics'],
-  ['\u{1F4CA}', 'analytic'],
-  ['\u{1F4CA}', 'metric'],
-  ['\u{1F4CA}', 'data'],
-  ['\u{1F4CA}', 'report'],
-  ['\u{1F4CA}', 'chart'],
+  ['chart', 'dashboard'],
+  ['chart', 'insight'],
+  ['chart', 'statistics'],
+  ['chart', 'analytic'],
+  ['chart', 'metric'],
+  ['chart', 'data'],
+  ['chart', 'report'],
+  ['chart', 'chart'],
 
-  ['\u{1F50D}', 'detective'],
-  ['\u{1F50D}', 'inspector'],
-  ['\u{1F50D}', 'examiner'],
-  ['\u{1F50D}', 'auditor'],
-  ['\u{1F50D}', 'sleuth'],
-  ['\u{1F50D}', 'checker'],
-  ['\u{1F50D}', 'verifier'],
-  ['\u{1F50D}', 'search'],
-  ['\u{1F50D}', 'find'],
+  ['search', 'detective'],
+  ['search', 'inspector'],
+  ['search', 'examiner'],
+  ['search', 'auditor'],
+  ['search', 'sleuth'],
+  ['search', 'checker'],
+  ['search', 'verifier'],
+  ['search', 'search'],
+  ['search', 'find'],
 
-  ['\u{1F5C2}', 'repository'],
-  ['\u{1F5C2}', 'database'],
-  ['\u{1F5C2}', 'archive'],
-  ['\u{1F5C2}', 'storage'],
-  ['\u{1F5C2}', 'vault'],
-  ['\u{1F5C2}', 'cache'],
-  ['\u{1F5C2}', 'keeper'],
-  ['\u{1F5C2}', 'store'],
+  ['database', 'repository'],
+  ['database', 'database'],
+  ['database', 'archive'],
+  ['database', 'storage'],
+  ['database', 'vault'],
+  ['database', 'cache'],
+  ['database', 'keeper'],
+  ['database', 'store'],
 
-  ['\u{1F9E0}', 'strategist'],
-  ['\u{1F9E0}', 'strategy'],
-  ['\u{1F9E0}', 'consultant'],
-  ['\u{1F9E0}', 'adviser'],
-  ['\u{1F9E0}', 'thinker'],
-  ['\u{1F9E0}', 'brain'],
+  ['brain', 'strategist'],
+  ['brain', 'strategy'],
+  ['brain', 'consultant'],
+  ['brain', 'adviser'],
+  ['brain', 'thinker'],
+  ['brain', 'brain'],
 
-  ['\u{1F527}', 'maintenance'],
-  ['\u{1F527}', 'technician'],
-  ['\u{1F527}', 'mechanic'],
-  ['\u{1F527}', 'repair'],
-  ['\u{1F527}', 'fixer'],
-  ['\u{1F527}', 'fix'],
+  ['wrench', 'maintenance'],
+  ['wrench', 'technician'],
+  ['wrench', 'mechanic'],
+  ['wrench', 'repair'],
+  ['wrench', 'fixer'],
+  ['wrench', 'fix'],
 
-  ['\u{1F3A8}', 'stylist'],
-  ['\u{1F3A8}', 'aesthetic'],
-  ['\u{1F3A8}', 'creative'],
-  ['\u{1F3A8}', 'designer'],
-  ['\u{1F3A8}', 'painter'],
-  ['\u{1F3A8}', 'artist'],
-  ['\u{1F3A8}', 'art'],
+  ['palette', 'stylist'],
+  ['palette', 'aesthetic'],
+  ['palette', 'creative'],
+  ['palette', 'designer'],
+  ['palette', 'painter'],
+  ['palette', 'artist'],
+  ['palette', 'art'],
 
-  ['\u{1F3B5}', 'podcast'],
-  ['\u{1F3B5}', 'audio'],
-  ['\u{1F3B5}', 'sound'],
-  ['\u{1F3B5}', 'music'],
+  ['music', 'podcast'],
+  ['music', 'audio'],
+  ['music', 'sound'],
+  ['music', 'music'],
 
-  ['\u{23F0}', 'deadline'],
-  ['\u{23F0}', 'schedule'],
-  ['\u{23F0}', 'calendar'],
-  ['\u{23F0}', 'timer'],
-  ['\u{23F0}', 'clock'],
+  ['clock', 'deadline'],
+  ['clock', 'schedule'],
+  ['clock', 'calendar'],
+  ['clock', 'timer'],
+  ['clock', 'clock'],
 
-  ['\u{1F4B0}', 'budget'],
-  ['\u{1F4B0}', 'invoice'],
-  ['\u{1F4B0}', 'account'],
-  ['\u{1F4B0}', 'finance'],
-  ['\u{1F4B0}', 'calculator'],
+  ['wallet', 'budget'],
+  ['wallet', 'invoice'],
+  ['wallet', 'account'],
+  ['wallet', 'finance'],
+  ['wallet', 'calculator'],
 
-  ['\u{1F9EA}', 'validation'],
-  ['\u{1F9EA}', 'quality'],
-  ['\u{1F9EA}', 'experiment'],
-  ['\u{1F9EA}', 'test'],
+  ['flask', 'validation'],
+  ['flask', 'quality'],
+  ['flask', 'experiment'],
+  ['flask', 'test'],
 ]
 
 interface FlowCanvasProps {
@@ -221,12 +269,12 @@ function edgePointOnCircle(
   }
 }
 
-function iconForAgent(nodeId: string, label: string): string {
+function iconNameForAgent(nodeId: string, label: string): string {
   const text = `${nodeId} ${label}`.toLowerCase().replace(/[_-]+/g, ' ')
-  for (const [icon, keyword] of ICON_KEYWORDS) {
-    if (text.includes(keyword)) return icon
+  for (const [name, keyword] of ICON_KEYWORDS) {
+    if (text.includes(keyword)) return name
   }
-  return FALLBACK_ICON
+  return FALLBACK_ICON_NAME
 }
 
 export function FlowCanvas({ orchestratorId, agents, edges }: FlowCanvasProps) {
@@ -327,9 +375,9 @@ export function FlowCanvas({ orchestratorId, agents, edges }: FlowCanvasProps) {
         {nodes.map((node) => {
           const isOrchestrator = node.id === orchestratorId
           const fill = isOrchestrator ? ORCHESTRATOR_COLOR : colorForAgent(node.id)
-          const icon = isOrchestrator
-            ? ORCHESTRATOR_ICON
-            : iconForAgent(node.id, node.label)
+          const iconName = isOrchestrator ? 'bot' : iconNameForAgent(node.id, node.label)
+          const IconComponent = ICON_MAP[iconName]
+          const iconSize = node.radius * 1.15
           return (
             <g key={node.id} className="node" transform={`translate(${node.x}, ${node.y})`}>
               {isOrchestrator && (
@@ -341,15 +389,11 @@ export function FlowCanvas({ orchestratorId, agents, edges }: FlowCanvasProps) {
                 className={isOrchestrator ? 'node-core orchestrator' : 'node-core agent'}
                 data-agent={node.id}
               />
-              <text
-                className="node-icon"
-                textAnchor="middle"
-                dominantBaseline="central"
-                y={-2}
-                aria-hidden
-              >
-                {icon}
-              </text>
+              {IconComponent && (
+                <g transform={`translate(${-iconSize / 2}, ${-iconSize / 2})`}>
+                  <IconComponent size={iconSize} color="#fff" strokeWidth={1.5} />
+                </g>
+              )}
               <text className="node-label" y={node.radius + 24} textAnchor="middle">
                 {node.label}
               </text>
