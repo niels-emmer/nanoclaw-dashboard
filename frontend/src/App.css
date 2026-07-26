@@ -216,6 +216,82 @@
   }
 }
 
+/* ---- Chat bubbles ---- */
+
+.chat-bubble-fo {
+  overflow: visible !important;
+}
+
+.chat-bubble {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px 10px;
+  background: rgba(23, 23, 25, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 3px solid #a78bfa;
+  border-radius: 12px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.9);
+  animation: bubble-life 5s ease forwards;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.chat-bubble::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+}
+
+.chat-bubble.tail-left::before {
+  left: -13px;
+  border-right-color: rgba(23, 23, 25, 0.88);
+}
+
+.chat-bubble.tail-right::before {
+  right: -13px;
+  border-left-color: rgba(23, 23, 25, 0.88);
+}
+
+.bubble-direction {
+  flex-shrink: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  opacity: 0.6;
+}
+
+.bubble-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+@keyframes bubble-life {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  6% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 @media (max-width: 1200px) {
   .main-grid {
     grid-template-columns: 1fr;

@@ -8,7 +8,7 @@ import { Chip, Typography } from '@heroui/react'
 import './App.css'
 
 function App() {
-  const { agents, events, edges, connectionState, orchestratorId } = useEventStream()
+  const { agents, events, edges, bubbles, connectionState, orchestratorId } = useEventStream()
   const lastEvent = events[0]
   const lastEventTimestamp = lastEvent ? formatTime(Date.parse(lastEvent.timestamp)) : '--'
 
@@ -62,7 +62,7 @@ function App() {
       <main className="main-grid">
         <div className="canvas-panel rounded-[28px] border border-accent/10 bg-surface shadow-surface overflow-hidden">
           <div className="flex-1 flex flex-col justify-center min-h-0">
-            <FlowCanvas orchestratorId={orchestratorId} agents={agents} edges={edges} />
+            <FlowCanvas orchestratorId={orchestratorId} agents={agents} edges={edges} bubbles={bubbles} />
           </div>
           <div className="signal-legend" aria-hidden>
             <div className="legend-items">
