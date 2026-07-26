@@ -81,19 +81,19 @@ function App() {
         </div>
 
         <aside className="detail-stack">
-          <Card className="flex flex-col min-h-0">
+          <Card className="flex flex-col min-h-0 h-full overflow-hidden">
             <Card.Header>
               <div className="flex w-full justify-between items-baseline">
                 <Card.Title>Agents</Card.Title>
                 <Chip color="accent" variant="soft" size="sm">{agents.length}</Chip>
               </div>
             </Card.Header>
-            <Card.Content className="flex-1 min-h-0">
+            <Card.Content className="flex-1 min-h-0 overflow-y-auto">
               <AgentGrid agents={agents} />
             </Card.Content>
           </Card>
 
-          <Card className="flex flex-col min-h-0">
+          <Card className="flex flex-col min-h-0 h-full overflow-hidden">
             <Card.Header>
               <div className="flex w-full justify-between items-baseline">
                 <Card.Title>Latest traffic</Card.Title>
@@ -102,7 +102,7 @@ function App() {
                 </Chip>
               </div>
             </Card.Header>
-            <Card.Content className="flex-1 min-h-0">
+            <Card.Content className="flex-1 min-h-0 overflow-y-auto">
               <EventFeed events={events} />
             </Card.Content>
           </Card>
