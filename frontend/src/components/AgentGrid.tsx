@@ -1,6 +1,6 @@
 import { Card, Chip } from '@heroui/react'
 import type { AgentSnapshot } from '../lib/types'
-import { colorForAgent, compactAge, elapsedLabel } from '../lib/utils'
+import { colorForAgent, elapsedLabel } from '../lib/utils'
 
 interface Props {
   agents: AgentSnapshot[]
@@ -41,9 +41,8 @@ export function AgentGrid({ agents }: Props) {
               <Chip size="sm" variant="secondary" color="accent" className="shrink-0 ml-2">{agent.activityCount}</Chip>
             </Card.Header>
             <p className="text-sm text-foreground leading-relaxed line-clamp-2">{agent.lastSummary}</p>
-            <div className="flex justify-between text-[0.75rem] text-muted">
-              <span>{agent.lastEventType}</span>
-              <span>{elapsedLabel(agent.lastUpdated)} / up: {compactAge(agent.firstSeen)}</span>
+            <div className="text-[0.75rem] text-muted">
+              {agent.lastEventType} &middot; {elapsedLabel(agent.lastUpdated)}
             </div>
           </Card>
         )
