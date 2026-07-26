@@ -10,7 +10,7 @@ dependencies = [
     "uvicorn[standard]==0.30.3",
     "pydantic-settings==2.4.0",
     "orjson==3.10.7",
-    "structlog==24.2.0",
+    "structlog==26.1.0",
     "python-dotenv==1.0.1"
 ]
 
