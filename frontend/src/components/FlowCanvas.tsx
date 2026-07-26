@@ -24,7 +24,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
-import type { AgentSnapshot, EdgePulse } from '../lib/types'
+import type { AgentSnapshot, ChatBubble, EdgePulse } from '../lib/types'
 import { colorForAgent } from '../lib/utils'
 
 const WIDTH = 1000
@@ -244,6 +244,7 @@ interface FlowCanvasProps {
   orchestratorId: string
   agents: AgentSnapshot[]
   edges: EdgePulse[]
+  bubbles: ChatBubble[]
 }
 
 interface NodePosition {
@@ -277,7 +278,7 @@ function iconNameForAgent(nodeId: string, label: string): string {
   return FALLBACK_ICON_NAME
 }
 
-export function FlowCanvas({ orchestratorId, agents, edges }: FlowCanvasProps) {
+export function FlowCanvas({ orchestratorId, agents, edges, bubbles }: FlowCanvasProps) {
   const nodes = useMemo<NodePosition[]>(() => {
     const nonOrchestratorAgents = agents.filter((agent) => agent.id !== orchestratorId)
     const agentCount = Math.max(nonOrchestratorAgents.length, 1)
@@ -398,6 +399,38 @@ export function FlowCanvas({ orchestratorId, agents, edges }: FlowCanvasProps) {
                 {node.label}
               </text>
             </g>
+          )
+        })}
+        {bubbles.map((bubble) => {
+          const node = nodeMap[bubble.agentId]
+          if (!node) return null
+          const isQuestion = bubble.type === 'question'
+          // Place bubble to the right of the agent; flip to left if too close to edge
+          let bx = node.x + node.radius + 14
+          if (bx + 220 > WIDTH - 10) {
+            bx = node.x - node.radius - 14 - 220
+          }
+          const by = Math.max(8, Math.min(HEIGHT - 78, node.y - 32))
+          const tailSide = bx > node.x ? 'left' : 'right'
+          const accentColor =
+            bubble.type === 'question' ? '#a78bfa' : bubble.type === 'response' ? '#7860d8' : '#c084fc'
+          return (
+            <foreignObject
+              key={bubble.id}
+              x={bx}
+              y={by}
+              width={220}
+              height={70}
+              className="chat-bubble-fo"
+            >
+              <div
+                className={`chat-bubble tail-${tailSide}`}
+                style={{ borderLeftColor: accentColor }}
+              >
+                <span className="bubble-direction">{isQuestion ? '→' : '←'}</span>
+                <span className="bubble-text">{bubble.text}</span>
+              </div>
+            </foreignObject>
           )
         })}
       </svg>

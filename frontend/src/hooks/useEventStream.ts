@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { config } from '../lib/config'
-import type { AgentSnapshot, EdgePulse, TelemetryEvent } from '../lib/types'
+import type { AgentSnapshot, ChatBubble, EdgePulse, TelemetryEvent } from '../lib/types'
 import { deriveAgentSnapshot } from '../lib/utils'
 
 export type ConnectionState = 'connecting' | 'connected' | 'reconnecting' | 'error'
@@ -12,6 +12,7 @@ export const useEventStream = () => {
   const [events, setEvents] = useState<TelemetryEvent[]>([])
   const [snapshots, setSnapshots] = useState<Record<string, AgentSnapshot>>({})
   const [edges, setEdges] = useState<EdgePulse[]>([])
+  const [bubbles, setBubbles] = useState<ChatBubble[]>([])
   const [connectionState, setConnectionState] = useState<ConnectionState>('connecting')
   const [orchestratorId, setOrchestratorId] = useState(config.orchestratorId)
   const wsRef = useRef<WebSocket | null>(null)
@@ -79,6 +80,20 @@ export const useEventStream = () => {
         ]
         return next.slice(0, 32)
       })
+
+      // Spawn a chat bubble anchored to the relevant agent
+      const bubbleAgentId =
+        event.type === 'question' ? event.target : event.source
+      const bubble: ChatBubble = {
+        id: event.id,
+        agentId: bubbleAgentId,
+        text: event.payload.summary,
+        type: event.type,
+      }
+      setBubbles((prev) => [bubble, ...prev].slice(0, 6))
+      setTimeout(() => {
+        setBubbles((prev) => prev.filter((b) => b.id !== event.id))
+      }, 5000)
     }
 
     connect()
@@ -96,5 +111,5 @@ export const useEventStream = () => {
     return Object.values(snapshots).sort((a, b) => a.label.localeCompare(b.label))
   }, [snapshots])
 
-  return { agents, events, edges, connectionState, orchestratorId }
+  return { agents, events, edges, bubbles, connectionState, orchestratorId }
 }

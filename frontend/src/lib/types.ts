@@ -42,3 +42,10 @@ export interface EdgePulse {
   type: EventType
   timestamp: number
 }
+
+export interface ChatBubble {
+  id: string
+  agentId: string
+  text: string
+  type: EventType
+}
