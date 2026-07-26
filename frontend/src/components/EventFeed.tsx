@@ -1,6 +1,6 @@
 import { Chip } from '@heroui/react'
 import type { TelemetryEvent } from '../lib/types'
-import { agentLabelFromId, colorForAgent, formatTime } from '../lib/utils'
+import { colorForAgent, formatTime, readableNodeLabel } from '../lib/utils'
 
 interface Props {
   events: TelemetryEvent[]
@@ -45,13 +45,4 @@ export function EventFeed({ events }: Props) {
       })}
     </div>
   )
-}
-
-const readableNodeLabel = (id: string) => {
-  if (id.startsWith('agent:')) return agentLabelFromId(id)
-  if (id.startsWith('channel:')) {
-    const channel = id.replace(/^channel:/, '')
-    return `${channel} channel`
-  }
-  return id
 }

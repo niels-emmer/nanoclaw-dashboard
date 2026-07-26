@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import random
-import uuid
+from uuid import uuid4
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from typing import AsyncIterator
@@ -18,6 +18,16 @@ class TelemetrySource(ABC):
     @abstractmethod
     async def stream(self) -> AsyncIterator[TelemetryEvent]:
         """Yield telemetry events indefinitely."""
+
+
+_AGENT_SKILLS: dict[str, list[str]] = {
+    "researcher": ["web-search", "document-scrape", "fact-check"],
+    "coder": ["code-review", "git-commit", "unit-test"],
+    "architect": ["design-review", "dependency-graph", "db-schema"],
+    "editor": ["copy-edit", "style-guide", "format"],
+    "terminal": ["shell-exec", "log-parse", "env-inspect"],
+    "plotter": ["chart-js", "svg-render", "data-plot"],
+}
 
 
 class MockTelemetrySource(TelemetrySource):
@@ -38,9 +48,17 @@ class MockTelemetrySource(TelemetrySource):
 
             response_type = EventType.RESPONSE
             duration = random.randint(200, 2000)
-            payload = EventPayload(summary=f"Response from {agent}", duration_ms=duration, status="completed")
+            meta: dict[str, str] = {}
+            if agent in _AGENT_SKILLS:
+                meta["skills"] = ",".join(_AGENT_SKILLS[agent])
+            payload = EventPayload(
+                summary=f"Response from {agent}",
+                duration_ms=duration,
+                status="completed",
+                meta=meta or None,
+            )
             response = TelemetryEvent(
-                id=str(uuid.uuid4()),
+                id=str(uuid4()),
                 timestamp=_timestamp(),
                 type=response_type,
                 source=f"agent:{agent}",
@@ -52,9 +70,19 @@ class MockTelemetrySource(TelemetrySource):
             await asyncio.sleep(self._sleep_seconds())
 
     def _build_event(self, event_type: EventType, source: str, target: str) -> TelemetryEvent:
-        payload = EventPayload(summary=f"{event_type.value.title()} to {target}", duration_ms=None, status="running")
+        agent_ref = target if event_type == EventType.QUESTION else source
+        agent_name = agent_ref.removeprefix("agent:") if agent_ref.startswith("agent:") else None
+        meta: dict[str, str] = {}
+        if agent_name and agent_name in _AGENT_SKILLS:
+            meta["skills"] = ",".join(_AGENT_SKILLS[agent_name])
+        payload = EventPayload(
+            summary=f"{event_type.value.title()} to {target}",
+            duration_ms=None,
+            status="running",
+            meta=meta or None,
+        )
         return TelemetryEvent(
-            id=str(uuid.uuid4()),
+            id=str(uuid4()),
             timestamp=_timestamp(),
             type=event_type,
             source=source,
