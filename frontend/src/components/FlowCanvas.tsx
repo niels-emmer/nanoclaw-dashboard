@@ -25,13 +25,11 @@ import {
 import type { LucideIcon } from 'lucide-react'
 
 import type { AgentSnapshot, AgentState, ChatBubble, EdgePulse } from '../lib/types'
-import { colorForAgent } from '../lib/utils'
+import { colorForAgent, ORCHESTRATOR_COLOR } from '../lib/utils'
 
 const WIDTH = 1000
 const HEIGHT = 560
 const CENTER = { x: WIDTH / 2, y: HEIGHT / 2 }
-
-const ORCHESTRATOR_COLOR = '#f59e0b'
 
 const ICON_MAP: Record<string, LucideIcon> = {
   backpack: Backpack,
