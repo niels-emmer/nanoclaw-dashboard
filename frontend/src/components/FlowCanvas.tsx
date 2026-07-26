@@ -49,9 +49,13 @@ function edgePointOnCircle(
   }
 }
 
-function iconForAgent(label: string): string {
-  const key = label.toLowerCase().replace(/^agent:/, '')
-  return AGENT_ICONS[key] ?? FALLBACK_ICON
+function iconForAgent(nodeId: string, label: string): string {
+  const candidates = [nodeId, label]
+  for (const raw of candidates) {
+    const key = raw.toLowerCase().replace(/^agent:/, '')
+    if (AGENT_ICONS[key]) return AGENT_ICONS[key]
+  }
+  return FALLBACK_ICON
 }
 
 export function FlowCanvas({ orchestratorId, agents, edges }: FlowCanvasProps) {
@@ -154,7 +158,7 @@ export function FlowCanvas({ orchestratorId, agents, edges }: FlowCanvasProps) {
           const fill = isOrchestrator ? ORCHESTRATOR_COLOR : colorForAgent(node.id)
           const icon = isOrchestrator
             ? AGENT_ICONS.orchestrator
-            : iconForAgent(node.label)
+            : iconForAgent(node.id, node.label)
           return (
             <g key={node.id} className="node" transform={`translate(${node.x}, ${node.y})`}>
               {isOrchestrator && (
