@@ -4,8 +4,8 @@
 
 # Governance + Required Docs
 - Governance is normative: threat modeling, dependency pinning, SBOMs, ADRs, and documentation are mandatory.
-- Keep `README.md`, `ARCHITECTURE.md`, `SECURITY.md`, `THIRD_PARTY.md`, and `DECISIONS.md` up to date before merging.
-- Threat model every new network interface or data store and link the artifact in `DECISIONS.md`.
+- Keep `README.md`, `docs/ARCHITECTURE.md`, `SECURITY.md`, `THIRD_PARTY.md`, and `docs/DECISIONS.md` up to date before merging.
+- Threat model every new network interface or data store and link the artifact in `docs/DECISIONS.md`.
 - Current threat model: `docs/threat-models/2026-07-25.md` (WebSocket surface). Update it or add a new entry when interfaces change.
 
 # Architecture expectations
@@ -23,8 +23,8 @@
 - Before pushing changes: `cd backend && pytest` and `PATH=$PWD/.tools/node/bin:$PATH && cd frontend && npm run build`.
 - When altering telemetry schema or transport, bump `schema_version`, update frontend types, and add an ADR entry.
 - Keep `THIRD_PARTY.md` in sync with any new dependencies (exact version + license) and note modifications.
-- Add/extend threat models for new interfaces, then reference them from `DECISIONS.md`.
-- Document any new commands or operational steps in `README.md` + `ARCHITECTURE.md` immediately.
+- Add/extend threat models for new interfaces, then reference them from `docs/DECISIONS.md`.
+- Document any new commands or operational steps in `README.md` + `docs/ARCHITECTURE.md` immediately.
 - Prefer using `./scripts/install_dashboard.sh` to provision deps + run verification; update the script whenever workflows change.
 - Container workflow: `docker compose up --build` reads `.env` defaults (ports + backend config). Update Compose + nginx proxy if you change transport paths.
 - When wiring to a real Nanoclaw host, require a read-only bind mount of the Nanoclaw checkout (`NANOCLAW_HOST_DATA` → `NANOCLAW_CONTAINER_DATA`) and set `NANOCLAW_ENABLED=true`. Never write to the mounted data folder.

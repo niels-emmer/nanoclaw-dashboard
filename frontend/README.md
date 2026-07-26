@@ -26,4 +26,4 @@ Set `VITE_BACKEND_WS_URL` when the backend lives somewhere other than `localhost
 - `src/lib/types.ts` – Canonical telemetry types mirrored from the backend.
 - `src/index.css` / `App.css` – typography + color tokens for the 1080p TV layout; keep modifications intentional.
 
-Frontend changes must stay in sync with backend schema updates and be recorded in `DECISIONS.md` when they alter contracts.
+Frontend changes must stay in sync with backend schema updates and be recorded in `docs/DECISIONS.md` when they alter contracts.

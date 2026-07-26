@@ -224,12 +224,14 @@ nanoclaw-dashboard/
 ├── .env                        # Environment defaults
 ├── LICENSE
 ├── README.md
-├── ARCHITECTURE.md
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── DECISIONS.md
+│   └── screenshot.png
 ├── CONTRIBUTING.md
 ├── CODE_OF_CONDUCT.md
 ├── SECURITY.md
 ├── THIRD_PARTY.md
-├── DECISIONS.md
 └── AGENTS.md                   # Agentic coding checklist
 ```
 
@@ -237,12 +239,12 @@ nanoclaw-dashboard/
 
 | File | Purpose |
 |------|---------|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | System design, data flow, component responsibilities |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design, data flow, component responsibilities |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute — setup, guidelines, PR process |
 | [SECURITY.md](SECURITY.md) | Security controls, threat models, vulnerability reporting |
 | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards |
 | [THIRD_PARTY.md](THIRD_PARTY.md) | Dependency provenance ledger (exact versions + licenses) |
-| [DECISIONS.md](DECISIONS.md) | Architecture Decision Record (ADR) log |
+| [docs/DECISIONS.md](docs/DECISIONS.md) | Architecture Decision Record (ADR) log |
 | [docs/threat-models/](docs/threat-models/) | STRIDE analyses for exposed interfaces |
 | [AGENTS.md](AGENTS.md) | Condensed playbook for AI coding agents |
 | [frontend/README.md](frontend/README.md) | Frontend-specific development notes |

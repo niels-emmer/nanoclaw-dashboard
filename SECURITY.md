@@ -30,7 +30,7 @@ before public disclosure.
 
 ## Known Security Controls
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for the system design and
+See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for the system design and
 [THIRD_PARTY.md](./THIRD_PARTY.md) for dependency provenance.
 
 The WebSocket interface is currently **unauthenticated** and intended for
