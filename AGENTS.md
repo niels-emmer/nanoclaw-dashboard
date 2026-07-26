@@ -74,3 +74,56 @@ nanoclaw-dashboard/
 - Prefer `./scripts/install_dashboard.sh` for provisioning; update it when workflows change.
 - Container workflow: `docker compose up --build` reads `.env` defaults. Update Compose + nginx.conf if transport paths change.
 - When wiring to a real Nanoclaw host: require read-only bind mount (`NANOCLAW_HOST_DATA` → `NANOCLAW_CONTAINER_DATA`), set `NANOCLAW_ENABLED=true`. Never write to the mounted data folder.
+
+# Universal agent rules
+These rules apply to every task in this tree unless a more specific
+`CLAUDE.md` or `AGENTS.md` overrides them.
+
+## Edit-time rules
+
+1. **Think Before Coding** — State assumptions explicitly. If uncertain,
+   ask rather than guess; stop and name what's unclear instead of guessing
+   through it. Surface tradeoffs before proceeding.
+
+2. **Simplicity First** — Write the minimum code that solves the problem.
+   No features beyond what was asked, nothing speculative. If 200 lines
+   could be 50, write the 50.
+
+3. **Surgical Changes** — Touch only what the request requires. Match
+   existing style even if you'd do it differently. No drive-by refactors
+   or unrelated "improvements".
+
+4. **Goal-Driven Execution** — Turn the task into machine-verifiable
+   success criteria before writing code. Define what "done" looks like,
+   then loop until those checks pass.
+
+## Agent self-check rules
+
+5. **Debugging Discipline** — Read the full error and stack trace before
+   acting. Reproduce the problem before attempting a fix. Change one
+   variable at a time. Beware confident wrong diagnosis: never generate a
+   fix for a problem you have not confirmed.
+
+6. **Reproduce Before Fixing** — Before fixing a bug, write a test that
+   reliably reproduces it. Fix the code. Run the test. The bug is fixed
+   only when the test passes — not when it "feels" fixed.
+
+7. **Dependency Hygiene** — Treat every added package as permanent,
+   uncontrolled code maintained on someone else's schedule. Ask whether
+   the standard library handles it first. If you add a dependency,
+   document the decision explicitly.
+
+8. **Honest Communication** — Report actionable uncertainty, not vague
+   reassurance. "I'm not sure this library supports streaming" is useful;
+   "I think this should work" is not. Never dress up a guess as
+   confidence.
+
+9. **Recognize Failure Modes** — In autonomous loops no human reviews
+   each step. Watch for and halt on the known traps: confident wrong
+   diagnosis, fixes that only "feel" right, scope creep, silent guessing
+   past confusion. Stop and flag rather than push through.
+
+10. **Verify Before Done** — Nothing is complete until its success
+    criteria are demonstrably met (tests run, output matches the goal).
+    "Looks correct" is not "runs correctly". Close the loop with
+    evidence.
