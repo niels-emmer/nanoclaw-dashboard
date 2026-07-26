@@ -4,10 +4,10 @@ Record every external dependency here with license info and notes on local modif
 
 | Component | Version/Commit | License | Purpose | Local Changes |
 |-----------|----------------|---------|---------|---------------|
-| FastAPI | 0.112.0 | MIT | Backend HTTP/WebSocket framework | None |
-| Uvicorn | 0.30.3 | BSD | ASGI server for FastAPI app + dev reload | None |
-| structlog | 24.2.0 | Apache-2.0 | Structured JSON logging | None |
-| pydantic-settings | 2.4.0 | MIT | Environment-driven configuration | None |
+| FastAPI | 0.140.0 | MIT | Backend HTTP/WebSocket framework | None |
+| Uvicorn | 0.51.0 | BSD | ASGI server for FastAPI app + dev reload | None |
+| structlog | 26.1.0 | Apache-2.0 | Structured JSON logging | None |
+| pydantic-settings | 2.14.2 | MIT | Environment-driven configuration | None |
 | React | 19.2.7 | MIT | Frontend UI library | None |
 | Vite | 8.1.5 | MIT | Frontend dev server/build tool | None |
 | Tailwind CSS | 4.x | MIT | Utility-first CSS framework for styling | None |
