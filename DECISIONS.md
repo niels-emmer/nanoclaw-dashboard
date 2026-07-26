@@ -13,8 +13,8 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
 
 ## 0002 – Enforce governance charter
 - **Status**: Accepted
-- **Context**: Owner mandated adoption of `agent-governance/GOVERNANCE.md` across all repos.
-- **Decision**: Treat the charter as normative; threat modeling, documentation set, dependency pinning, SBOMs, and ADR logging are mandatory.
+- **Context**: Owner mandated adoption of a governance charter across all repos.
+- **Decision**: Threat modeling, documentation set, dependency pinning, SBOMs, and ADR logging are mandatory.
 - **Consequences**:
   - Contributors must update this log for material changes (dependencies, data models, protocols).
   - CI pipeline must include security scans and SBOM generation before releases.
