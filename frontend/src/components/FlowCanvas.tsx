@@ -31,7 +31,7 @@ const WIDTH = 1000
 const HEIGHT = 560
 const CENTER = { x: WIDTH / 2, y: HEIGHT / 2 }
 
-const ORCHESTRATOR_COLOR = '#e8c547'
+const ORCHESTRATOR_COLOR = '#f59e0b'
 
 const ICON_MAP: Record<string, LucideIcon> = {
   backpack: Backpack,
@@ -291,7 +291,7 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles }: FlowCanva
       y: CENTER.y,
       radius: 70,
       label: orchestratorSnapshot?.label ?? 'orchestrator',
-      state: 'idle',
+      state: orchestratorSnapshot?.state ?? 'idle',
     }
 
     const spokes = nonOrchestratorAgents.map((agent, idx) => {
@@ -387,7 +387,7 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles }: FlowCanva
               {isOrchestrator && (
                 <circle r={node.radius + 8} fill="url(#orchestratorGlow)" />
               )}
-              {!isOrchestrator && node.state !== 'idle' && node.state !== 'unknown' && (
+              {node.state !== 'idle' && node.state !== 'unknown' && (
                 <circle
                   r={node.radius + 6}
                   className={`node-ring ${node.state}`}
