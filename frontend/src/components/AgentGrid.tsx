@@ -15,6 +15,8 @@ const stateCopy: Record<string, string> = {
 }
 
 export function AgentGrid({ agents }: Props) {
+  const sorted = [...agents].sort((a, b) => b.activityCount - a.activityCount)
+
   if (agents.length === 0) {
     return (
       <div className="min-h-[80px] grid place-content-center text-center text-muted text-sm border border-dashed border-accent/20 rounded-2xl">
@@ -25,7 +27,7 @@ export function AgentGrid({ agents }: Props) {
 
   return (
     <div className="flex flex-col gap-3 overflow-y-auto flex-1 pr-1">
-      {agents.map((agent) => {
+      {sorted.map((agent) => {
         const tone = colorForAgent(agent.id)
         return (
           <Card key={agent.id} className="flex flex-col gap-2 p-3" style={{ borderColor: `${tone}40` }}>
