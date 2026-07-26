@@ -1,6 +1,6 @@
 import { Card, Chip } from '@heroui/react'
 import type { AgentSnapshot } from '../lib/types'
-import { colorForAgent, readableNodeLabel } from '../lib/utils'
+import { colorForAgent, ORCHESTRATOR_COLOR, readableNodeLabel } from '../lib/utils'
 
 interface Props {
   agents: AgentSnapshot[]
@@ -17,6 +17,17 @@ const stateCopy: Record<string, string> = {
 export function AgentGrid({ agents }: Props) {
   const sorted = [...agents].sort((a, b) => b.activityCount - a.activityCount)
 
+  // Map display labels back to full agent IDs for consistent color lookup
+  const labelToId = new Map<string, string>()
+  for (const a of agents) {
+    labelToId.set(a.label, a.id)
+  }
+
+  // Resolve color for any entity ID or label — handles the orchestrator's
+  // hardcoded color so blobs match the FlowCanvas orbit node.
+  const colorForEntity = (id: string) =>
+    id === 'orchestrator' ? ORCHESTRATOR_COLOR : colorForAgent(id)
+
   if (agents.length === 0) {
     return (
       <div className="min-h-[80px] grid place-content-center text-center text-muted text-sm border border-dashed border-accent/20 rounded-2xl">
@@ -30,9 +41,9 @@ export function AgentGrid({ agents }: Props) {
       {sorted.map((agent) => {
         const tone = colorForAgent(agent.id)
         const agentWasSource = agent.lastEventSource === agent.id
-        const partnerLabel = agentWasSource
-          ? readableNodeLabel(agent.lastEventTarget ?? '')
-          : readableNodeLabel(agent.lastEventSource ?? '')
+        const partnerId = agentWasSource ? agent.lastEventTarget : agent.lastEventSource
+        const partnerLabel = partnerId ? readableNodeLabel(partnerId) : ''
+        const partnerTone = partnerId ? colorForEntity(partnerId) : tone
         return (
           <Card key={agent.id} className="flex flex-col gap-1.5 p-3" style={{ borderColor: `${tone}40` }}>
             <Card.Header className="flex flex-row justify-between items-center p-0">
@@ -50,7 +61,7 @@ export function AgentGrid({ agents }: Props) {
               <Chip size="sm" variant="soft" color="warning" className="text-[0.65rem]">
                 {agentWasSource ? '>' : '<'}
               </Chip>
-              <span className="text-[0.65rem] font-medium px-1.5 py-0.5 rounded" style={{ background: tone, color: '#fff' }}>
+              <span className="text-[0.65rem] font-medium px-1.5 py-0.5 rounded" style={{ background: partnerTone, color: '#fff' }}>
                 {partnerLabel}
               </span>
             </div>
@@ -58,22 +69,30 @@ export function AgentGrid({ agents }: Props) {
             {agent.outboundTargets.length > 0 && (
               <div className="flex flex-wrap items-center gap-1 text-xs">
                 <span className="text-muted font-medium shrink-0">TO:</span>
-                {agent.outboundTargets.map((tgt) => (
-                  <span key={tgt} className="text-[0.65rem] font-medium px-1.5 py-0.5 rounded" style={{ background: tone, color: '#fff' }}>
-                    {tgt}
-                  </span>
-                ))}
+                {agent.outboundTargets.map((tgt) => {
+                  const tgtId = labelToId.get(tgt)
+                  const tgtTone = tgtId ? colorForEntity(tgtId) : colorForEntity(tgt)
+                  return (
+                    <span key={tgt} className="text-[0.65rem] font-medium px-1.5 py-0.5 rounded" style={{ background: tgtTone, color: '#fff' }}>
+                      {tgt}
+                    </span>
+                  )
+                })}
               </div>
             )}
 
             {agent.inboundSources.length > 0 && (
               <div className="flex flex-wrap items-center gap-1 text-xs">
                 <span className="text-muted font-medium shrink-0">FR:</span>
-                {agent.inboundSources.map((src) => (
-                  <span key={src} className="text-[0.65rem] font-medium px-1.5 py-0.5 rounded" style={{ background: tone, color: '#fff' }}>
-                    {src}
-                  </span>
-                ))}
+                {agent.inboundSources.map((src) => {
+                  const srcId = labelToId.get(src)
+                  const srcTone = srcId ? colorForEntity(srcId) : colorForEntity(src)
+                  return (
+                    <span key={src} className="text-[0.65rem] font-medium px-1.5 py-0.5 rounded" style={{ background: srcTone, color: '#fff' }}>
+                      {src}
+                    </span>
+                  )
+                })}
               </div>
             )}
           </Card>
