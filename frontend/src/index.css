@@ -26,11 +26,12 @@ body {
   font-family: var(--sans);
   background: #000000;
   color: var(--fg);
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 #root {
-  min-height: 100vh;
+  height: 100vh;
 }
 
 h1, h2, h3 {
