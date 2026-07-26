@@ -16,7 +16,7 @@ function App() {
     <div className="app-shell">
       <header className="masthead">
         <div className="masthead-copy">
-          <Typography type="h1">Nanoclaw Command Surface</Typography>
+          <Typography type="h1">NanoClaw Live Traffic</Typography>
         </div>
         <div className="masthead-status">
           <div className="flex items-center gap-3">
