@@ -4,6 +4,7 @@ import { EventFeed } from './components/EventFeed'
 import { ConnectionStatus } from './components/ConnectionStatus'
 import { useEventStream } from './hooks/useEventStream'
 import { formatTime } from './lib/utils'
+import { Card, Chip, Typography } from '@heroui/react'
 import './App.css'
 
 function App() {
@@ -25,45 +26,46 @@ function App() {
     <div className="app-shell">
       <header className="masthead">
         <div className="masthead-copy">
-          <h1>Nanoclaw Command Surface</h1>
-          <ul className="framework-pill-list">
-            {capabilityHighlights.map((highlight) => (
-              <li key={highlight.label} className="framework-pill">
-                <span>{highlight.label}</span>
-                <small>{highlight.detail}</small>
-              </li>
+          <Typography type="h1">Nanoclaw Command Surface</Typography>
+          <div className="flex flex-wrap gap-2 mt-3">
+            {capabilityHighlights.map((h) => (
+              <Chip key={h.label} color="accent" variant="secondary" size="sm">
+                <span className="text-xs tracking-wider uppercase">{h.label}</span>
+              </Chip>
             ))}
-          </ul>
+          </div>
         </div>
         <div className="masthead-status">
-          <ConnectionStatus state={connectionState} />
-          <dl className="status-callouts">
-            <div>
-              <dt>Active agents</dt>
-              <dd>{agents.length}</dd>
-            </div>
-            <div>
-              <dt>Live pulses</dt>
-              <dd>{edges.length}</dd>
-            </div>
-            <div>
-              <dt>Last signal</dt>
-              <dd>{lastEventTimestamp}</dd>
-            </div>
-            <div>
-              <dt>Workspace</dt>
-              <dd>{orchestratorId}</dd>
-            </div>
-          </dl>
-          <div className="status-stream">
-            <span className="status-label">Now streaming</span>
-            <span className="status-summary">{lastEventSummary}</span>
+          <div className="flex items-center gap-3">
+            <ConnectionStatus state={connectionState} />
+            <dl className="status-callouts">
+              <div>
+                <dt>Active agents</dt>
+                <dd>{agents.length}</dd>
+              </div>
+              <div>
+                <dt>Live pulses</dt>
+                <dd>{edges.length}</dd>
+              </div>
+              <div>
+                <dt>Last signal</dt>
+                <dd>{lastEventTimestamp}</dd>
+              </div>
+              <div>
+                <dt>Workspace</dt>
+                <dd>{orchestratorId}</dd>
+              </div>
+            </dl>
           </div>
+          <Chip color="accent" variant="soft" size="sm" className="max-w-[360px] truncate">
+            <span className="text-[0.65rem] uppercase tracking-wider shrink-0">Now streaming</span>
+            <span className="text-xs truncate">{lastEventSummary}</span>
+          </Chip>
         </div>
       </header>
 
       <main className="main-grid">
-        <section className="panel canvas-panel">
+        <Card className="canvas-panel">
           <FlowCanvas orchestratorId={orchestratorId} agents={agents} edges={edges} />
           <div className="signal-legend" aria-hidden>
             <div className="legend-items">
@@ -81,24 +83,34 @@ function App() {
               </span>
             </div>
           </div>
-        </section>
+        </Card>
 
         <aside className="detail-stack">
-          <section className="panel agents-panel">
-            <div className="panel-header">
-              <h2>Agents</h2>
-              <span className="metric">{agents.length}</span>
-            </div>
-            <AgentGrid agents={agents} />
-          </section>
+          <Card className="flex flex-col min-h-0">
+            <Card.Header>
+              <div className="flex w-full justify-between items-baseline">
+                <Card.Title>Agents</Card.Title>
+                <Chip color="accent" variant="soft" size="sm">{agents.length}</Chip>
+              </div>
+            </Card.Header>
+            <Card.Content className="flex-1 min-h-0">
+              <AgentGrid agents={agents} />
+            </Card.Content>
+          </Card>
 
-          <section className="panel events-panel">
-            <div className="panel-header">
-              <h2>Latest traffic</h2>
-              <span className="metric">{events.length ? 'streaming' : 'idle'}</span>
-            </div>
-            <EventFeed events={events} />
-          </section>
+          <Card className="flex flex-col min-h-0">
+            <Card.Header>
+              <div className="flex w-full justify-between items-baseline">
+                <Card.Title>Latest traffic</Card.Title>
+                <Chip color="accent" variant="soft" size="sm">
+                  {events.length ? 'streaming' : 'idle'}
+                </Chip>
+              </div>
+            </Card.Header>
+            <Card.Content className="flex-1 min-h-0">
+              <EventFeed events={events} />
+            </Card.Content>
+          </Card>
         </aside>
       </main>
     </div>
