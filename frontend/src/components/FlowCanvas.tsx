@@ -24,7 +24,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
-import type { AgentSnapshot, ChatBubble, EdgePulse } from '../lib/types'
+import type { AgentSnapshot, AgentState, ChatBubble, EdgePulse } from '../lib/types'
 import { colorForAgent } from '../lib/utils'
 
 const WIDTH = 1000
@@ -253,6 +253,7 @@ interface NodePosition {
   y: number
   radius: number
   label: string
+  state: AgentState | 'unknown'
 }
 
 function edgePointOnCircle(
@@ -290,6 +291,7 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles }: FlowCanva
       y: CENTER.y,
       radius: 70,
       label: orchestratorSnapshot?.label ?? 'orchestrator',
+      state: 'idle',
     }
 
     const spokes = nonOrchestratorAgents.map((agent, idx) => {
@@ -300,6 +302,7 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles }: FlowCanva
         y: CENTER.y + orbit * Math.sin(angle),
         radius: 52,
         label: agent.label,
+        state: agent.state,
       }
     })
 
@@ -383,6 +386,13 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles }: FlowCanva
             <g key={node.id} className="node" transform={`translate(${node.x}, ${node.y})`}>
               {isOrchestrator && (
                 <circle r={node.radius + 8} fill="url(#orchestratorGlow)" />
+              )}
+              {!isOrchestrator && node.state !== 'idle' && node.state !== 'unknown' && (
+                <circle
+                  r={node.radius + 6}
+                  className={`node-ring ${node.state}`}
+                  style={{ stroke: node.state === 'error' ? '#ef4444' : fill }}
+                />
               )}
               <circle
                 r={node.radius}
