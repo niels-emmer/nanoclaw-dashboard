@@ -1,12 +1,24 @@
 import { useMemo } from 'react'
 
 import type { AgentSnapshot, EdgePulse } from '../lib/types'
+import { colorForAgent } from '../lib/utils'
 
 const WIDTH = 1000
 const HEIGHT = 560
 const CENTER = { x: WIDTH / 2, y: HEIGHT / 2 }
 
-const ACCENT = '#7860d8'
+const ORCHESTRATOR_COLOR = '#e8c547'
+
+const AGENT_ICONS: Record<string, string> = {
+  orchestrator: '\u{1F916}',
+  seer: '\u{1F441}',
+  navigator: '\u{1F9ED}',
+  scribe: '\u{270D}',
+  smith: '\u{1F528}',
+  warden: '\u{1F6E1}',
+}
+
+const FALLBACK_ICON = '\u2699'
 
 interface FlowCanvasProps {
   orchestratorId: string
@@ -20,6 +32,26 @@ interface NodePosition {
   y: number
   radius: number
   label: string
+}
+
+function edgePointOnCircle(
+  cx: number, cy: number,
+  tx: number, ty: number,
+  radius: number,
+) {
+  const dx = tx - cx
+  const dy = ty - cy
+  const dist = Math.sqrt(dx * dx + dy * dy)
+  if (dist === 0) return { x: cx, y: cy }
+  return {
+    x: cx + (dx / dist) * radius,
+    y: cy + (dy / dist) * radius,
+  }
+}
+
+function iconForAgent(label: string): string {
+  const key = label.toLowerCase().replace(/^agent:/, '')
+  return AGENT_ICONS[key] ?? FALLBACK_ICON
 }
 
 export function FlowCanvas({ orchestratorId, agents, edges }: FlowCanvasProps) {
@@ -58,7 +90,6 @@ export function FlowCanvas({ orchestratorId, agents, edges }: FlowCanvasProps) {
       .map((agent) => ({
         source: orchestratorId,
         target: agent.id,
-        color: ACCENT,
       }))
   }, [agents, orchestratorId])
 
@@ -80,56 +111,76 @@ export function FlowCanvas({ orchestratorId, agents, edges }: FlowCanvasProps) {
       <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="presentation" aria-hidden>
         <defs>
           <radialGradient id="orchestratorGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor={ACCENT} stopOpacity="0.5" />
-            <stop offset="100%" stopColor={ACCENT} stopOpacity="0" />
+            <stop offset="0%" stopColor={ORCHESTRATOR_COLOR} stopOpacity="0.4" />
+            <stop offset="100%" stopColor={ORCHESTRATOR_COLOR} stopOpacity="0" />
           </radialGradient>
         </defs>
+
         {baseEdges.map((edge) => {
           const start = nodeMap[edge.source]
           const end = nodeMap[edge.target]
           if (!start || !end) return null
+          const s = edgePointOnCircle(start.x, start.y, end.x, end.y, start.radius)
+          const e = edgePointOnCircle(end.x, end.y, start.x, start.y, end.radius)
           return (
             <line
-              key={edge.target}
-              x1={start.x}
-              y1={start.y}
-              x2={end.x}
-              y2={end.y}
+              key={`spine-${edge.target}`}
+              x1={s.x}
+              y1={s.y}
+              x2={e.x}
+              y2={e.y}
               className="edge-spine"
-              stroke={edge.color}
-              strokeOpacity={0.35}
             />
           )
         })}
 
-        {resolvedPulses.map((pulse) => (
-          <line
-            key={pulse.id}
-            className={`edge-pulse pulse-${pulse.type}`}
-            x1={pulse.start.x}
-            y1={pulse.start.y}
-            x2={pulse.end.x}
-            y2={pulse.end.y}
-          />
-        ))}
-
-        {nodes.map((node) => (
-          <g key={node.id} className="node" transform={`translate(${node.x}, ${node.y})`}>
-            {node.id === orchestratorId ? (
-              <circle r={node.radius + 22} className="node-orbit" />
-            ) : (
-              <circle r={node.radius + 8} className="node-orbit" />
-            )}
-            <circle
-              r={node.radius}
-              className={node.id === orchestratorId ? 'node-core orchestrator' : 'node-core agent'}
-              data-agent={node.id}
+        {resolvedPulses.map((pulse) => {
+          const s = edgePointOnCircle(pulse.start.x, pulse.start.y, pulse.end.x, pulse.end.y, pulse.start.radius)
+          const e = edgePointOnCircle(pulse.end.x, pulse.end.y, pulse.start.x, pulse.start.y, pulse.end.radius)
+          return (
+            <line
+              key={pulse.id}
+              className={`edge-pulse pulse-${pulse.type}`}
+              x1={s.x}
+              y1={s.y}
+              x2={e.x}
+              y2={e.y}
             />
-            <text className="node-label" y={node.radius + 28} textAnchor="middle">
-              {node.label}
-            </text>
-          </g>
-        ))}
+          )
+        })}
+
+        {nodes.map((node) => {
+          const isOrchestrator = node.id === orchestratorId
+          const fill = isOrchestrator ? ORCHESTRATOR_COLOR : colorForAgent(node.id)
+          const icon = isOrchestrator
+            ? AGENT_ICONS.orchestrator
+            : iconForAgent(node.label)
+          return (
+            <g key={node.id} className="node" transform={`translate(${node.x}, ${node.y})`}>
+              {isOrchestrator && (
+                <circle r={node.radius + 8} fill="url(#orchestratorGlow)" />
+              )}
+              <circle
+                r={node.radius}
+                fill={fill}
+                className={isOrchestrator ? 'node-core orchestrator' : 'node-core agent'}
+                data-agent={node.id}
+              />
+              <text
+                className="node-icon"
+                textAnchor="middle"
+                dominantBaseline="central"
+                y={-2}
+                aria-hidden
+              >
+                {icon}
+              </text>
+              <text className="node-label" y={node.radius + 24} textAnchor="middle">
+                {node.label}
+              </text>
+            </g>
+          )
+        })}
       </svg>
       <div className="canvas-overlay" aria-hidden>
         <div className="grid-lines" />
