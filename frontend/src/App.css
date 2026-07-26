@@ -121,12 +121,13 @@
 
 .flow-canvas {
   position: relative;
+  flex: 1;
+  min-height: 0;
   background: radial-gradient(circle at 40% 50%, rgba(120, 96, 216, 0.08), transparent 55%),
     #171719;
   border-radius: 28px;
   width: 100%;
   max-width: 100%;
-  aspect-ratio: 1000 / 560;
 }
 
 .flow-canvas svg {

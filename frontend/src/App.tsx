@@ -45,7 +45,7 @@ function App() {
 
       <main className="main-grid">
         <div className="canvas-panel rounded-[28px] border border-accent/10 bg-surface shadow-surface overflow-hidden">
-          <div className="flex-1 flex flex-col justify-center min-h-0">
+          <div className="flex-1 flex flex-col min-h-0">
             <FlowCanvas orchestratorId={orchestratorId} agents={agents} edges={edges} bubbles={bubbles} />
           </div>
           <div className="signal-legend" aria-hidden>
