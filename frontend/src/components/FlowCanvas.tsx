@@ -407,26 +407,21 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles }: FlowCanva
           const isQuestion = bubble.type === 'question'
           // Place bubble to the right of the agent; flip to left if too close to edge
           let bx = node.x + node.radius + 14
-          if (bx + 220 > WIDTH - 10) {
-            bx = node.x - node.radius - 14 - 220
+          if (bx + 440 > WIDTH - 10) {
+            bx = node.x - node.radius - 14 - 440
           }
-          const by = Math.max(8, Math.min(HEIGHT - 100, node.y - 40))
+          const by = Math.max(8, Math.min(HEIGHT - 180, node.y - 40))
           const tailSide = bx > node.x ? 'left' : 'right'
-          const accentColor =
-            bubble.type === 'question' ? '#a78bfa' : bubble.type === 'response' ? '#7860d8' : '#c084fc'
           return (
             <foreignObject
               key={bubble.id}
               x={bx}
               y={by}
-              width={220}
-              height={88}
+              width={440}
+              height={160}
               className="chat-bubble-fo"
             >
-              <div
-                className={`chat-bubble tail-${tailSide}`}
-                style={{ borderLeftColor: accentColor }}
-              >
+              <div className={`chat-bubble tail-${tailSide}`}>
                 <span className="bubble-direction">{isQuestion ? '→' : '←'}</span>
                 <span className="bubble-text">{bubble.text}</span>
               </div>

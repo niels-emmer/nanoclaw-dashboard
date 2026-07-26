@@ -231,8 +231,7 @@
   background: rgba(23, 23, 25, 0.72);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-left: 3px solid #a78bfa;
+  border: 3px solid #fff;
   border-radius: 12px;
   font-size: 17px;
   line-height: 1.4;
@@ -269,7 +268,7 @@
 
 .bubble-text {
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 6;
   -webkit-box-orient: vertical;
   overflow: hidden;
   word-break: break-word;
