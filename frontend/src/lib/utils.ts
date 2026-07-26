@@ -1,4 +1,4 @@
-import type { AgentState, AgentSnapshot, TelemetryEvent } from './types'
+import type { AgentSnapshot, TelemetryEvent } from './types'
 
 export const formatTime = (maybeMs: number) => {
   const safeMs = Number.isNaN(maybeMs) ? Date.now() : maybeMs
@@ -35,6 +35,15 @@ export const compactAge = (maybeMs: number) => {
 
 export const agentLabelFromId = (id: string) => id.replace(/^agent:/, '')
 
+export const readableNodeLabel = (id: string) => {
+  if (id.startsWith('agent:')) return agentLabelFromId(id)
+  if (id.startsWith('channel:')) {
+    const channel = id.replace(/^channel:/, '')
+    return `${channel} channel`
+  }
+  return id
+}
+
 const palette = ['#f97316', '#38bdf8', '#a855f7', '#22d3ee', '#ef4444', '#eab308']
 
 export const colorForAgent = (id: string) => {
@@ -52,25 +61,56 @@ export const deriveAgentSnapshot = (
   event: TelemetryEvent,
 ): Record<string, AgentSnapshot> => {
   const snapshot = { ...prev }
-  const id = normalizeAgentId(event)
-  const labelFromMeta = (() => {
-    if (event.source === id) return event.payload.meta?.sourceLabel
-    if (event.target === id) return event.payload.meta?.targetLabel
-    return undefined
-  })()
-  const label = labelFromMeta ?? prev[id]?.label ?? agentLabelFromId(id)
-  const state: AgentState | 'unknown' = event.agent_state ?? prev[id]?.state ?? 'unknown'
-  const ts = Date.parse(event.timestamp) || Date.now()
-  snapshot[id] = {
-    id,
-    label,
-    state,
-    lastSummary: event.payload.summary,
-    lastEventType: event.type,
-    lastUpdated: ts,
-    firstSeen: prev[id]?.firstSeen ?? ts,
-    activityCount: (prev[id]?.activityCount ?? 0) + 1,
+
+  const agentIds: string[] = []
+  if (event.source.startsWith('agent:')) agentIds.push(event.source)
+  if (event.target.startsWith('agent:') && !agentIds.includes(event.target)) agentIds.push(event.target)
+
+  const primaryId = normalizeAgentId(event)
+
+  for (const id of agentIds) {
+    const isPrimary = id === primaryId
+    const prevSnapshot = prev[id]
+    const ts = Date.parse(event.timestamp) || Date.now()
+
+    const label = (() => {
+      if (event.source === id) return event.payload.meta?.sourceLabel
+      if (event.target === id) return event.payload.meta?.targetLabel
+      return undefined
+    })() ?? prevSnapshot?.label ?? agentLabelFromId(id)
+
+    const outboundTargets = prevSnapshot ? [...prevSnapshot.outboundTargets] : []
+    const inboundSources = prevSnapshot ? [...prevSnapshot.inboundSources] : []
+
+    if (event.source === id && event.target !== id) {
+      const lbl = event.payload.meta?.targetLabel ?? agentLabelFromId(event.target)
+      if (!outboundTargets.includes(lbl)) outboundTargets.push(lbl)
+    }
+    if (event.target === id && event.source !== id) {
+      const lbl = event.payload.meta?.sourceLabel ?? agentLabelFromId(event.source)
+      if (!inboundSources.includes(lbl)) inboundSources.push(lbl)
+    }
+
+    const skillsRaw = event.payload.meta?.skills
+    const skills = skillsRaw ? skillsRaw.split(',').filter(Boolean) : (prevSnapshot?.skills ?? [])
+
+    snapshot[id] = {
+      id,
+      label,
+      state: isPrimary ? (event.agent_state ?? prevSnapshot?.state ?? 'unknown') : (prevSnapshot?.state ?? 'unknown'),
+      lastSummary: isPrimary ? event.payload.summary : (prevSnapshot?.lastSummary ?? ''),
+      lastEventType: isPrimary ? event.type : (prevSnapshot?.lastEventType ?? null),
+      lastUpdated: isPrimary ? ts : (prevSnapshot?.lastUpdated ?? ts),
+      firstSeen: prevSnapshot?.firstSeen ?? ts,
+      activityCount: (prevSnapshot?.activityCount ?? 0) + (isPrimary ? 1 : 0),
+      lastEventSource: event.source,
+      lastEventTarget: event.target,
+      outboundTargets,
+      inboundSources,
+      skills,
+    }
   }
+
   return snapshot
 }
 
