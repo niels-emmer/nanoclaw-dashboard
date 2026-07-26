@@ -33,7 +33,7 @@ export function EventFeed({ events }: Props) {
                 </Chip>
                 <time className="text-xs text-muted ml-auto">{formatTime(Date.parse(event.timestamp))}</time>
               </div>
-              <p className="text-sm text-foreground leading-relaxed">{event.payload.summary}</p>
+              <p className="text-sm text-foreground leading-relaxed line-clamp-2">{event.payload.summary}</p>
               <div className="text-xs text-muted mt-0.5">
                 <span>{sourceLabel}</span>
                 <span className="mx-1">&rarr;</span>

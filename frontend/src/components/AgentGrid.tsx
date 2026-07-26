@@ -29,16 +29,16 @@ export function AgentGrid({ agents }: Props) {
         const tone = colorForAgent(agent.id)
         return (
           <Card key={agent.id} className="flex flex-col gap-2 p-3" style={{ borderColor: `${tone}40` }}>
-            <Card.Header className="flex justify-between items-baseline p-0">
-              <div className="flex items-baseline gap-2">
-                <Card.Title className="text-base capitalize">{agent.label}</Card.Title>
-                <Chip size="sm" variant="soft" color="accent" className="text-[0.65rem]">
+            <Card.Header className="flex flex-row justify-between items-center p-0">
+              <div className="flex items-baseline gap-2 min-w-0">
+                <Card.Title className="text-base capitalize truncate">{agent.label}</Card.Title>
+                <Chip size="sm" variant="soft" color="accent" className="text-[0.65rem] shrink-0">
                   {stateCopy[agent.state] ?? agent.state}
                 </Chip>
               </div>
-              <Chip size="sm" variant="secondary" color="accent">{agent.activityCount}</Chip>
+              <Chip size="sm" variant="secondary" color="accent" className="shrink-0 ml-2">{agent.activityCount}</Chip>
             </Card.Header>
-            <p className="text-sm text-foreground leading-relaxed">{agent.lastSummary}</p>
+            <p className="text-sm text-foreground leading-relaxed line-clamp-2">{agent.lastSummary}</p>
             <div className="flex justify-between text-[0.75rem] text-muted">
               <span>{agent.lastEventType}</span>
               <span>{elapsedLabel(agent.lastUpdated)}</span>
