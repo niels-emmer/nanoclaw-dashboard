@@ -78,6 +78,7 @@
   gap: 0.75rem;
   min-height: 0;
   height: 100%;
+  overflow: hidden;
 }
 
 .signal-legend {
