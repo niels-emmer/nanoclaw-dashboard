@@ -26,6 +26,7 @@ export interface AgentSnapshot {
   lastSummary: string
   lastEventType: EventType | null
   lastUpdated: number
+  firstSeen: number
   activityCount: number
 }
 
