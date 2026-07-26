@@ -222,7 +222,9 @@ nanoclaw-dashboard/
 │   ├── screenshot.png
 │   └── threat-models/          # STRIDE analyses
 ├── scripts/
-│   └── install_dashboard.sh    # One-shot setup script
+│   ├── install_dashboard.sh    # One-shot setup script
+│   ├── sync_wiki.sh            # Sync docs/ → GitHub Wiki
+│   └── repo_id.sh              # Resolve GitHub owner/repo identifier
 ├── .github/
 │   ├── CODEOWNERS
 │   ├── pull_request_template.md
@@ -240,8 +242,8 @@ nanoclaw-dashboard/
 
 ## Documentation Map
 
-| File | Purpose |
-|------|---------|
+| Location | Purpose |
+|----------|---------|
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design, data flow, component responsibilities |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute — setup, guidelines, PR process |
 | [SECURITY.md](SECURITY.md) | Security controls, threat models, vulnerability reporting |
@@ -251,6 +253,19 @@ nanoclaw-dashboard/
 | [docs/threat-models/](docs/threat-models/) | STRIDE analyses for exposed interfaces |
 | [AGENTS.md](AGENTS.md) | Condensed playbook for AI coding agents |
 | [frontend/README.md](frontend/README.md) | Frontend-specific development notes |
+| [Wiki](https://github.com/niels-emmer/nanoclaw-dashboard/wiki) | Rendered docs (auto-synced from `docs/`) |
+
+## Wiki
+
+The [project wiki](https://github.com/niels-emmer/nanoclaw-dashboard/wiki) is
+automatically synced from the `docs/` folder. To update it:
+
+1. Create the first wiki page through the GitHub web UI to initialize the
+   wiki repository.
+2. Run `./scripts/sync_wiki.sh` to mirror `docs/` into the wiki.
+
+Do not edit wiki pages directly — edit the source Markdown files in `docs/`
+and re-run the sync script.
 
 ## Telemetry Schema
 

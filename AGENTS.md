@@ -134,6 +134,8 @@ nanoclaw-dashboard/
 - Keep `THIRD_PARTY.md` in sync with new deps (exact version + license).
 - Prefer `./scripts/install_dashboard.sh` for provisioning; update it when
   workflows change.
+- Wiki is auto-synced from `docs/` via `./scripts/sync_wiki.sh`; run it
+  after changing `docs/ARCHITECTURE.md` or `docs/DECISIONS.md`.
 - Container workflow: `docker compose up --build` reads `.env` defaults.
   Update Compose + nginx.conf if transport paths change.
 - Nanoclaw host integration: read-only bind mount
