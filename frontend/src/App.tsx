@@ -12,27 +12,11 @@ function App() {
   const lastEvent = events[0]
   const lastEventTimestamp = lastEvent ? formatTime(Date.parse(lastEvent.timestamp)) : '--'
 
-  const capabilityHighlights = [
-    {
-      label: 'Real-time streaming',
-      detail: connectionState === 'connected' ? 'WebSocket lock-on' : 'Negotiating signal',
-    },
-    { label: 'Step-level observability', detail: `${events.length} tracked events` },
-    { label: 'Multimodal ready', detail: 'Meta payload surfaces attachments' },
-  ]
-
   return (
     <div className="app-shell">
       <header className="masthead">
         <div className="masthead-copy">
           <Typography type="h1">Nanoclaw Command Surface</Typography>
-          <div className="flex flex-wrap gap-2 mt-3">
-            {capabilityHighlights.map((h) => (
-              <Chip key={h.label} color="accent" variant="secondary" size="sm">
-                <span className="text-xs tracking-wider uppercase">{h.label}</span>
-              </Chip>
-            ))}
-          </div>
         </div>
         <div className="masthead-status">
           <div className="flex items-center gap-3">
