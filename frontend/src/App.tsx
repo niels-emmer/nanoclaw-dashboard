@@ -4,7 +4,7 @@ import { EventFeed } from './components/EventFeed'
 import { ConnectionStatus } from './components/ConnectionStatus'
 import { useEventStream } from './hooks/useEventStream'
 import { formatTime } from './lib/utils'
-import { Card, Chip, Typography } from '@heroui/react'
+import { Chip, Typography } from '@heroui/react'
 import './App.css'
 
 function App() {
@@ -81,31 +81,27 @@ function App() {
         </div>
 
         <aside className="detail-stack">
-          <Card className="flex flex-col min-h-0 h-full overflow-hidden">
-            <Card.Header>
-              <div className="flex w-full justify-between items-baseline">
-                <Card.Title>Agents</Card.Title>
-                <Chip color="accent" variant="soft" size="sm">{agents.length}</Chip>
-              </div>
-            </Card.Header>
-            <Card.Content className="flex-1 min-h-0 overflow-y-auto">
+          <div className="flex flex-col min-h-0 rounded-[20px] border border-accent/10 bg-surface shadow-surface overflow-hidden">
+            <div className="flex items-center justify-between px-4 pt-4 pb-2">
+              <span className="text-sm font-semibold text-foreground">Agents</span>
+              <Chip color="accent" variant="soft" size="sm">{agents.length}</Chip>
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
               <AgentGrid agents={agents} />
-            </Card.Content>
-          </Card>
+            </div>
+          </div>
 
-          <Card className="flex flex-col min-h-0 h-full overflow-hidden">
-            <Card.Header>
-              <div className="flex w-full justify-between items-baseline">
-                <Card.Title>Latest traffic</Card.Title>
-                <Chip color="accent" variant="soft" size="sm">
-                  {events.length ? 'streaming' : 'idle'}
-                </Chip>
-              </div>
-            </Card.Header>
-            <Card.Content className="flex-1 min-h-0 overflow-y-auto">
+          <div className="flex flex-col min-h-0 rounded-[20px] border border-accent/10 bg-surface shadow-surface overflow-hidden">
+            <div className="flex items-center justify-between px-4 pt-4 pb-2">
+              <span className="text-sm font-semibold text-foreground">Latest traffic</span>
+              <Chip color="accent" variant="soft" size="sm">
+                {events.length ? 'streaming' : 'idle'}
+              </Chip>
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
               <EventFeed events={events} />
-            </Card.Content>
-          </Card>
+            </div>
+          </div>
         </aside>
       </main>
     </div>
