@@ -25,6 +25,9 @@ def setup_logging() -> None:
     )
 
 
+# Configure once at import time
+setup_logging()
+
+
 def get_logger(*args: Any, **kwargs: Any) -> structlog.stdlib.BoundLogger:
-    setup_logging()
     return structlog.get_logger(*args, **kwargs)
