@@ -1,6 +1,5 @@
-import { Chip } from '@heroui/react'
 import type { TelemetryEvent } from '../lib/types'
-import { colorForAgent, formatTime, readableNodeLabel } from '../lib/utils'
+import { colorForAgent, colorForEventType, formatTime, readableNodeLabel } from '../lib/utils'
 
 interface Props {
   events: TelemetryEvent[]
@@ -28,9 +27,9 @@ export function EventFeed({ events }: Props) {
             <span className="w-2.5 h-2.5 rounded-full mt-1 shrink-0" style={{ background: accent }} aria-hidden />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
-                <Chip size="sm" variant="soft" color="accent" className="text-[0.65rem] capitalize">
+                <span className="text-[0.65rem] capitalize font-medium px-1.5 py-0.5 rounded" style={{ background: colorForEventType(event.type), color: '#fff' }}>
                   {event.type.replace('_', ' ')}
-                </Chip>
+                </span>
                 <time className="text-xs text-muted ml-auto">{formatTime(Date.parse(event.timestamp))}</time>
               </div>
               <p className="text-sm text-foreground leading-relaxed line-clamp-2">{event.payload.summary}</p>

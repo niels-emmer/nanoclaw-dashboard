@@ -46,6 +46,16 @@ export const readableNodeLabel = (id: string) => {
 
 const palette = ['#f97316', '#38bdf8', '#a855f7', '#22d3ee', '#ef4444', '#eab308']
 
+const eventTypeColors: Record<string, string> = {
+  question: '#a78bfa',
+  response: '#7860d8',
+  agent_status: '#c084fc',
+}
+
+export const colorForEventType = (type: string) => {
+  return eventTypeColors[type] ?? '#6b7280'
+}
+
 export const colorForAgent = (id: string) => {
   let hash = 0
   for (let i = 0; i < id.length; i += 1) {
