@@ -131,6 +131,9 @@ nanoclaw-dashboard/
   `frontend/src/lib/types.ts`, add ADR entry.
 - **Prerequisites**: Node 20.19.0, Python 3.11+.
 - **Before pushing**: `cd backend && pytest && cd ../frontend && npm run lint && npm run build`.
+- **Lockfile discipline**: global `~/.npmrc` has `package-lock=false`. Always use
+  `npm install --package-lock` (or `npm ci`) when updating frontend dependencies,
+  otherwise `package-lock.json` won't be regenerated and CI will fail on `npm ci`.
 - Keep `THIRD_PARTY.md` in sync with new deps (exact version + license).
 - Prefer `./scripts/install_dashboard.sh` for provisioning; update it when
   workflows change.
