@@ -10,6 +10,10 @@ Record every external dependency here with license info and notes on local modif
 | pydantic-settings | 2.4.0 | MIT | Environment-driven configuration | None |
 | React | 19.2.7 | MIT | Frontend UI library | None |
 | Vite | 8.1.5 | MIT | Frontend dev server/build tool | None |
+| Tailwind CSS | 4.x | MIT | Utility-first CSS framework for styling | None |
+| @heroui/react | 3.x | Apache-2.0 | UI component library (Card, Chip, Typography) | None |
+| @heroui/styles | 3.x | Apache-2.0 | HeroUI pre-built component styles | None |
+| @tailwindcss/vite | 4.x | MIT | Tailwind Vite integration plugin | None |
 | Space Grotesk / IBM Plex Sans / JetBrains Mono | Google Fonts | Open Font License | Typography per design spec | Served via Google Fonts CDN |
 
 Guidance:
