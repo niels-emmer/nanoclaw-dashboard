@@ -28,6 +28,11 @@ export interface AgentSnapshot {
   lastUpdated: number
   firstSeen: number
   activityCount: number
+  lastEventSource: string | null
+  lastEventTarget: string | null
+  outboundTargets: string[]
+  inboundSources: string[]
+  skills: string[]
 }
 
 export interface EdgePulse {
