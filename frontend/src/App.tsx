@@ -110,39 +110,44 @@ function App() {
             </p>
           </div>
         </section>
-        <section className="panel agents-panel">
-          <div className="panel-header">
-            <h2>Agents</h2>
-            <span className="metric">{agents.length}</span>
-          </div>
-          <AgentGrid agents={agents} />
-        </section>
+
+        <aside className="detail-stack">
+          <section className="panel agents-panel">
+            <div className="panel-header">
+              <h2>Agents</h2>
+              <span className="metric">{agents.length}</span>
+            </div>
+            <AgentGrid agents={agents} />
+          </section>
+
+          <section className="panel events-panel">
+            <div className="panel-header">
+              <h2>Latest traffic</h2>
+              <span className="metric">{events.length ? 'streaming' : 'idle'}</span>
+            </div>
+            <EventFeed events={events} />
+          </section>
+
+          <section className="panel insight-panel">
+            <div className="panel-header">
+              <h2>Interface tenets</h2>
+              <span className="metric">Fast.io research</span>
+            </div>
+            <ul className="insight-list">
+              {frameworkInsights.map((insight) => (
+                <li key={insight.title}>
+                  <strong>{insight.title}</strong>
+                  <p>{insight.body}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="panel debug-wrapper">
+            <DebugPanel event={events[0]} />
+          </section>
+        </aside>
       </main>
-
-      <section className="panel events-panel">
-        <div className="panel-header">
-          <h2>Latest traffic</h2>
-          <span className="metric">{events.length ? 'streaming' : 'idle'}</span>
-        </div>
-        <EventFeed events={events} />
-      </section>
-
-      <section className="panel insight-panel">
-        <div className="panel-header">
-          <h2>Interface tenets</h2>
-          <span className="metric">Fast.io research</span>
-        </div>
-        <ul className="insight-list">
-          {frameworkInsights.map((insight) => (
-            <li key={insight.title}>
-              <strong>{insight.title}</strong>
-              <p>{insight.body}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <DebugPanel event={events[0]} />
     </div>
   )
 }
