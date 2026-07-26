@@ -104,12 +104,13 @@ Keep the schema versioned and update `DECISIONS.md` whenever the payload changes
 
 ## Layout + UX highlights
 
-- Flow canvas keeps the orchestrator centered with sub-agents placed on a deterministic orbit; directional pulses animate question vs. response edges.
-- Agent grid cards summarize last summary/state/timestamp for each agent.
-- Event feed streams the latest eight events with timestamps.
+- Flow canvas keeps the orchestrator centered with sub-agents on a deterministic orbit, now paired with a contextual legend that mirrors the Fast.io streaming vs. response vs. status split.
+- Hero masthead introduces a capability pill rail (real-time streaming, observability, multimodal readiness) inspired by the [Fast.io "Best UI Frameworks for AI Agents" (2026)](https://fast.io/resources/best-ui-frameworks-ai-agents/) guidance.
+- Agent grid cards summarize last summary/state/timestamp for each agent, while a new status block in the masthead surfaces active agents, live pulses, and the last signal.
+- Event feed still streams the latest eight events with timestamps, and the new "Interface tenets" panel documents the same transparency/streaming tenets called out in the Fast.io article.
 - Debug panel (toggle at bottom) dumps the most recent raw event for troubleshooting.
 
-Typography uses Space Grotesk + IBM Plex Sans, with an atmospheric gradient background tuned for 1080p displays. Avoid introducing new fonts/colors without updating the shared tokens in `src/index.css`.
+Typography uses Space Grotesk + IBM Plex Sans, with a refreshed multi-stop gradient background tuned for 1080p displays. Avoid introducing new fonts/colors without updating the shared tokens in `src/index.css`.
 
 ## Documentation map
 
