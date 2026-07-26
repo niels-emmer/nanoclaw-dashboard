@@ -412,8 +412,6 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles }: FlowCanva
           }
           const by = Math.max(8, Math.min(HEIGHT - 100, node.y - 40))
           const tailSide = bx > node.x ? 'left' : 'right'
-          const accentColor =
-            bubble.type === 'question' ? '#a78bfa' : bubble.type === 'response' ? '#7860d8' : '#c084fc'
           return (
             <foreignObject
               key={bubble.id}
@@ -423,10 +421,7 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles }: FlowCanva
               height={88}
               className="chat-bubble-fo"
             >
-              <div
-                className={`chat-bubble tail-${tailSide}`}
-                style={{ borderLeftColor: accentColor }}
-              >
+              <div className={`chat-bubble tail-${tailSide}`}>
                 <span className="bubble-direction">{isQuestion ? '→' : '←'}</span>
                 <span className="bubble-text">{bubble.text}</span>
               </div>
