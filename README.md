@@ -217,17 +217,20 @@ nanoclaw-dashboard/
 │   ├── nginx.conf
 │   └── package.json
 ├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── DECISIONS.md
+│   ├── screenshot.png
 │   └── threat-models/          # STRIDE analyses
 ├── scripts/
 │   └── install_dashboard.sh    # One-shot setup script
+├── .github/
+│   ├── CODEOWNERS
+│   ├── pull_request_template.md
+│   └── ISSUE_TEMPLATE/
 ├── docker-compose.yml
 ├── .env                        # Environment defaults
 ├── LICENSE
 ├── README.md
-├── docs/
-│   ├── ARCHITECTURE.md
-│   ├── DECISIONS.md
-│   └── screenshot.png
 ├── CONTRIBUTING.md
 ├── CODE_OF_CONDUCT.md
 ├── SECURITY.md

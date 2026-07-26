@@ -10,7 +10,7 @@
 
 # Architecture expectations
 - Backend: FastAPI + WebSocket `/ws/events`, `TelemetrySource` abstraction, structlog JSON logging, pytest coverage. Swap in the real nanoclaw feed by implementing a new source + ADR.
-- Frontend: Vite + React + TypeScript, custom SVG orbit renderer, dedicated `useEventStream` hook for ingest/retry logic, toggleable debug pane. Typography tokens live in `src/index.css`.
+- Frontend: Vite + React + TypeScript, custom SVG orbit renderer, dedicated `useEventStream` hook for ingest/retry logic, toggleable debug pane. Typography tokens live in `frontend/src/index.css`.
 - Layout stays optimized for a bezel-less 1080p TV: gradients, purposeful typography, minimal chrome.
 
 # Visual + UX requirements
