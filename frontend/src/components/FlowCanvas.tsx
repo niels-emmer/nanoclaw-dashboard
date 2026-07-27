@@ -143,30 +143,10 @@ function iconNameForAgent(nodeId: string, label: string): string {
   return FALLBACK_ICON_NAME
 }
 
-/** Describe an SVG arc path from startAngle to endAngle (degrees). */
-function describeArc(
-  cx: number, cy: number, r: number,
-  startAngle: number, endAngle: number,
-): string {
-  const start = polarToCartesian(cx, cy, r, endAngle)
-  const end = polarToCartesian(cx, cy, r, startAngle)
-  const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1'
-  return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`
-}
-
-function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
-  const rad = (angleDeg - 90) * Math.PI / 180
-  return {
-    x: cx + r * Math.cos(rad),
-    y: cy + r * Math.sin(rad),
-  }
-}
-
-/** Compute the tool arc angle (0-360) based on elapsed vs timeout. */
-function toolArcAngle(elapsedMs: number | null, timeoutMs: number | null): number {
-  if (!elapsedMs || !timeoutMs || timeoutMs <= 0) return 45 // subtle arc when no timeout info
-  const fraction = Math.min(elapsedMs / timeoutMs, 1)
-  return Math.max(10, fraction * 360)
+/** Compute tool progress fraction (0-1) based on elapsed vs timeout. */
+function toolProgress(elapsedMs: number | null, timeoutMs: number | null): number {
+  if (!elapsedMs || !timeoutMs || timeoutMs <= 0) return 0.125 // subtle arc when no timeout info
+  return Math.min(elapsedMs / timeoutMs, 1)
 }
 
 /** Map a channel type to a display icon character. */
@@ -448,14 +428,26 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
                 <circle r={node.radius + 8} fill="url(#orchestratorGlow)" />
               )}
 
-              {/* Tool indicator arc — replaces generic pulse ring */}
-              {agent?.currentTool && (
-                <path
-                  d={describeArc(0, 0, node.radius + 6, 0, toolArcAngle(agent.toolElapsedMs, agent.toolTimeoutMs))}
-                  className={`tool-arc tool-${agent.currentToolCategory}`}
-                  style={{ stroke: toolCategoryColor(agent.currentToolCategory) }}
-                />
-              )}
+              {/* Tool indicator arc — uses stroke-dashoffset for smooth growth */}
+              {agent?.currentTool && (() => {
+                const arcR = node.radius + 6
+                const circ = 2 * Math.PI * arcR
+                const progress = toolProgress(agent.toolElapsedMs, agent.toolTimeoutMs)
+                return (
+                  <circle
+                    r={arcR}
+                    fill="none"
+                    className={`tool-arc tool-${agent.currentToolCategory}`}
+                    style={{
+                      stroke: toolCategoryColor(agent.currentToolCategory),
+                      strokeDasharray: circ,
+                      strokeDashoffset: circ * (1 - progress),
+                      transform: 'rotate(-90deg)',
+                      transformOrigin: '0 0',
+                    }}
+                  />
+                )
+              })()}
 
               {/* State ring — only for spinning_up or error (running is shown by tool arc) */}
               {node.state === 'spinning_up' && (

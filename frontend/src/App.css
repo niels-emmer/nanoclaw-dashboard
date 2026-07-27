@@ -190,7 +190,7 @@
   stroke-width: 3;
   stroke-linecap: round;
   filter: drop-shadow(0 0 6px currentColor);
-  transition: d 1s linear;
+  transition: stroke-dashoffset 1s linear;
 }
 
 /* ---- Liveness dot ---- */
