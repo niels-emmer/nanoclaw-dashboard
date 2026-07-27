@@ -375,8 +375,8 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 8px 12px;
-  background: rgba(23, 23, 25, 0.72);
+  padding: 10px 14px;
+  background: rgba(23, 23, 25, 0.92);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 3px solid #fff;
@@ -415,17 +415,17 @@
 
 .bubble-direction {
   flex-shrink: 0;
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.2;
   opacity: 0.6;
 }
 
 .bubble-from {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  opacity: 0.7;
+  opacity: 0.8;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -444,9 +444,9 @@
 }
 
 .bubble-line {
-  font-size: 13px;
-  line-height: 1.35;
-  opacity: 0.9;
+  font-size: 15px;
+  line-height: 1.4;
+  opacity: 0.95;
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
