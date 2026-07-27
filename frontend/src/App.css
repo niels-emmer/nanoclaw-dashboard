@@ -116,6 +116,8 @@
 .legend-dot.question { background: #a78bfa; }
 .legend-dot.response { background: #7860d8; }
 .legend-dot.status { background: #c084fc; }
+.legend-dot.activity { background: #38bdf8; }
+.legend-dot.delivery { background: #22c55e; }
 
 /* ---- SVG orbit canvas ---- */
 
@@ -163,10 +165,128 @@
   to { transform: translate3d(-60px, -40px, 0); }
 }
 
+.node {
+  transition: transform 0.2s ease;
+}
+.node:hover {
+  filter: brightness(1.15);
+}
+.node-selected .node-core {
+  stroke: #fff;
+  stroke-width: 4px;
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.4));
+}
+
 .node-orbit {
   fill: none;
   stroke: rgba(255, 255, 255, 0.08);
   stroke-width: 1;
+}
+
+/* ---- Tool indicator arc ---- */
+
+.tool-arc {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px currentColor);
+  transition: d 1s linear;
+}
+
+/* ---- Liveness dot ---- */
+
+.liveness-dot {
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+.liveness-dot.alive { fill: #22c55e; }
+.liveness-dot.stale { fill: #eab308; }
+.liveness-dot.dead { fill: #ef4444; }
+.liveness-dot.unknown { fill: #6b7280; }
+
+/* ---- Skills dots ---- */
+
+.skill-dot {
+  transition: opacity 0.2s, r 0.2s;
+}
+.skill-dot:hover {
+  opacity: 1;
+  r: 4;
+}
+
+/* ---- Agent-to-agent edges ---- */
+
+.edge-a2a {
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 1.5;
+  stroke-dasharray: 3, 4;
+  stroke-linecap: round;
+}
+
+/* ---- Channel edges ---- */
+
+.edge-channel {
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1;
+  stroke-dasharray: 2, 4;
+  stroke-linecap: round;
+}
+
+/* ---- Channel nodes ---- */
+
+.channel-node {
+  cursor: default;
+}
+.channel-label {
+  fill: #fff;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+/* ---- Hover tooltip ---- */
+
+.tooltip-fo {
+  overflow: visible !important;
+  pointer-events: none;
+}
+
+.agent-tooltip {
+  background: rgba(23, 23, 25, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+}
+
+.tooltip-name {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tooltip-label {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.tooltip-skills {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
 }
 
 .node-core {

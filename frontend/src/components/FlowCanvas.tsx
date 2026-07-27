@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Backpack,
   BarChart3,
@@ -24,8 +24,8 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
-import type { AgentSnapshot, AgentState, ChatBubble, EdgePulse } from '../lib/types'
-import { colorForAgent, ORCHESTRATOR_COLOR } from '../lib/utils'
+import type { AgentSnapshot, AgentState, ChatBubble, EdgePulse, TopologyData } from '../lib/types'
+import { colorForAgent, ORCHESTRATOR_COLOR, toolCategoryColor, formatElapsed } from '../lib/utils'
 
 const WIDTH = 1000
 const HEIGHT = 560
@@ -58,184 +58,47 @@ const ICON_MAP: Record<string, LucideIcon> = {
 const FALLBACK_ICON_NAME = 'bot'
 
 const ICON_KEYWORDS: [string, string][] = [
-  ['eye', 'lookout'],
-  ['eye', 'foresight'],
-  ['eye', 'observer'],
-  ['eye', 'spotter'],
-  ['eye', 'oracle'],
-  ['eye', 'vision'],
-  ['eye', 'seer'],
-  ['eye', 'scout'],
-
-  ['compass', 'wayfinder'],
-  ['compass', 'direction'],
-  ['compass', 'compass'],
-  ['compass', 'navigat'],
-  ['compass', 'pilot'],
-  ['compass', 'route'],
-  ['compass', 'guide'],
-  ['compass', 'path'],
-
-  ['pen', 'chronicle'],
-  ['pen', 'notebook'],
-  ['pen', 'memoir'],
-  ['pen', 'diary'],
-  ['pen', 'journal'],
-  ['pen', 'reporter'],
-  ['pen', 'scribe'],
-  ['pen', 'author'],
-  ['pen', 'writer'],
-  ['pen', 'editor'],
-  ['pen', 'content'],
-  ['pen', 'article'],
-  ['pen', 'document'],
-  ['pen', 'blog'],
-  ['pen', 'log'],
-  ['pen', 'record'],
-  ['pen', 'copy'],
-
-  ['hammer', 'fabricat'],
-  ['hammer', 'construct'],
-  ['hammer', 'hammer'],
-  ['hammer', 'forge'],
-  ['hammer', 'builder'],
-  ['hammer', 'architect'],
-  ['hammer', 'engineer'],
-  ['hammer', 'developer'],
-  ['hammer', 'craft'],
-  ['hammer', 'maker'],
-  ['hammer', 'smith'],
-
-  ['shield', 'safeguard'],
-  ['shield', 'sentinel'],
-  ['shield', 'protector'],
-  ['shield', 'defender'],
-  ['shield', 'guardian'],
-  ['shield', 'sentry'],
-  ['shield', 'warden'],
-  ['shield', 'shield'],
-  ['shield', 'security'],
-  ['shield', 'guard'],
-  ['shield', 'watch'],
-
-  ['book', 'librarian'],
-  ['book', 'archivist'],
-  ['book', 'investigator'],
-  ['book', 'scientist'],
-  ['book', 'scholar'],
-  ['book', 'researcher'],
-  ['book', 'research'],
-  ['book', 'explorer'],
-  ['book', 'analyst'],
-  ['book', 'study'],
-  ['book', 'learn'],
-
-  ['backpack', 'hospitality'],
-  ['backpack', 'itinerary'],
-  ['backpack', 'vacation'],
-  ['backpack', 'holiday'],
-  ['backpack', 'journey'],
-  ['backpack', 'voyage'],
-  ['backpack', 'excursion'],
-  ['backpack', 'travel'],
-  ['backpack', 'concierge'],
-  ['backpack', 'tour'],
-  ['backpack', 'trip'],
-  ['backpack', 'planner'],
-
-  ['clipboard', 'supervisor'],
-  ['clipboard', 'regulator'],
-  ['clipboard', 'governor'],
-  ['clipboard', 'operator'],
-  ['clipboard', 'controller'],
-  ['clipboard', 'control'],
-  ['clipboard', 'manager'],
-
-  ['message', 'spokesperson'],
-  ['message', 'announcer'],
-  ['message', 'broadcast'],
-  ['message', 'messenger'],
-  ['message', 'communicat'],
-  ['message', 'liaison'],
-  ['message', 'notify'],
-
-  ['globe', 'connector'],
-  ['globe', 'network'],
-  ['globe', 'bridge'],
-  ['globe', 'hub'],
-  ['globe', 'link'],
-
-  ['chart', 'dashboard'],
-  ['chart', 'insight'],
-  ['chart', 'statistics'],
-  ['chart', 'analytic'],
-  ['chart', 'metric'],
-  ['chart', 'data'],
-  ['chart', 'report'],
-  ['chart', 'chart'],
-
-  ['search', 'detective'],
-  ['search', 'inspector'],
-  ['search', 'examiner'],
-  ['search', 'auditor'],
-  ['search', 'sleuth'],
-  ['search', 'checker'],
-  ['search', 'verifier'],
-  ['search', 'search'],
-  ['search', 'find'],
-
-  ['database', 'repository'],
-  ['database', 'database'],
-  ['database', 'archive'],
-  ['database', 'storage'],
-  ['database', 'vault'],
-  ['database', 'cache'],
-  ['database', 'keeper'],
-  ['database', 'store'],
-
-  ['brain', 'strategist'],
-  ['brain', 'strategy'],
-  ['brain', 'consultant'],
-  ['brain', 'adviser'],
-  ['brain', 'thinker'],
-  ['brain', 'brain'],
-
-  ['wrench', 'maintenance'],
-  ['wrench', 'technician'],
-  ['wrench', 'mechanic'],
-  ['wrench', 'repair'],
-  ['wrench', 'fixer'],
-  ['wrench', 'fix'],
-
-  ['palette', 'stylist'],
-  ['palette', 'aesthetic'],
-  ['palette', 'creative'],
-  ['palette', 'designer'],
-  ['palette', 'painter'],
-  ['palette', 'artist'],
-  ['palette', 'art'],
-
-  ['music', 'podcast'],
-  ['music', 'audio'],
-  ['music', 'sound'],
-  ['music', 'music'],
-
-  ['clock', 'deadline'],
-  ['clock', 'schedule'],
-  ['clock', 'calendar'],
-  ['clock', 'timer'],
-  ['clock', 'clock'],
-
-  ['wallet', 'budget'],
-  ['wallet', 'invoice'],
-  ['wallet', 'account'],
-  ['wallet', 'finance'],
-  ['wallet', 'calculator'],
-
-  ['flask', 'validation'],
-  ['flask', 'quality'],
-  ['flask', 'experiment'],
-  ['flask', 'test'],
+  ['eye', 'lookout'], ['eye', 'foresight'], ['eye', 'observer'], ['eye', 'spotter'],
+  ['eye', 'oracle'], ['eye', 'vision'], ['eye', 'seer'], ['eye', 'scout'],
+  ['compass', 'wayfinder'], ['compass', 'direction'], ['compass', 'compass'], ['compass', 'navigat'],
+  ['compass', 'pilot'], ['compass', 'route'], ['compass', 'guide'], ['compass', 'path'],
+  ['pen', 'chronicle'], ['pen', 'notebook'], ['pen', 'memoir'], ['pen', 'diary'],
+  ['pen', 'journal'], ['pen', 'reporter'], ['pen', 'scribe'], ['pen', 'author'],
+  ['pen', 'writer'], ['pen', 'editor'], ['pen', 'content'], ['pen', 'article'],
+  ['pen', 'document'], ['pen', 'blog'], ['pen', 'log'], ['pen', 'record'], ['pen', 'copy'],
+  ['hammer', 'fabricat'], ['hammer', 'construct'], ['hammer', 'hammer'], ['hammer', 'forge'],
+  ['hammer', 'builder'], ['hammer', 'architect'], ['hammer', 'engineer'], ['hammer', 'developer'],
+  ['hammer', 'craft'], ['hammer', 'maker'], ['hammer', 'smith'],
+  ['shield', 'safeguard'], ['shield', 'sentinel'], ['shield', 'protector'], ['shield', 'defender'],
+  ['shield', 'guardian'], ['shield', 'sentry'], ['shield', 'warden'], ['shield', 'shield'],
+  ['shield', 'security'], ['shield', 'guard'], ['shield', 'watch'],
+  ['book', 'librarian'], ['book', 'archivist'], ['book', 'investigator'], ['book', 'scientist'],
+  ['book', 'scholar'], ['book', 'researcher'], ['book', 'research'], ['book', 'explorer'],
+  ['book', 'analyst'], ['book', 'study'], ['book', 'learn'],
+  ['backpack', 'hospitality'], ['backpack', 'itinerary'], ['backpack', 'vacation'], ['backpack', 'holiday'],
+  ['backpack', 'journey'], ['backpack', 'voyage'], ['backpack', 'excursion'], ['backpack', 'travel'],
+  ['backpack', 'concierge'], ['backpack', 'tour'], ['backpack', 'trip'], ['backpack', 'planner'],
+  ['clipboard', 'supervisor'], ['clipboard', 'regulator'], ['clipboard', 'governor'], ['clipboard', 'operator'],
+  ['clipboard', 'controller'], ['clipboard', 'control'], ['clipboard', 'manager'],
+  ['message', 'spokesperson'], ['message', 'announcer'], ['message', 'broadcast'], ['message', 'messenger'],
+  ['message', 'communicat'], ['message', 'liaison'], ['message', 'notify'],
+  ['globe', 'connector'], ['globe', 'network'], ['globe', 'bridge'], ['globe', 'hub'], ['globe', 'link'],
+  ['chart', 'dashboard'], ['chart', 'insight'], ['chart', 'statistics'], ['chart', 'analytic'],
+  ['chart', 'metric'], ['chart', 'data'], ['chart', 'report'], ['chart', 'chart'],
+  ['search', 'detective'], ['search', 'inspector'], ['search', 'examiner'], ['search', 'auditor'],
+  ['search', 'sleuth'], ['search', 'checker'], ['search', 'verifier'], ['search', 'search'], ['search', 'find'],
+  ['database', 'repository'], ['database', 'database'], ['database', 'archive'], ['database', 'storage'],
+  ['database', 'vault'], ['database', 'cache'], ['database', 'keeper'], ['database', 'store'],
+  ['brain', 'strategist'], ['brain', 'strategy'], ['brain', 'consultant'], ['brain', 'adviser'],
+  ['brain', 'thinker'], ['brain', 'brain'],
+  ['wrench', 'maintenance'], ['wrench', 'technician'], ['wrench', 'mechanic'], ['wrench', 'repair'],
+  ['wrench', 'fixer'], ['wrench', 'fix'],
+  ['palette', 'stylist'], ['palette', 'aesthetic'], ['palette', 'creative'], ['palette', 'designer'],
+  ['palette', 'painter'], ['palette', 'artist'], ['palette', 'art'],
+  ['music', 'podcast'], ['music', 'audio'], ['music', 'sound'], ['music', 'music'],
+  ['clock', 'deadline'], ['clock', 'schedule'], ['clock', 'calendar'], ['clock', 'timer'], ['clock', 'clock'],
+  ['wallet', 'budget'], ['wallet', 'invoice'], ['wallet', 'account'], ['wallet', 'finance'], ['wallet', 'calculator'],
+  ['flask', 'validation'], ['flask', 'quality'], ['flask', 'experiment'], ['flask', 'test'],
 ]
 
 interface FlowCanvasProps {
@@ -243,6 +106,9 @@ interface FlowCanvasProps {
   agents: AgentSnapshot[]
   edges: EdgePulse[]
   bubbles: ChatBubble[]
+  topology: TopologyData | null
+  onAgentClick?: (agentId: string) => void
+  selectedAgentId?: string | null
 }
 
 interface NodePosition {
@@ -277,7 +143,63 @@ function iconNameForAgent(nodeId: string, label: string): string {
   return FALLBACK_ICON_NAME
 }
 
-export function FlowCanvas({ orchestratorId, agents, edges, bubbles }: FlowCanvasProps) {
+/** Describe an SVG arc path from startAngle to endAngle (degrees). */
+function describeArc(
+  cx: number, cy: number, r: number,
+  startAngle: number, endAngle: number,
+): string {
+  const start = polarToCartesian(cx, cy, r, endAngle)
+  const end = polarToCartesian(cx, cy, r, startAngle)
+  const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1'
+  return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x} ${end.y}`
+}
+
+function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
+  const rad = (angleDeg - 90) * Math.PI / 180
+  return {
+    x: cx + r * Math.cos(rad),
+    y: cy + r * Math.sin(rad),
+  }
+}
+
+/** Compute the tool arc angle (0-360) based on elapsed vs timeout. */
+function toolArcAngle(elapsedMs: number | null, timeoutMs: number | null): number {
+  if (!elapsedMs || !timeoutMs || timeoutMs <= 0) return 45 // subtle arc when no timeout info
+  const fraction = Math.min(elapsedMs / timeoutMs, 1)
+  return Math.max(10, fraction * 360)
+}
+
+/** Map a channel type to a display icon character. */
+function channelIcon(channelType: string): string {
+  const icons: Record<string, string> = {
+    telegram: '✈',
+    discord: '♯',
+    slack: '#',
+    whatsapp: '💬',
+    email: '✉',
+    github: '◆',
+    web: '🌐',
+  }
+  return icons[channelType] ?? '◉'
+}
+
+/** Map a channel type to a color. */
+function channelColor(channelType: string): string {
+  const colors: Record<string, string> = {
+    telegram: '#26a5e4',
+    discord: '#5865f2',
+    slack: '#4a154b',
+    whatsapp: '#25d366',
+    email: '#ea4335',
+    github: '#333',
+    web: '#6b7280',
+  }
+  return colors[channelType] ?? '#6b7280'
+}
+
+export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, onAgentClick, selectedAgentId }: FlowCanvasProps) {
+  const [hoveredAgent, setHoveredAgent] = useState<string | null>(null)
+
   const nodes = useMemo<NodePosition[]>(() => {
     const nonOrchestratorAgents = agents.filter((agent) => agent.id !== orchestratorId)
     const agentCount = Math.max(nonOrchestratorAgents.length, 1)
@@ -292,7 +214,49 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles }: FlowCanva
       state: orchestratorSnapshot?.state ?? 'idle',
     }
 
-    const spokes = nonOrchestratorAgents.map((agent, idx) => {
+    // Greedy layout optimization: place agents that communicate adjacently
+    const a2aPairs = new Set<string>()
+    if (topology) {
+      for (const edge of topology.a2aEdges) {
+        const src = edge.source.replace('agent:', '')
+        const tgt = edge.target.replace('agent:', '')
+        a2aPairs.add(`${src}:${tgt}`)
+        a2aPairs.add(`${tgt}:${src}`)
+      }
+    }
+
+    // Sort agents so communicating ones are adjacent
+    const sorted = [...nonOrchestratorAgents]
+    if (a2aPairs.size > 0) {
+      const adjList = new Map<string, string[]>()
+      for (const a of sorted) adjList.set(a.id, [])
+      for (const pair of a2aPairs) {
+        const [a, b] = pair.split(':')
+        adjList.get(a)?.push(b)
+        adjList.get(b)?.push(a)
+      }
+      // Greedy BFS ordering
+      const ordered: typeof sorted = []
+      const visited = new Set<string>()
+      const queue = [sorted[0]?.id].filter(Boolean)
+      while (queue.length > 0) {
+        const id = queue.shift()!
+        if (visited.has(id)) continue
+        visited.add(id)
+        const agent = sorted.find((a) => a.id === id)
+        if (agent) ordered.push(agent)
+        for (const neighbor of adjList.get(id) ?? []) {
+          if (!visited.has(neighbor)) queue.push(neighbor)
+        }
+      }
+      for (const a of sorted) {
+        if (!visited.has(a.id)) ordered.push(a)
+      }
+      sorted.length = 0
+      sorted.push(...ordered)
+    }
+
+    const spokes = sorted.map((agent, idx) => {
       const angle = (idx / agentCount) * Math.PI * 2 - Math.PI / 2
       return {
         id: agent.id,
@@ -305,9 +269,11 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles }: FlowCanva
     })
 
     return [orchestrator, ...spokes]
-  }, [agents, orchestratorId])
+  }, [agents, orchestratorId, topology])
 
   const nodeMap = useMemo(() => Object.fromEntries(nodes.map((node) => [node.id, node])), [nodes])
+
+  const agentMap = useMemo(() => Object.fromEntries(agents.map((a) => [a.id, a])), [agents])
 
   const baseEdges = useMemo(() => {
     return agents
@@ -317,6 +283,31 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles }: FlowCanva
         target: agent.id,
       }))
   }, [agents, orchestratorId])
+
+  // Agent-to-agent edges from topology
+  const a2aEdges = useMemo(() => {
+    if (!topology) return []
+    return topology.a2aEdges.filter((edge) => {
+      const src = edge.source.replace('agent:', '')
+      const tgt = edge.target.replace('agent:', '')
+      return nodeMap[src] && nodeMap[tgt]
+    })
+  }, [topology, nodeMap])
+
+  // Channel edges from topology
+  const channelEdges = useMemo(() => {
+    if (!topology) return []
+    const result: Array<{ channelId: string; agentId: string }> = []
+    for (const ch of topology.channels) {
+      for (const agentRef of ch.agents) {
+        const agentId = agentRef.replace('agent:', '')
+        if (nodeMap[agentId]) {
+          result.push({ channelId: ch.id, agentId })
+        }
+      }
+    }
+    return result
+  }, [topology, nodeMap])
 
   const resolvedPulses = edges
     .map((edge) => {
@@ -331,6 +322,9 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles }: FlowCanva
     })
     .filter(Boolean) as Array<EdgePulse & { start: NodePosition; end: NodePosition }>
 
+  // Hovered agent data for tooltip
+  const hoveredData = hoveredAgent ? agentMap[hoveredAgent] ?? agents.find((a) => a.id === hoveredAgent) : null
+
   return (
     <div className="flow-canvas">
       <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="presentation" aria-hidden>
@@ -339,8 +333,47 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles }: FlowCanva
             <stop offset="0%" stopColor={ORCHESTRATOR_COLOR} stopOpacity="0.4" />
             <stop offset="100%" stopColor={ORCHESTRATOR_COLOR} stopOpacity="0" />
           </radialGradient>
+          <filter id="tooltipShadow">
+            <feDropShadow dx="0" dy="2" stdDeviation="4" floodOpacity="0.3" />
+          </filter>
         </defs>
 
+        {/* Channel→agent edges */}
+        {channelEdges.map((ce) => {
+          const chIdx = topology?.channels.findIndex((c) => c.id === ce.channelId) ?? 0
+          const outerOrbit = Math.min(WIDTH, HEIGHT) / 2.1
+          const angle = ((chIdx + 0.5) / (topology?.channels.length ?? 1)) * Math.PI * 2 - Math.PI / 2
+          const cx = CENTER.x + outerOrbit * Math.cos(angle)
+          const cy = CENTER.y + outerOrbit * Math.sin(angle)
+          const agent = nodeMap[ce.agentId]
+          if (!agent) return null
+          return (
+            <line
+              key={`ch-${ce.channelId}-${ce.agentId}`}
+              x1={cx} y1={cy}
+              x2={agent.x} y2={agent.y}
+              className="edge-channel"
+            />
+          )
+        })}
+
+        {/* Agent-to-agent edges */}
+        {a2aEdges.map((edge) => {
+          const src = nodeMap[edge.source.replace('agent:', '')]
+          const tgt = nodeMap[edge.target.replace('agent:', '')]
+          if (!src || !tgt) return null
+          const s = edgePointOnCircle(src.x, src.y, tgt.x, tgt.y, src.radius)
+          const e = edgePointOnCircle(tgt.x, tgt.y, src.x, src.y, tgt.radius)
+          return (
+            <line
+              key={`a2a-${edge.source}-${edge.target}`}
+              x1={s.x} y1={s.y} x2={e.x} y2={e.y}
+              className="edge-a2a"
+            />
+          )
+        })}
+
+        {/* Base orchestrator→agent spines */}
         {baseEdges.map((edge) => {
           const start = nodeMap[edge.source]
           const end = nodeMap[edge.target]
@@ -350,15 +383,13 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles }: FlowCanva
           return (
             <line
               key={`spine-${edge.target}`}
-              x1={s.x}
-              y1={s.y}
-              x2={e.x}
-              y2={e.y}
+              x1={s.x} y1={s.y} x2={e.x} y2={e.y}
               className="edge-spine"
             />
           )
         })}
 
+        {/* Pulse edges */}
         {resolvedPulses.map((pulse) => {
           const s = edgePointOnCircle(pulse.start.x, pulse.start.y, pulse.end.x, pulse.end.y, pulse.start.radius)
           const e = edgePointOnCircle(pulse.end.x, pulse.end.y, pulse.start.x, pulse.start.y, pulse.end.radius)
@@ -366,54 +397,169 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles }: FlowCanva
             <line
               key={pulse.id}
               className={`edge-pulse pulse-${pulse.type}`}
-              x1={s.x}
-              y1={s.y}
-              x2={e.x}
-              y2={e.y}
+              x1={s.x} y1={s.y} x2={e.x} y2={e.y}
             />
           )
         })}
 
+        {/* Channel nodes (outer ring) */}
+        {topology?.channels.map((ch, idx) => {
+          const outerOrbit = Math.min(WIDTH, HEIGHT) / 2.1
+          const angle = ((idx + 0.5) / topology.channels.length) * Math.PI * 2 - Math.PI / 2
+          const cx = CENTER.x + outerOrbit * Math.cos(angle)
+          const cy = CENTER.y + outerOrbit * Math.sin(angle)
+          return (
+            <g key={ch.id} className="channel-node" transform={`translate(${cx}, ${cy})`}>
+              <circle r={18} fill={channelColor(ch.type)} opacity={0.7} stroke="#fff" strokeWidth={1.5} />
+              <text textAnchor="middle" dominantBaseline="central" className="channel-label" fontSize={14}>
+                {channelIcon(ch.type)}
+              </text>
+            </g>
+          )
+        })}
+
+        {/* Agent nodes */}
         {nodes.map((node) => {
           const isOrchestrator = node.id === orchestratorId
           const fill = isOrchestrator ? ORCHESTRATOR_COLOR : colorForAgent(node.id)
           const iconName = isOrchestrator ? 'bot' : iconNameForAgent(node.id, node.label)
           const IconComponent = ICON_MAP[iconName]
           const iconSize = node.radius * 1.15
+          const agent = agentMap[node.id]
+          const isSelected = selectedAgentId === node.id
+
           return (
-            <g key={node.id} className="node" transform={`translate(${node.x}, ${node.y})`}>
+            <g
+              key={node.id}
+              className={`node ${isSelected ? 'node-selected' : ''}`}
+              transform={`translate(${node.x}, ${node.y})`}
+              onMouseEnter={() => setHoveredAgent(node.id)}
+              onMouseLeave={() => setHoveredAgent(null)}
+              onClick={() => onAgentClick?.(node.id)}
+              style={{ cursor: onAgentClick ? 'pointer' : 'default' }}
+            >
+              {/* Selection ring */}
+              {isSelected && (
+                <circle r={node.radius + 10} fill="none" stroke="#fff" strokeWidth={2} opacity={0.5} strokeDasharray="4 4" />
+              )}
+
+              {/* Orchestrator glow */}
               {isOrchestrator && (
                 <circle r={node.radius + 8} fill="url(#orchestratorGlow)" />
               )}
-              {node.state !== 'idle' && node.state !== 'unknown' && (
-                <circle
-                  r={node.radius + 6}
-                  className={`node-ring ${node.state}`}
-                  style={{ stroke: node.state === 'error' ? '#ef4444' : fill }}
+
+              {/* Tool indicator arc — replaces generic pulse ring */}
+              {agent?.currentTool && (
+                <path
+                  d={describeArc(0, 0, node.radius + 6, 0, toolArcAngle(agent.toolElapsedMs, agent.toolTimeoutMs))}
+                  className={`tool-arc tool-${agent.currentToolCategory}`}
+                  style={{ stroke: toolCategoryColor(agent.currentToolCategory) }}
                 />
               )}
+
+              {/* State ring — only for spinning_up or error (running is shown by tool arc) */}
+              {node.state === 'spinning_up' && (
+                <circle r={node.radius + 6} className="node-ring spinning_up" />
+              )}
+              {node.state === 'error' && (
+                <circle r={node.radius + 6} className="node-ring error" />
+              )}
+
+              {/* Agent circle */}
               <circle
                 r={node.radius}
                 fill={fill}
                 className={isOrchestrator ? 'node-core orchestrator' : 'node-core agent'}
                 data-agent={node.id}
               />
+
+              {/* Icon */}
               {IconComponent && (
                 <g transform={`translate(${-iconSize / 2}, ${-iconSize / 2})`}>
                   <IconComponent size={iconSize} color="#fff" strokeWidth={1.5} />
                 </g>
               )}
+
+              {/* Liveness dot — bottom-right */}
+              {agent && (
+                <circle
+                  cx={node.radius * 0.55}
+                  cy={node.radius * 0.55}
+                  r={5}
+                  className={`liveness-dot ${agent.liveness}`}
+                />
+              )}
+
+              {/* Skills dots — arc above label */}
+              {agent && agent.skills.length > 0 && agent.skills.slice(0, 8).map((skill, i) => {
+                const angle = -Math.PI + (i / Math.max(Math.min(agent.skills.length, 8) - 1, 1)) * Math.PI
+                const dotR = 3
+                const orbitR = node.radius + 14
+                return (
+                  <circle
+                    key={skill}
+                    cx={orbitR * Math.cos(angle)}
+                    cy={orbitR * Math.sin(angle)}
+                    r={dotR}
+                    fill={fill}
+                    opacity={0.5}
+                    className="skill-dot"
+                  />
+                )
+              })}
+
+              {/* Label */}
               <text className="node-label" y={node.radius + 24} textAnchor="middle">
                 {node.label}
               </text>
             </g>
           )
         })}
+
+        {/* Hover tooltip */}
+        {hoveredData && hoveredAgent && (
+          <foreignObject
+            x={Math.min(nodeMap[hoveredAgent]?.x ?? CENTER.x + 80, WIDTH - 220)}
+            y={Math.max((nodeMap[hoveredAgent]?.y ?? CENTER.y) - 90, 10)}
+            width={200}
+            height={hoveredData.skills.length > 0 ? 120 : 90}
+            className="tooltip-fo"
+          >
+            <div className="agent-tooltip">
+              <div className="tooltip-name">{hoveredData.label}</div>
+              <div className="tooltip-row">
+                <span className="tooltip-label">Model:</span>
+                <span>{hoveredData.provider ?? '?'}/{hoveredData.model ?? '?'}</span>
+              </div>
+              {hoveredData.currentTool && (
+                <div className="tooltip-row">
+                  <span className="tooltip-label">Tool:</span>
+                  <span>{hoveredData.currentTool} ({formatElapsed(hoveredData.toolElapsedMs)})</span>
+                </div>
+              )}
+              <div className="tooltip-row">
+                <span className="tooltip-label">Uptime:</span>
+                <span>{hoveredData.uptimeMs != null ? formatElapsed(hoveredData.uptimeMs) : 'unknown'}</span>
+              </div>
+              <div className="tooltip-row">
+                <span className="tooltip-label">Activity:</span>
+                <span>{hoveredData.activityCount} messages</span>
+              </div>
+              {hoveredData.skills.length > 0 && (
+                <div className="tooltip-skills">
+                  {hoveredData.skills.slice(0, 4).join(', ')}
+                  {hoveredData.skills.length > 4 && ` +${hoveredData.skills.length - 4} more`}
+                </div>
+              )}
+            </div>
+          </foreignObject>
+        )}
+
+        {/* Chat bubbles */}
         {bubbles.map((bubble) => {
           const node = nodeMap[bubble.agentId]
           if (!node) return null
           const isQuestion = bubble.type === 'question'
-          // Place bubble to the right of the agent; flip to left if too close to edge
           let bx = node.x + node.radius + 14
           if (bx + 352 > WIDTH - 10) {
             bx = node.x - node.radius - 14 - 352

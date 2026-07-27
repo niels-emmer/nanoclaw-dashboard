@@ -1,4 +1,4 @@
-import type { AgentSnapshot, TelemetryEvent } from './types'
+import type { AgentSnapshot, Liveness, TelemetryEvent, ToolCategory, TopologyData } from './types'
 
 export const formatTime = (maybeMs: number) => {
   const safeMs = Number.isNaN(maybeMs) ? Date.now() : maybeMs
@@ -33,6 +33,15 @@ export const compactAge = (maybeMs: number) => {
   return `${Math.floor(delta / 86_400_000)}d`
 }
 
+export const formatElapsed = (ms: number | null | undefined): string => {
+  if (ms == null) return ''
+  if (ms < 1000) return `${ms}ms`
+  if (ms < 60_000) return `${Math.floor(ms / 1000)}s`
+  const m = Math.floor(ms / 60_000)
+  const s = Math.floor((ms % 60_000) / 1000)
+  return `${m}m${s}s`
+}
+
 export const agentLabelFromId = (id: string) => id.replace(/^agent:/, '')
 
 export const readableNodeLabel = (id: string) => {
@@ -52,6 +61,10 @@ const eventTypeColors: Record<string, string> = {
   question: '#a78bfa',
   response: '#7860d8',
   agent_status: '#c084fc',
+  activity_update: '#38bdf8',
+  delivery_update: '#22c55e',
+  approval_pending: '#a855f7',
+  topology_snapshot: '#6b7280',
 }
 
 export const colorForEventType = (type: string) => {
@@ -66,6 +79,65 @@ export const colorForAgent = (id: string) => {
   }
   const idx = Math.abs(hash) % palette.length
   return palette[idx]
+}
+
+// Tool category mapping
+const TOOL_CATEGORIES: Record<string, ToolCategory> = {
+  Bash: 'executing',
+  Read: 'reading',
+  Write: 'writing',
+  Edit: 'writing',
+  Glob: 'reading',
+  Grep: 'reading',
+  WebSearch: 'network',
+  WebFetch: 'network',
+  Task: 'thinking',
+  Skill: 'thinking',
+}
+
+export const toolCategory = (tool: string | null | undefined): ToolCategory => {
+  if (!tool) return 'thinking'
+  return TOOL_CATEGORIES[tool] ?? 'thinking'
+}
+
+export const toolCategoryColor = (category: ToolCategory): string => {
+  switch (category) {
+    case 'executing': return '#ef4444'
+    case 'reading': return '#38bdf8'
+    case 'writing': return '#f59e0b'
+    case 'network': return '#22d3ee'
+    case 'waiting': return '#a855f7'
+    case 'thinking': return 'rgba(255,255,255,0.3)'
+  }
+}
+
+// Liveness derivation
+export const deriveLiveness = (
+  containerStatus: string | null | undefined,
+  heartbeatAgeMs: number | null | undefined,
+): Liveness => {
+  if (!containerStatus && heartbeatAgeMs == null) return 'unknown'
+  if (containerStatus === 'stopped') return 'dead'
+  if (containerStatus === 'idle') return 'stale'
+  if (heartbeatAgeMs != null) {
+    if (heartbeatAgeMs < 30_000) return 'alive'
+    if (heartbeatAgeMs < 120_000) return 'stale'
+    return 'dead'
+  }
+  if (containerStatus === 'running') return 'alive'
+  return 'unknown'
+}
+
+// Topology parsing
+export const parseTopologyMeta = (meta: Record<string, string> | null | undefined): TopologyData | null => {
+  if (!meta) return null
+  try {
+    const channels = meta.channels ? JSON.parse(meta.channels) : []
+    const a2aEdges = meta.a2aEdges ? JSON.parse(meta.a2aEdges) : []
+    return { channels, a2aEdges }
+  } catch {
+    return null
+  }
 }
 
 export const deriveAgentSnapshot = (
@@ -106,6 +178,24 @@ export const deriveAgentSnapshot = (
     const skillsRaw = event.payload.meta?.skills
     const skills = skillsRaw ? skillsRaw.split(',').filter(Boolean) : (prevSnapshot?.skills ?? [])
 
+    // New fields from payload
+    const p = event.payload
+    const currentTool = p.current_tool ?? prevSnapshot?.currentTool ?? null
+    const currentToolCategory = toolCategory(currentTool)
+    const toolElapsedMs = p.tool_elapsed_ms ?? prevSnapshot?.toolElapsedMs ?? null
+    const toolTimeoutMs = p.tool_timeout_ms ?? prevSnapshot?.toolTimeoutMs ?? null
+    const containerStatus = p.container_status ?? prevSnapshot?.containerStatus ?? null
+    const heartbeatAgeMs = p.heartbeat_age_ms ?? prevSnapshot?.heartbeatAgeMs ?? null
+    const provider = p.provider ?? prevSnapshot?.provider ?? null
+    const model = p.model ?? prevSnapshot?.model ?? null
+    const liveness = deriveLiveness(containerStatus, heartbeatAgeMs)
+
+    // Track pending approvals
+    let pendingApprovals = prevSnapshot?.pendingApprovals ?? 0
+    if (event.type === 'approval_pending' && (event.source === id || event.target === id)) {
+      pendingApprovals += 1
+    }
+
     snapshot[id] = {
       id,
       label,
@@ -120,6 +210,18 @@ export const deriveAgentSnapshot = (
       outboundTargets,
       inboundSources,
       skills,
+      // New fields
+      currentTool,
+      currentToolCategory,
+      toolElapsedMs,
+      toolTimeoutMs,
+      liveness,
+      containerStatus,
+      heartbeatAgeMs,
+      provider,
+      model,
+      uptimeMs: heartbeatAgeMs ?? prevSnapshot?.uptimeMs ?? null,
+      pendingApprovals,
     }
   }
 
