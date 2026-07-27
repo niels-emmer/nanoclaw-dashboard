@@ -240,9 +240,7 @@ class NanoclawTelemetrySource(TelemetrySource):
         self._refresh_sessions()
 
     async def stream(self) -> AsyncIterator[TelemetryEvent]:
-        # Emit initial snapshot so the dashboard renders immediately
-        for event in self._build_initial_events():
-            yield event
+        initial_emitted = False
 
         while True:
             events = []
@@ -250,7 +248,14 @@ class NanoclawTelemetrySource(TelemetrySource):
                 self._refresh_agent_groups()
                 self._refresh_agent_configs()
                 self._refresh_sessions()
-                events = self._collect_events()
+
+                # Emit initial snapshot on first loop iteration (after clients
+                # have had a chance to connect)
+                if not initial_emitted:
+                    events.extend(self._build_initial_events())
+                    initial_emitted = True
+
+                events.extend(self._collect_events())
                 events.extend(self._collect_activity_events())
                 events.extend(self._collect_delivery_events())
                 events.extend(self._collect_approval_events())
