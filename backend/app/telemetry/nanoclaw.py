@@ -297,6 +297,7 @@ class NanoclawTelemetrySource(TelemetrySource):
 
             # Container state (tool in flight)
             container_state = watcher.fetch_container_state()
+            container_status = session_rec.container_status if session_rec else None
             if container_state and container_state.get("current_tool"):
                 tool = container_state["current_tool"]
                 timeout = container_state.get("tool_declared_timeout_ms")
@@ -310,7 +311,6 @@ class NanoclawTelemetrySource(TelemetrySource):
                         log.warning("tool_elapsed_parse_failed", session_id=session_id, started_str=started_str)
 
                 heartbeat = watcher.heartbeat_age_ms()
-                container_status = session_rec.container_status if session_rec else None
 
                 events.append(TelemetryEvent(
                     id=str(uuid4()),
