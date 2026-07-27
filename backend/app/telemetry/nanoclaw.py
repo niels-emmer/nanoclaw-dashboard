@@ -83,7 +83,7 @@ class SessionWatcher:
 
     # --- New operational data fetchers ---
 
-    def fetch_processing_acks(self) -> List[sqlite3.Row]:
+    def fetch_processing_acks(self) -> List[dict]:
         """Return new processing_ack rows since last poll."""
         if not self.outbound_path.exists():
             return []
@@ -94,9 +94,12 @@ class SessionWatcher:
             if count <= self._last_ack_count:
                 conn.close()
                 return []
-            rows = conn.execute(
-                "SELECT * FROM processing_ack ORDER BY status_changed DESC LIMIT 10"
-            ).fetchall()
+            rows = [
+                dict(row)
+                for row in conn.execute(
+                    "SELECT * FROM processing_ack ORDER BY status_changed DESC LIMIT 10"
+                ).fetchall()
+            ]
             self._last_ack_count = count
             conn.close()
             return rows
@@ -126,7 +129,7 @@ class SessionWatcher:
             log.warning("nanoclaw_container_state_read_failed", session=self.session_id, error=str(exc))
             return None
 
-    def fetch_delivered(self) -> List[sqlite3.Row]:
+    def fetch_delivered(self) -> List[dict]:
         """Return new delivered rows since last poll."""
         if not self.inbound_path.exists():
             return []
@@ -137,9 +140,12 @@ class SessionWatcher:
             if count <= self._last_delivered_count:
                 conn.close()
                 return []
-            rows = conn.execute(
-                "SELECT * FROM delivered ORDER BY delivered_at DESC LIMIT 10"
-            ).fetchall()
+            rows = [
+                dict(row)
+                for row in conn.execute(
+                    "SELECT * FROM delivered ORDER BY delivered_at DESC LIMIT 10"
+                ).fetchall()
+            ]
             self._last_delivered_count = count
             conn.close()
             return rows
@@ -668,11 +674,12 @@ class NanoclawTelemetrySource(TelemetrySource):
             return default
         return value if value is not None else default
 
-    def _query(self, db_path: Path, sql: str) -> Iterable[sqlite3.Row]:
+    def _query(self, db_path: Path, sql: str) -> Iterable[dict]:
+        """Execute a query and return rows as plain dicts (supports .get())."""
         try:
             conn = sqlite3.connect(db_path)
             conn.row_factory = sqlite3.Row
-            rows = conn.execute(sql).fetchall()
+            rows = [dict(row) for row in conn.execute(sql).fetchall()]
             conn.close()
             return rows
         except sqlite3.DatabaseError as exc:
