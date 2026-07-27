@@ -20,7 +20,7 @@ follow up to ensure we received your original message.
 We ask that you give us a reasonable window to investigate and release a fix
 before public disclosure.
 
-[gh-advisory]: https://github.com/nanoclaw/nanoclaw-dashboard/security/advisories
+[gh-advisory]: https://github.com/niels-emmer/nanoclaw-dashboard/security/advisories
 
 ## Supported Versions
 
