@@ -321,8 +321,8 @@ class NanoclawTelemetrySource(TelemetrySource):
                     events.append(event)
             outbound_rows = watcher.fetch_outbound()
             for row in outbound_rows:
-                if self._is_noise_message(row):
-                    continue
+                # Outbound messages are responses — always show them.
+                # The noise filter is for inbound CLI/system chatter only.
                 event = self._build_response_event(watcher, row)
                 if event:
                     events.append(event)
