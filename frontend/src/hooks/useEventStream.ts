@@ -95,7 +95,8 @@ export const useEventStream = () => {
         })
       }
 
-      // Spawn a chat bubble anchored to the relevant agent
+      // Spawn a chat bubble only for actual messages, not status updates
+      if (event.type !== 'question' && event.type !== 'response') return
       const bubbleAgentId =
         event.type === 'question' ? event.target : event.source
       const sourceLabel = event.payload.meta?.sourceLabel ?? readableNodeLabel(event.source)
