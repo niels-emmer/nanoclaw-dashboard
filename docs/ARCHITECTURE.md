@@ -22,10 +22,33 @@ The dashboard is split into a FastAPI WebSocket service (`/backend`) and a Vite 
 3. Clients connect to `/ws/events`; the backend enforces a `max_clients` soft limit and gracefully drops sockets on send errors.
 4. Health monitoring: `/health` returns `{ "status": "ok" }` for integration tests and uptime probes.
 
+### Live agent ops data pipeline
+
+Beyond the core question/response flow, the backend reads operational tables from the Nanoclaw databases to emit richer telemetry:
+
+| Event type | Source table(s) | What it conveys |
+|------------|----------------|-----------------|
+| `activity_update` | `container_state` (outbound.db), `processing_ack` (outbound.db) | Current tool the agent is running (Bash, Read, etc.), elapsed time, timeout, processing status per message |
+| `delivery_update` | `delivered` (inbound.db) | Whether an outbound message was delivered or failed |
+| `approval_pending` | `pending_approvals` (central v2.db) | Admin actions awaiting approval (install_packages, add_mcp_server, etc.) |
+| `topology_snapshot` | `messaging_group_agents`, `agent_destinations` (central v2.db) | Routing graph: which channels feed which agents, agent-to-agent connections |
+
+Additional fields on all event types:
+
+| Field | Source | Purpose |
+|-------|--------|---------|
+| `provider`, `model` | `container_configs` (central v2.db) | Agent capabilities (claude/sonnet, etc.) |
+| `skills` | `container_configs` (central v2.db) | List of skill names the agent has loaded |
+| `container_status` | `sessions` (central v2.db) | Container runtime state: running, idle, or stopped |
+| `heartbeat_age_ms` | `.heartbeat` file mtime | Milliseconds since last container liveness signal |
+| `current_tool`, `tool_elapsed_ms`, `tool_timeout_ms` | `container_state` (outbound.db) | Real-time tool execution state |
+| `retry_count` | `messages_in.tries` (inbound.db) | Number of retry attempts for a message |
+| `delivery_status` | `delivered` (inbound.db) | Delivery outcome: delivered or failed |
+
 ### Testing hooks
 
 - `tests/test_app.py` covers `/health` to ensure the FastAPI stack boots.
-- `tests/test_telemetry.py` ensures the mock source emits alternating question/response events.
+- `tests/test_telemetry.py` covers the mock source: question/response flow, emission of all new event types, and presence of tool state fields on activity_update events.
 - Structured logs surface in JSON for later ingestion into observability stacks.
 
 ## Frontend (`frontend/`)
@@ -33,7 +56,7 @@ The dashboard is split into a FastAPI WebSocket service (`/backend`) and a Vite 
 | Area | Key files | Notes |
 |------|-----------|-------|
 | Event ingestion | `src/hooks/useEventStream.ts`, `src/lib/config.ts`, `src/lib/types.ts`, `src/lib/utils.ts` | Custom hook manages the WebSocket connection (auto-reconnect, edge TTLs, snapshots). Config infers backend URL, with overrides via `VITE_BACKEND_WS_URL`. |
-| Visualization | `src/components/FlowCanvas.tsx` | SVG orbit layout with orchestrator at center, deterministic spokes for agents, and animated edge pulses keyed by the telemetry stream. |
+| Visualization | `src/components/FlowCanvas.tsx` | SVG orbit layout with orchestrator at center, deterministic spokes for agents, animated edge pulses, tool indicator arcs (color-coded by category), liveness dots, skills dots, channel nodes on outer ring, agent-to-agent edges, hover tooltips, and click-to-filter. |
 | Details panes | `AgentGrid.tsx`, `EventFeed.tsx`, `DebugPanel.tsx`, `ConnectionStatus.tsx` | Present agent states, recent events, raw payloads, and connection indicators with purposeful typography and color tokens. |
 | Shell | `App.tsx`, `App.css`, `index.css` | Hero masthead with capability Chip rail + streaming legend feeds into a fixed two-column layout (orbit canvas + insight grid). Uses HeroUI Card/Chip/Typography components on Tailwind CSS v4. |
 
@@ -47,16 +70,34 @@ The dashboard is split into a FastAPI WebSocket service (`/backend`) and a Vite 
 {
   "id": "UUID",
   "timestamp": "ISO-8601",
-  "type": "question | response | agent_status",
-  "source": "orchestrator | agent:<name>",
-  "target": "agent:<name> | orchestrator",
+  "type": "question | response | agent_status | activity_update | delivery_update | approval_pending | topology_snapshot",
+  "source": "orchestrator | agent:<name> | channel:<type>",
+  "target": "agent:<name> | orchestrator | admin | dashboard",
   "payload": {
     "summary": "string (≤240 chars)",
     "duration_ms": "int | null",
-    "status": "running | completed | error"
+    "status": "running | completed | error | pending | processing | delivered | failed",
+    "meta": "{ channels, a2aEdges } | null",
+
+    "current_tool": "string | null",
+    "tool_elapsed_ms": "int | null",
+    "tool_timeout_ms": "int | null",
+
+    "provider": "string | null",
+    "model": "string | null",
+    "skills": ["string"] | null,
+
+    "container_status": "string | null",
+    "heartbeat_age_ms": "int | null",
+
+    "retry_count": "int | null",
+    "delivery_status": "string | null",
+
+    "approval_action": "string | null",
+    "approval_title": "string | null"
   },
   "agent_state": "spinning_up | idle | running | error | null",
-  "schema_version": "0.1.0"
+  "schema_version": "0.2.0"
 }
 ```
 
@@ -71,7 +112,16 @@ When new telemetry attributes are required, bump `schema_version`, update both t
 ## Nanoclaw integration
 
 - Enabling: set `NANOCLAW_ENABLED=true` and point `NANOCLAW_ROOT` (CLI/dev) or the compose bind (`NANOCLAW_HOST_DATA` → `NANOCLAW_CONTAINER_DATA`) at the Nanoclaw checkout. The backend mounts the folder read-only.
-- Data sources: `NanoclawTelemetrySource` reads `data/v2.db` for agent/session metadata and tails each session’s `inbound.db` / `outbound.db` pair for fresh rows. It maps `messages_in.source_session_id` to discover agent-to-agent traffic and correlates `messages_out.in_reply_to` with the cached inbound rows for response edges.
+- Data sources: `NanoclawTelemetrySource` reads the following tables across the three Nanoclaw databases:
+
+  | Database | Tables read | Purpose |
+  |----------|-------------|---------|
+  | Central `v2.db` | `agent_groups`, `sessions`, `container_configs`, `pending_approvals`, `messaging_group_agents`, `agent_destinations` | Agent metadata, container state, capabilities, approvals, routing topology |
+  | Session `inbound.db` | `messages_in`, `delivered` | Inbound messages, delivery status |
+  | Session `outbound.db` | `messages_out`, `processing_ack`, `container_state` | Outbound messages, processing lifecycle, current tool in flight |
+  | Filesystem | `.heartbeat` file mtime | Container liveness signal |
+
+  It maps `messages_in.source_session_id` to discover agent-to-agent traffic and correlates `messages_out.in_reply_to` with the cached inbound rows for response edges.
 - Safety: only read operations are performed. If the mount is missing/unreadable the backend logs a warning and falls back to the mock generator.
 
 ## Observability + debugging
@@ -89,3 +139,5 @@ When new telemetry attributes are required, bump `schema_version`, update both t
 
 - Wire SBOM generation (Syft recommended) into CI for both stacks.
 - Add integration tests that spin up the backend, run the frontend in headless mode (Playwright/Cypress), and assert render correctness.
+- Token usage / cost tracking: nanoclaw does not persist token counts in its DB schema. Would require upstream changes or parsing provider API responses.
+- Error detail propagation: `processing_ack` only stores `failed` status, not the error reason. Would need nanoclaw changes to persist error details.
