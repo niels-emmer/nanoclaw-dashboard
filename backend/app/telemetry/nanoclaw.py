@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import sqlite3
+import time
 from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -28,10 +29,22 @@ class AgentGroup:
 
 
 @dataclass
+class AgentConfig:
+    """Cached container_configs data for an agent group."""
+    provider: Optional[str] = None
+    model: Optional[str] = None
+    effort: Optional[str] = None
+    skills: Optional[List[str]] = None
+    assistant_name: Optional[str] = None
+
+
+@dataclass
 class SessionRecord:
     id: str
     agent_group_id: str
     path: Path
+    container_status: Optional[str] = None
+    last_active: Optional[str] = None
 
 
 @dataclass
@@ -44,7 +57,7 @@ class InboundRecord:
 
 
 class SessionWatcher:
-    """Tails a session's inbound/outbound message databases."""
+    """Tails a session's inbound/outbound message databases and operational tables."""
 
     def __init__(self, session_id: str, agent_group_id: str, session_path: Path, history_events: int) -> None:
         self.session_id = session_id
@@ -53,14 +66,95 @@ class SessionWatcher:
         self.history_events = history_events
         self.inbound_path = session_path / "inbound.db"
         self.outbound_path = session_path / "outbound.db"
+        self.heartbeat_path = session_path / ".heartbeat"
         self.last_in_seq = self._prime_seq(self.inbound_path, "messages_in")
         self.last_out_seq = self._prime_seq(self.outbound_path, "messages_out")
+        self._last_ack_count = 0
+        self._last_delivered_count = 0
+        self._last_container_state: Optional[dict] = None
+
+    # --- Existing message fetchers ---
 
     def fetch_inbound(self) -> List[sqlite3.Row]:
         return self._fetch_rows(self.inbound_path, "messages_in", "last_in_seq")
 
     def fetch_outbound(self) -> List[sqlite3.Row]:
         return self._fetch_rows(self.outbound_path, "messages_out", "last_out_seq")
+
+    # --- New operational data fetchers ---
+
+    def fetch_processing_acks(self) -> List[sqlite3.Row]:
+        """Return new processing_ack rows since last poll."""
+        if not self.outbound_path.exists():
+            return []
+        try:
+            conn = sqlite3.connect(self.outbound_path)
+            conn.row_factory = sqlite3.Row
+            count = conn.execute("SELECT COUNT(*) AS c FROM processing_ack").fetchone()["c"]
+            if count <= self._last_ack_count:
+                conn.close()
+                return []
+            rows = conn.execute(
+                "SELECT * FROM processing_ack ORDER BY status_changed DESC LIMIT 10"
+            ).fetchall()
+            self._last_ack_count = count
+            conn.close()
+            return rows
+        except sqlite3.DatabaseError:
+            return []
+
+    def fetch_container_state(self) -> Optional[dict]:
+        """Return current container_state row if changed."""
+        if not self.outbound_path.exists():
+            return None
+        try:
+            conn = sqlite3.connect(self.outbound_path)
+            conn.row_factory = sqlite3.Row
+            row = conn.execute(
+                "SELECT current_tool, tool_declared_timeout_ms, tool_started_at, updated_at FROM container_state WHERE id = 1"
+            ).fetchone()
+            conn.close()
+            if not row:
+                return None
+            state = dict(row)
+            if state == self._last_container_state:
+                return None
+            self._last_container_state = state
+            return state
+        except sqlite3.DatabaseError:
+            return None
+
+    def fetch_delivered(self) -> List[sqlite3.Row]:
+        """Return new delivered rows since last poll."""
+        if not self.inbound_path.exists():
+            return []
+        try:
+            conn = sqlite3.connect(self.inbound_path)
+            conn.row_factory = sqlite3.Row
+            count = conn.execute("SELECT COUNT(*) AS c FROM delivered").fetchone()["c"]
+            if count <= self._last_delivered_count:
+                conn.close()
+                return []
+            rows = conn.execute(
+                "SELECT * FROM delivered ORDER BY delivered_at DESC LIMIT 10"
+            ).fetchall()
+            self._last_delivered_count = count
+            conn.close()
+            return rows
+        except sqlite3.DatabaseError:
+            return []
+
+    def heartbeat_age_ms(self) -> Optional[int]:
+        """Return milliseconds since .heartbeat was last touched, or None."""
+        if not self.heartbeat_path.exists():
+            return None
+        try:
+            mtime = self.heartbeat_path.stat().st_mtime
+            return int((time.time() - mtime) * 1000)
+        except OSError:
+            return None
+
+    # --- Internal ---
 
     def _fetch_rows(self, db_path: Path, table: str, seq_attr: str) -> List[sqlite3.Row]:
         if not db_path.exists():
@@ -113,15 +207,18 @@ class NanoclawTelemetrySource(TelemetrySource):
         self.history_events = config.history_events
         self.orchestrator_hint = config.orchestrator_group.lower() if config.orchestrator_group else None
         self._agent_groups: Dict[str, AgentGroup] = {}
+        self._agent_configs: Dict[str, AgentConfig] = {}
         self._sessions: Dict[str, SessionWatcher] = {}
         self._session_map: Dict[str, SessionRecord] = {}
         self._inbound_cache: "OrderedDict[str, InboundRecord]" = OrderedDict()
         self._cache_size = 5000
         self._orchestrator_id: Optional[str] = None
+        self._topology_tick = 0
 
         if not self.central_db.exists():
             raise FileNotFoundError(f"Nanoclaw database not found at {self.central_db}")
         self._refresh_agent_groups()
+        self._refresh_agent_configs()
         self._refresh_sessions()
 
     async def stream(self) -> AsyncIterator[TelemetryEvent]:
@@ -129,8 +226,15 @@ class NanoclawTelemetrySource(TelemetrySource):
             events = []
             try:
                 self._refresh_agent_groups()
+                self._refresh_agent_configs()
                 self._refresh_sessions()
                 events = self._collect_events()
+                events.extend(self._collect_activity_events())
+                events.extend(self._collect_delivery_events())
+                events.extend(self._collect_approval_events())
+                topo = self._emit_topology_snapshot()
+                if topo:
+                    events.append(topo)
             except Exception as exc:  # noqa: BLE001
                 log.warning("nanoclaw_stream_error", error=str(exc))
             for event in events:
@@ -138,7 +242,7 @@ class NanoclawTelemetrySource(TelemetrySource):
             await asyncio.sleep(self.poll_interval)
 
     # ------------------------------------------------------------------
-    # Internal helpers
+    # Event collection
     # ------------------------------------------------------------------
 
     def _collect_events(self) -> List[TelemetryEvent]:
@@ -156,6 +260,177 @@ class NanoclawTelemetrySource(TelemetrySource):
                     events.append(event)
         return events
 
+    def _collect_activity_events(self) -> List[TelemetryEvent]:
+        """Emit activity_update events for tool state changes and processing acks."""
+        events: List[TelemetryEvent] = []
+        for session_id, watcher in list(self._sessions.items()):
+            agent_id = watcher.agent_group_id
+            config = self._agent_configs.get(agent_id)
+            session_rec = self._session_map.get(session_id)
+
+            # Container state (tool in flight)
+            container_state = watcher.fetch_container_state()
+            if container_state and container_state.get("current_tool"):
+                tool = container_state["current_tool"]
+                timeout = container_state.get("tool_declared_timeout_ms")
+                started_str = container_state.get("tool_started_at")
+                elapsed = None
+                if started_str:
+                    try:
+                        started = datetime.fromisoformat(started_str)
+                        elapsed = int((datetime.now(timezone.utc) - started).total_seconds() * 1000)
+                    except (ValueError, TypeError):
+                        pass
+
+                heartbeat = watcher.heartbeat_age_ms()
+                container_status = session_rec.container_status if session_rec else None
+
+                events.append(TelemetryEvent(
+                    id=str(uuid4()),
+                    timestamp=self._now(),
+                    type=EventType.ACTIVITY_UPDATE,
+                    source=f"agent:{agent_id}",
+                    target="orchestrator",
+                    payload=EventPayload(
+                        summary=f"Running {tool}",
+                        status="processing",
+                        current_tool=tool,
+                        tool_elapsed_ms=elapsed,
+                        tool_timeout_ms=timeout,
+                        provider=config.provider if config else None,
+                        model=config.model if config else None,
+                        skills=config.skills if config else None,
+                        container_status=container_status,
+                        heartbeat_age_ms=heartbeat,
+                    ),
+                    agent_state=AgentState.RUNNING,
+                ))
+
+            # Processing acks
+            ack_rows = watcher.fetch_processing_acks()
+            for ack in ack_rows:
+                events.append(TelemetryEvent(
+                    id=str(uuid4()),
+                    timestamp=ack.get("status_changed") or self._now(),
+                    type=EventType.ACTIVITY_UPDATE,
+                    source=f"agent:{agent_id}",
+                    target="orchestrator",
+                    payload=EventPayload(
+                        summary=f"Message {ack['status']}",
+                        status=ack["status"],
+                        provider=config.provider if config else None,
+                        model=config.model if config else None,
+                        container_status=container_status if session_rec else None,
+                        heartbeat_age_ms=watcher.heartbeat_age_ms(),
+                    ),
+                    agent_state=AgentState.IDLE if ack["status"] == "completed" else AgentState.RUNNING,
+                ))
+
+        return events
+
+    def _collect_delivery_events(self) -> List[TelemetryEvent]:
+        """Emit delivery_update events from the delivered table."""
+        events: List[TelemetryEvent] = []
+        for session_id, watcher in list(self._sessions.items()):
+            agent_id = watcher.agent_group_id
+            delivered_rows = watcher.fetch_delivered()
+            for row in delivered_rows:
+                events.append(TelemetryEvent(
+                    id=str(uuid4()),
+                    timestamp=row.get("delivered_at") or self._now(),
+                    type=EventType.DELIVERY_UPDATE,
+                    source=f"agent:{agent_id}",
+                    target="orchestrator",
+                    payload=EventPayload(
+                        summary=f"Message {row['status']}",
+                        status=row["status"],
+                        delivery_status=row["status"],
+                    ),
+                    agent_state=AgentState.IDLE,
+                ))
+        return events
+
+    def _collect_approval_events(self) -> List[TelemetryEvent]:
+        """Emit approval_pending events from the pending_approvals table."""
+        events: List[TelemetryEvent] = []
+        rows = self._query(
+            self.central_db,
+            "SELECT action, title, status, agent_group_id, created_at FROM pending_approvals WHERE status = 'pending' ORDER BY created_at DESC LIMIT 20",
+        )
+        for row in rows:
+            agent_id = row.get("agent_group_id") or self._orchestrator_id or "unknown"
+            events.append(TelemetryEvent(
+                id=str(uuid4()),
+                timestamp=row.get("created_at") or self._now(),
+                type=EventType.APPROVAL_PENDING,
+                source=f"agent:{agent_id}",
+                target="admin",
+                payload=EventPayload(
+                    summary=row.get("title") or row.get("action") or "Pending approval",
+                    status="pending",
+                    approval_action=row.get("action"),
+                    approval_title=row.get("title"),
+                ),
+                agent_state=AgentState.IDLE,
+            ))
+        return events
+
+    def _emit_topology_snapshot(self) -> Optional[TelemetryEvent]:
+        """Emit topology_snapshot every ~30 ticks (~30s at 1s poll)."""
+        self._topology_tick += 1
+        if self._topology_tick < 30:
+            return None
+        self._topology_tick = 0
+
+        # Read messaging_group_agents for channel→agent routing
+        channel_rows = self._query(
+            self.central_db,
+            """SELECT mg.channel_type, mg.platform_id, mg.name, mga.agent_group_id
+               FROM messaging_group_agents mga
+               JOIN messaging_groups mg ON mg.id = mga.messaging_group_id""",
+        )
+        channels_map: Dict[str, dict] = {}
+        for row in channel_rows:
+            ch_type = row.get("channel_type") or "unknown"
+            if ch_type not in channels_map:
+                channels_map[ch_type] = {"id": ch_type, "type": ch_type, "agents": []}
+            agent_id = row.get("agent_group_id")
+            if agent_id and f"agent:{agent_id}" not in channels_map[ch_type]["agents"]:
+                channels_map[ch_type]["agents"].append(f"agent:{agent_id}")
+
+        # Read agent_destinations for agent-to-agent edges
+        a2a_rows = self._query(
+            self.central_db,
+            "SELECT agent_group_id, target_id FROM agent_destinations WHERE target_type = 'agent'",
+        )
+        a2a_edges = []
+        for row in a2a_rows:
+            src = row.get("agent_group_id")
+            tgt = row.get("target_id")
+            if src and tgt:
+                a2a_edges.append({"source": f"agent:{src}", "target": f"agent:{tgt}"})
+
+        channels = list(channels_map.values())
+        return TelemetryEvent(
+            id=str(uuid4()),
+            timestamp=self._now(),
+            type=EventType.TOPOLOGY_SNAPSHOT,
+            source="orchestrator",
+            target="dashboard",
+            payload=EventPayload(
+                summary=f"Topology: {len(channels)} channels, {len(a2a_edges)} a2a links",
+                status="completed",
+                meta={
+                    "channels": json.dumps(channels, ensure_ascii=False, default=str),
+                    "a2aEdges": json.dumps(a2a_edges, ensure_ascii=False, default=str),
+                },
+            ),
+        )
+
+    # ------------------------------------------------------------------
+    # Refresh helpers
+    # ------------------------------------------------------------------
+
     def _refresh_agent_groups(self) -> None:
         rows = self._query(self.central_db, "SELECT id, name FROM agent_groups")
         groups = {row["id"]: AgentGroup(id=row["id"], name=row["name"] or row["id"]) for row in rows}
@@ -163,8 +438,36 @@ class NanoclawTelemetrySource(TelemetrySource):
             self._agent_groups = groups
             self._orchestrator_id = self._determine_orchestrator()
 
+    def _refresh_agent_configs(self) -> None:
+        """Read container_configs for all agent groups."""
+        rows = self._query(
+            self.central_db,
+            "SELECT agent_group_id, provider, model, effort, skills, assistant_name FROM container_configs",
+        )
+        for row in rows:
+            ag_id = row["agent_group_id"]
+            skills_raw = row.get("skills")
+            skills = None
+            if skills_raw and skills_raw != '"all"':
+                try:
+                    parsed = json.loads(skills_raw)
+                    if isinstance(parsed, list):
+                        skills = parsed
+                except (json.JSONDecodeError, TypeError):
+                    pass
+            self._agent_configs[ag_id] = AgentConfig(
+                provider=row.get("provider"),
+                model=row.get("model"),
+                effort=row.get("effort"),
+                skills=skills,
+                assistant_name=row.get("assistant_name"),
+            )
+
     def _refresh_sessions(self) -> None:
-        rows = self._query(self.central_db, "SELECT id, agent_group_id FROM sessions")
+        rows = self._query(
+            self.central_db,
+            "SELECT id, agent_group_id, container_status, last_active FROM sessions",
+        )
         latest_sessions: Dict[str, SessionRecord] = {}
         for row in rows:
             session_id = row["id"]
@@ -175,6 +478,8 @@ class NanoclawTelemetrySource(TelemetrySource):
                     id=session_id,
                     agent_group_id=agent_group,
                     path=session_path,
+                    container_status=row.get("container_status"),
+                    last_active=row.get("last_active"),
                 )
 
         # Remove stale watchers
@@ -195,7 +500,7 @@ class NanoclawTelemetrySource(TelemetrySource):
         self._session_map = latest_sessions
 
     # ------------------------------------------------------------------
-    # Event builders
+    # Event builders (existing, enriched)
     # ------------------------------------------------------------------
 
     def _build_question_event(self, watcher: SessionWatcher, row: sqlite3.Row) -> Optional[TelemetryEvent]:
@@ -216,6 +521,7 @@ class NanoclawTelemetrySource(TelemetrySource):
             source_label = channel.title()
 
         target_agent = f"agent:{watcher.agent_group_id}"
+        config = self._agent_configs.get(watcher.agent_group_id)
         meta = {
             "sourceLabel": source_label,
             "targetLabel": self._agent_label(watcher.agent_group_id),
@@ -231,7 +537,17 @@ class NanoclawTelemetrySource(TelemetrySource):
             type=EventType.QUESTION,
             source=source,
             target=target_agent,
-            payload=EventPayload(summary=summary, status="running", duration_ms=None, meta=meta),
+            payload=EventPayload(
+                summary=summary,
+                status="running",
+                duration_ms=None,
+                meta=meta,
+                provider=config.provider if config else None,
+                model=config.model if config else None,
+                skills=config.skills if config else None,
+                container_status=self._session_map.get(watcher.session_id, SessionRecord("", "", Path())).container_status,
+                heartbeat_age_ms=watcher.heartbeat_age_ms(),
+            ),
             agent_state=AgentState.RUNNING,
         )
 
@@ -267,11 +583,11 @@ class NanoclawTelemetrySource(TelemetrySource):
                     target_label = cached.channel_type.title()
 
         if not target:
-            # Fallback to orchestrator if configured, else echo back to self
             fallback_agent = self._orchestrator_id or watcher.agent_group_id
             target = f"agent:{fallback_agent}"
             target_label = self._agent_label(fallback_agent)
 
+        config = self._agent_configs.get(watcher.agent_group_id)
         meta = {
             "sourceLabel": source_label,
             "targetLabel": target_label,
@@ -280,12 +596,16 @@ class NanoclawTelemetrySource(TelemetrySource):
         if orchestrator_node:
             meta["orchestratorId"] = orchestrator_node
 
-        duration_ms = None
         payload = EventPayload(
             summary=self._summarize(self._row_value(row, "content")),
-            duration_ms=duration_ms,
+            duration_ms=None,
             status="completed",
             meta=meta,
+            provider=config.provider if config else None,
+            model=config.model if config else None,
+            skills=config.skills if config else None,
+            container_status=self._session_map.get(watcher.session_id, SessionRecord("", "", Path())).container_status,
+            heartbeat_age_ms=watcher.heartbeat_age_ms(),
         )
 
         return TelemetryEvent(
@@ -322,7 +642,6 @@ class NanoclawTelemetrySource(TelemetrySource):
         for group in self._agent_groups.values():
             if "orchestrator" in group.name.lower():
                 return group.id
-        # fallback to first group for deterministic layout
         return next(iter(self._agent_groups.keys()), None)
 
     def _orchestrator_node(self) -> Optional[str]:

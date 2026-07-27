@@ -5,7 +5,12 @@ from pathlib import Path
 from typing import Literal, Optional
 
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, EnvSettingsSource, SettingsConfigDict
+from pydantic_settings import (
+    BaseSettings,
+    DotEnvSettingsSource,
+    EnvSettingsSource,
+    SettingsConfigDict,
+)
 
 
 class LenientEnvSource(EnvSettingsSource):
@@ -20,10 +25,24 @@ class LenientEnvSource(EnvSettingsSource):
         return super().decode_complex_value(field_name, field, value)
 
 
+class LenientDotEnvSource(DotEnvSettingsSource):
+    """DotEnv source that falls back to raw strings when JSON parsing fails."""
+
+    def decode_complex_value(self, field_name, field, value):  # type: ignore[override]
+        if isinstance(value, str):
+            try:
+                return json.loads(value)
+            except json.JSONDecodeError:
+                return value
+        return super().decode_complex_value(field_name, field, value)
+
+
 class Settings(BaseSettings):
     """Runtime configuration loaded from environment variables."""
 
-    model_config = SettingsConfigDict(env_prefix="NANOCLAW_", env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_prefix="NANOCLAW_", env_file=".env", env_file_encoding="utf-8", extra="ignore"
+    )
 
     @classmethod
     def settings_customise_sources(
@@ -37,7 +56,7 @@ class Settings(BaseSettings):
         return (
             init_settings,
             LenientEnvSource(settings_cls),
-            dotenv_settings,
+            LenientDotEnvSource(settings_cls),
             file_secret_settings,
         )
 
