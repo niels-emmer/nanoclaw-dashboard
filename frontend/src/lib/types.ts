@@ -83,7 +83,10 @@ export interface EdgePulse {
 export interface ChatBubble {
   id: string
   agentId: string
+  fromLabel: string
+  toLabel: string
   text: string
+  lines: string[]
   type: EventType
 }
 

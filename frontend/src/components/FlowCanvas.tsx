@@ -477,11 +477,12 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
           const node = nodeMap[bubble.agentId]
           if (!node) return null
           const isQuestion = bubble.type === 'question'
+          const fromLabel = isQuestion ? bubble.fromLabel : bubble.toLabel
           let bx = node.x + node.radius + 14
           if (bx + 352 > WIDTH - 10) {
             bx = node.x - node.radius - 14 - 352
           }
-          const by = Math.max(8, Math.min(HEIGHT - 148, node.y - 40))
+          const by = Math.max(8, Math.min(HEIGHT - 148, node.y - 50))
           const tailSide = bx > node.x ? 'left' : 'right'
           return (
             <foreignObject
@@ -489,12 +490,20 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
               x={bx}
               y={by}
               width={352}
-              height={128}
+              height={140}
               className="chat-bubble-fo"
             >
               <div className={`chat-bubble tail-${tailSide}`}>
-                <span className="bubble-direction">{isQuestion ? '→' : '←'}</span>
-                <span className="bubble-text">{bubble.text}</span>
+                <div className="bubble-header">
+                  <span className="bubble-direction">{isQuestion ? '→' : '←'}</span>
+                  <span className="bubble-from">from: {fromLabel}</span>
+                </div>
+                <div className="bubble-divider" />
+                <div className="bubble-lines">
+                  {bubble.lines.slice(0, 3).map((line, i) => (
+                    <span key={i} className="bubble-line">{line}</span>
+                  ))}
+                </div>
               </div>
             </foreignObject>
           )
