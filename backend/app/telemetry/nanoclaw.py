@@ -100,7 +100,8 @@ class SessionWatcher:
             self._last_ack_count = count
             conn.close()
             return rows
-        except sqlite3.DatabaseError:
+        except sqlite3.DatabaseError as exc:
+            log.warning("nanoclaw_acks_read_failed", session=self.session_id, error=str(exc))
             return []
 
     def fetch_container_state(self) -> Optional[dict]:
@@ -121,7 +122,8 @@ class SessionWatcher:
                 return None
             self._last_container_state = state
             return state
-        except sqlite3.DatabaseError:
+        except sqlite3.DatabaseError as exc:
+            log.warning("nanoclaw_container_state_read_failed", session=self.session_id, error=str(exc))
             return None
 
     def fetch_delivered(self) -> List[sqlite3.Row]:
@@ -141,7 +143,8 @@ class SessionWatcher:
             self._last_delivered_count = count
             conn.close()
             return rows
-        except sqlite3.DatabaseError:
+        except sqlite3.DatabaseError as exc:
+            log.warning("nanoclaw_delivered_read_failed", session=self.session_id, error=str(exc))
             return []
 
     def heartbeat_age_ms(self) -> Optional[int]:
@@ -156,7 +159,12 @@ class SessionWatcher:
 
     # --- Internal ---
 
+    _ALLOWED_TABLES = frozenset({"messages_in", "messages_out"})
+
     def _fetch_rows(self, db_path: Path, table: str, seq_attr: str) -> List[sqlite3.Row]:
+        if table not in self._ALLOWED_TABLES:
+            log.warning("nanoclaw_unexpected_table", table=table)
+            return []
         if not db_path.exists():
             return []
         rows: List[sqlite3.Row] = []
@@ -173,6 +181,9 @@ class SessionWatcher:
         return rows
 
     def _prime_seq(self, db_path: Path, table: str) -> int:
+        if table not in self._ALLOWED_TABLES:
+            log.warning("nanoclaw_unexpected_table", table=table)
+            return 0
         if not db_path.exists():
             return 0
         try:
@@ -191,7 +202,8 @@ class SessionWatcher:
             ).fetchone()
             conn.close()
             return history_row["seq"] if history_row else row["seq"]
-        except sqlite3.DatabaseError:
+        except sqlite3.DatabaseError as exc:
+            log.warning("nanoclaw_prime_seq_failed", session=self.session_id, table=table, error=str(exc))
             return 0
 
 
@@ -235,7 +247,7 @@ class NanoclawTelemetrySource(TelemetrySource):
                 topo = self._emit_topology_snapshot()
                 if topo:
                     events.append(topo)
-            except Exception as exc:  # noqa: BLE001
+            except (sqlite3.DatabaseError, OSError, json.JSONDecodeError) as exc:
                 log.warning("nanoclaw_stream_error", error=str(exc))
             for event in events:
                 yield event
@@ -280,7 +292,7 @@ class NanoclawTelemetrySource(TelemetrySource):
                         started = datetime.fromisoformat(started_str)
                         elapsed = int((datetime.now(timezone.utc) - started).total_seconds() * 1000)
                     except (ValueError, TypeError):
-                        pass
+                        log.warning("tool_elapsed_parse_failed", session_id=session_id, started_str=started_str)
 
                 heartbeat = watcher.heartbeat_age_ms()
                 container_status = session_rec.container_status if session_rec else None
@@ -453,8 +465,8 @@ class NanoclawTelemetrySource(TelemetrySource):
                     parsed = json.loads(skills_raw)
                     if isinstance(parsed, list):
                         skills = parsed
-                except (json.JSONDecodeError, TypeError):
-                    pass
+                except (json.JSONDecodeError, TypeError) as exc:
+                    log.debug("agent_skills_parse_failed", agent_group_id=ag_id, error=str(exc))
             self._agent_configs[ag_id] = AgentConfig(
                 provider=row.get("provider"),
                 model=row.get("model"),
