@@ -427,7 +427,8 @@ class NanoclawTelemetrySource(TelemetrySource):
         events: List[TelemetryEvent] = []
         rows = self._query(
             self.central_db,
-            "SELECT action, title, status, agent_group_id, created_at FROM pending_approvals WHERE status = 'pending' ORDER BY created_at DESC LIMIT 20",
+            "SELECT action, title, status, agent_group_id, created_at FROM pending_approvals WHERE status = 'pending' AND created_at >= ? ORDER BY created_at DESC LIMIT 20",
+            (self._recent_cutoff(),),
         )
         for row in rows:
             action = row.get("action") or ""
@@ -769,17 +770,22 @@ class NanoclawTelemetrySource(TelemetrySource):
             return default
         return value if value is not None else default
 
-    def _query(self, db_path: Path, sql: str) -> Iterable[dict]:
+    def _query(self, db_path: Path, sql: str, params: tuple = ()) -> Iterable[dict]:
         """Execute a query and return rows as plain dicts (supports .get())."""
         try:
             conn = sqlite3.connect(db_path)
             conn.row_factory = sqlite3.Row
-            rows = [dict(row) for row in conn.execute(sql).fetchall()]
+            rows = [dict(row) for row in conn.execute(sql, params).fetchall()]
             conn.close()
             return rows
         except sqlite3.DatabaseError as exc:
             log.warning("nanoclaw_query_failed", sql=sql, error=str(exc))
             return []
+
+    @staticmethod
+    def _recent_cutoff(minutes: int = 5) -> str:
+        """Return ISO timestamp for N minutes ago."""
+        return (datetime.now(timezone.utc) - timedelta(minutes=minutes)).isoformat()
 
     def _summarize(self, raw: Optional[str]) -> str:
         if not raw:
