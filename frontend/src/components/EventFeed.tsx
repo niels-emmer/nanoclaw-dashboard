@@ -41,8 +41,10 @@ export function EventFeed({ events }: Props) {
     )
   }
 
-  // Filter out delivery signals — they're internal bookkeeping, not user-facing events
-  const visibleEvents = events.filter((e) => e.type !== 'delivery_update')
+  // Filter out system-level noise — delivery signals and tool progress updates
+  const visibleEvents = events.filter(
+    (e) => e.type !== 'delivery_update' && e.type !== 'activity_update',
+  )
 
   return (
     <div className="flex flex-col gap-3 overflow-y-auto min-h-0" role="log" aria-live="polite">
