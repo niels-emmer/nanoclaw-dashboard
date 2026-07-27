@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { config } from '../lib/config'
-import type { AgentSnapshot, ChatBubble, EdgePulse, TelemetryEvent } from '../lib/types'
-import { deriveAgentSnapshot } from '../lib/utils'
+import type { AgentSnapshot, ChatBubble, EdgePulse, TelemetryEvent, TopologyData } from '../lib/types'
+import { deriveAgentSnapshot, parseTopologyMeta } from '../lib/utils'
 
 export type ConnectionState = 'connecting' | 'connected' | 'reconnecting' | 'error'
 
@@ -15,6 +15,7 @@ export const useEventStream = () => {
   const [bubbles, setBubbles] = useState<ChatBubble[]>([])
   const [connectionState, setConnectionState] = useState<ConnectionState>('connecting')
   const [orchestratorId, setOrchestratorId] = useState(config.orchestratorId)
+  const [topology, setTopology] = useState<TopologyData | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
   const retryRef = useRef<number | null>(null)
   const orchestratorRef = useRef(config.orchestratorId)
@@ -64,22 +65,35 @@ export const useEventStream = () => {
         orchestratorRef.current = orchestratorMeta
         setOrchestratorId(orchestratorMeta)
       }
+
+      // Handle topology snapshots separately
+      if (event.type === 'topology_snapshot') {
+        const topo = parseTopologyMeta(event.payload.meta)
+        if (topo) setTopology(topo)
+        return
+      }
+
+      // Store event in history (skip topology_snapshot)
       setEvents((prev) => [event, ...prev].slice(0, config.maxEventHistory))
       setSnapshots((prev) => deriveAgentSnapshot(prev, event))
-      setEdges((prev) => {
-        const now = Date.now()
-        const next = [
-          {
-            id: event.id,
-            source: event.source,
-            target: event.target,
-            type: event.type,
-            timestamp: now,
-          },
-          ...prev.filter((edge) => now - edge.timestamp < EDGE_TTL_MS),
-        ]
-        return next.slice(0, 32)
-      })
+
+      // Edge pulses for question/response/activity events
+      if (event.type === 'question' || event.type === 'response' || event.type === 'activity_update') {
+        setEdges((prev) => {
+          const now = Date.now()
+          const next = [
+            {
+              id: event.id,
+              source: event.source,
+              target: event.target,
+              type: event.type,
+              timestamp: now,
+            },
+            ...prev.filter((edge) => now - edge.timestamp < EDGE_TTL_MS),
+          ]
+          return next.slice(0, 32)
+        })
+      }
 
       // Spawn a chat bubble anchored to the relevant agent
       const bubbleAgentId =
@@ -111,5 +125,5 @@ export const useEventStream = () => {
     return Object.values(snapshots).sort((a, b) => a.label.localeCompare(b.label))
   }, [snapshots])
 
-  return { agents, events, edges, bubbles, connectionState, orchestratorId }
+  return { agents, events, edges, bubbles, connectionState, orchestratorId, topology }
 }
