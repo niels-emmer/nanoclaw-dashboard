@@ -404,7 +404,6 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
           const fill = isOrchestrator ? ORCHESTRATOR_COLOR : colorForAgent(node.id)
           const iconName = isOrchestrator ? 'bot' : iconNameForAgent(node.id, node.label)
           const IconComponent = ICON_MAP[iconName]
-          const iconSize = node.radius * 1.15
           const agent = agentMap[node.id]
           const isSelected = selectedAgentId === node.id
 
@@ -465,13 +464,6 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
                 data-agent={node.id}
               />
 
-              {/* Icon */}
-              {IconComponent && (
-                <g transform={`translate(${-iconSize / 2}, ${-iconSize / 2})`}>
-                  <IconComponent size={iconSize} color="#fff" strokeWidth={1.5} />
-                </g>
-              )}
-
               {/* Liveness dot — bottom-right */}
               {agent && (
                 <circle
@@ -482,28 +474,34 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
                 />
               )}
 
-              {/* Skills dots — arc above label */}
-              {agent && agent.skills.length > 0 && agent.skills.slice(0, 8).map((skill, i) => {
-                const angle = -Math.PI + (i / Math.max(Math.min(agent.skills.length, 8) - 1, 1)) * Math.PI
-                const dotR = 3
-                const orbitR = node.radius + 14
-                return (
-                  <circle
-                    key={skill}
-                    cx={orbitR * Math.cos(angle)}
-                    cy={orbitR * Math.sin(angle)}
-                    r={dotR}
-                    fill={fill}
-                    opacity={0.5}
-                    className="skill-dot"
-                  />
-                )
-              })}
-
               {/* Label */}
               <text className="node-label" y={node.radius + 24} textAnchor="middle">
                 {node.label}
               </text>
+
+              {/* Small icon + skills row — below the label */}
+              <g transform={`translate(0, ${node.radius + 44})`}>
+                {/* Agent type icon — small, left of center */}
+                {IconComponent && (
+                  <g transform={`translate(${-8 - (agent && agent.skills.length > 0 ? agent.skills.slice(0, 6).length * 7 : 0)}, 0)`}>
+                    <IconComponent size={14} color="rgba(255,255,255,0.5)" strokeWidth={1.5} />
+                  </g>
+                )}
+                {/* Skills dots — compact row */}
+                {agent && agent.skills.length > 0 && agent.skills.slice(0, 6).map((skill, i) => (
+                  <circle
+                    key={skill}
+                    cx={-((agent.skills.slice(0, 6).length - 1) * 7) / 2 + i * 7}
+                    cy={0}
+                    r={3}
+                    fill={fill}
+                    opacity={0.5}
+                    className="skill-dot"
+                  >
+                    <title>{skill}</title>
+                  </circle>
+                ))}
+              </g>
             </g>
           )
         })}
