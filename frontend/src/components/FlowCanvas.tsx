@@ -28,7 +28,7 @@ import type { AgentSnapshot, AgentState, ChatBubble, EdgePulse, TopologyData } f
 import { colorForAgent, ORCHESTRATOR_COLOR, toolCategoryColor, formatElapsed } from '../lib/utils'
 
 const WIDTH = 1000
-const HEIGHT = 640
+const HEIGHT = 560
 const CENTER = { x: WIDTH / 2, y: HEIGHT / 2 }
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -149,34 +149,6 @@ function toolProgress(elapsedMs: number | null, timeoutMs: number | null): numbe
   return Math.min(elapsedMs / timeoutMs, 1)
 }
 
-/** Map a channel type to a display icon character. */
-function channelIcon(channelType: string): string {
-  const icons: Record<string, string> = {
-    telegram: '✈',
-    discord: '♯',
-    slack: '#',
-    whatsapp: '💬',
-    email: '✉',
-    github: '◆',
-    web: '🌐',
-  }
-  return icons[channelType] ?? '◉'
-}
-
-/** Map a channel type to a color. */
-function channelColor(channelType: string): string {
-  const colors: Record<string, string> = {
-    telegram: '#26a5e4',
-    discord: '#5865f2',
-    slack: '#4a154b',
-    whatsapp: '#25d366',
-    email: '#ea4335',
-    github: '#333',
-    web: '#6b7280',
-  }
-  return colors[channelType] ?? '#6b7280'
-}
-
 export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, onAgentClick, selectedAgentId }: FlowCanvasProps) {
   const [hoveredAgent, setHoveredAgent] = useState<string | null>(null)
 
@@ -274,21 +246,6 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
     })
   }, [topology, nodeMap])
 
-  // Channel edges from topology
-  const channelEdges = useMemo(() => {
-    if (!topology) return []
-    const result: Array<{ channelId: string; agentId: string }> = []
-    for (const ch of topology.channels) {
-      for (const agentRef of ch.agents) {
-        const agentId = agentRef.replace('agent:', '')
-        if (nodeMap[agentId]) {
-          result.push({ channelId: ch.id, agentId })
-        }
-      }
-    }
-    return result
-  }, [topology, nodeMap])
-
   const resolvedPulses = edges
     .map((edge) => {
       const start = nodeMap[edge.source]
@@ -317,25 +274,6 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
             <feDropShadow dx="0" dy="2" stdDeviation="4" floodOpacity="0.3" />
           </filter>
         </defs>
-
-        {/* Channel→agent edges */}
-        {channelEdges.map((ce) => {
-          const chIdx = topology?.channels.findIndex((c) => c.id === ce.channelId) ?? 0
-          const outerOrbit = Math.min(WIDTH, HEIGHT) / 2.0
-          const angle = ((chIdx + 0.5) / (topology?.channels.length ?? 1)) * Math.PI * 2 - Math.PI / 2
-          const cx = CENTER.x + outerOrbit * Math.cos(angle)
-          const cy = CENTER.y + outerOrbit * Math.sin(angle)
-          const agent = nodeMap[ce.agentId]
-          if (!agent) return null
-          return (
-            <line
-              key={`ch-${ce.channelId}-${ce.agentId}`}
-              x1={cx} y1={cy}
-              x2={agent.x} y2={agent.y}
-              className="edge-channel"
-            />
-          )
-        })}
 
         {/* Agent-to-agent edges */}
         {a2aEdges.map((edge) => {
@@ -379,22 +317,6 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
               className={`edge-pulse pulse-${pulse.type}`}
               x1={s.x} y1={s.y} x2={e.x} y2={e.y}
             />
-          )
-        })}
-
-        {/* Channel nodes (outer ring) */}
-        {topology?.channels.map((ch, idx) => {
-          const outerOrbit = Math.min(WIDTH, HEIGHT) / 2.0
-          const angle = ((idx + 0.5) / topology.channels.length) * Math.PI * 2 - Math.PI / 2
-          const cx = CENTER.x + outerOrbit * Math.cos(angle)
-          const cy = CENTER.y + outerOrbit * Math.sin(angle)
-          return (
-            <g key={ch.id} className="channel-node" transform={`translate(${cx}, ${cy})`}>
-              <circle r={18} fill={channelColor(ch.type)} opacity={0.7} stroke="#fff" strokeWidth={1.5} />
-              <text textAnchor="middle" dominantBaseline="central" className="channel-label" fontSize={14}>
-                {channelIcon(ch.type)}
-              </text>
-            </g>
           )
         })}
 

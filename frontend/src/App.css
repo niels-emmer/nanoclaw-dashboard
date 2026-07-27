@@ -223,26 +223,6 @@
   stroke-linecap: round;
 }
 
-/* ---- Channel edges ---- */
-
-.edge-channel {
-  stroke: rgba(255, 255, 255, 0.08);
-  stroke-width: 1;
-  stroke-dasharray: 2, 4;
-  stroke-linecap: round;
-}
-
-/* ---- Channel nodes ---- */
-
-.channel-node {
-  cursor: default;
-}
-.channel-label {
-  fill: #fff;
-  font-size: 14px;
-  pointer-events: none;
-}
-
 /* ---- Hover tooltip ---- */
 
 .tooltip-fo {
