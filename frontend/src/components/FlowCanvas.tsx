@@ -28,7 +28,7 @@ import type { AgentSnapshot, AgentState, ChatBubble, EdgePulse, TopologyData } f
 import { colorForAgent, ORCHESTRATOR_COLOR, toolCategoryColor, formatElapsed } from '../lib/utils'
 
 const WIDTH = 1000
-const HEIGHT = 560
+const HEIGHT = 640
 const CENTER = { x: WIDTH / 2, y: HEIGHT / 2 }
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -321,7 +321,7 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
         {/* Channel→agent edges */}
         {channelEdges.map((ce) => {
           const chIdx = topology?.channels.findIndex((c) => c.id === ce.channelId) ?? 0
-          const outerOrbit = Math.min(WIDTH, HEIGHT) / 2.1
+          const outerOrbit = Math.min(WIDTH, HEIGHT) / 2.0
           const angle = ((chIdx + 0.5) / (topology?.channels.length ?? 1)) * Math.PI * 2 - Math.PI / 2
           const cx = CENTER.x + outerOrbit * Math.cos(angle)
           const cy = CENTER.y + outerOrbit * Math.sin(angle)
@@ -384,7 +384,7 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
 
         {/* Channel nodes (outer ring) */}
         {topology?.channels.map((ch, idx) => {
-          const outerOrbit = Math.min(WIDTH, HEIGHT) / 2.1
+          const outerOrbit = Math.min(WIDTH, HEIGHT) / 2.0
           const angle = ((idx + 0.5) / topology.channels.length) * Math.PI * 2 - Math.PI / 2
           const cx = CENTER.x + outerOrbit * Math.cos(angle)
           const cy = CENTER.y + outerOrbit * Math.sin(angle)
@@ -404,6 +404,7 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
           const fill = isOrchestrator ? ORCHESTRATOR_COLOR : colorForAgent(node.id)
           const iconName = isOrchestrator ? 'bot' : iconNameForAgent(node.id, node.label)
           const IconComponent = ICON_MAP[iconName]
+          const iconSize = node.radius * 1.15
           const agent = agentMap[node.id]
           const isSelected = selectedAgentId === node.id
 
@@ -464,6 +465,13 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
                 data-agent={node.id}
               />
 
+              {/* Agent type icon — inside the circle */}
+              {IconComponent && (
+                <g transform={`translate(${-iconSize / 2}, ${-iconSize / 2})`}>
+                  <IconComponent size={iconSize} color="#fff" strokeWidth={1.5} />
+                </g>
+              )}
+
               {/* Liveness dot — bottom-right */}
               {agent && (
                 <circle
@@ -479,29 +487,23 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
                 {node.label}
               </text>
 
-              {/* Small icon + skills row — below the label */}
-              <g transform={`translate(0, ${node.radius + 44})`}>
-                {/* Agent type icon — small, left of center */}
-                {IconComponent && (
-                  <g transform={`translate(${-8 - (agent && agent.skills.length > 0 ? agent.skills.slice(0, 6).length * 7 : 0)}, 0)`}>
-                    <IconComponent size={14} color="rgba(255,255,255,0.5)" strokeWidth={1.5} />
-                  </g>
-                )}
-                {/* Skills dots — compact row */}
-                {agent && agent.skills.length > 0 && agent.skills.slice(0, 6).map((skill, i) => (
-                  <circle
-                    key={skill}
-                    cx={-((agent.skills.slice(0, 6).length - 1) * 7) / 2 + i * 7}
-                    cy={0}
-                    r={3}
-                    fill={fill}
-                    opacity={0.5}
-                    className="skill-dot"
-                  >
-                    <title>{skill}</title>
-                  </circle>
-                ))}
-              </g>
+              {/* Skills dots — compact row below the label */}
+              {agent && agent.skills.length > 0 && (
+                <g transform={`translate(0, ${node.radius + 42})`}>
+                  {agent.skills.slice(0, 6).map((skill, i) => (
+                    <circle
+                      key={skill}
+                      cx={-((Math.min(agent.skills.length, 6) - 1) * 7) / 2 + i * 7}
+                      cy={0}
+                      r={3}
+                      fill={fill}
+                      opacity={0.5}
+                    >
+                      <title>{skill}</title>
+                    </circle>
+                  ))}
+                </g>
+              )}
             </g>
           )
         })}
