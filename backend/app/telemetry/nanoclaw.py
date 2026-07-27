@@ -277,16 +277,52 @@ class NanoclawTelemetrySource(TelemetrySource):
     # Event collection
     # ------------------------------------------------------------------
 
+    _USEFUL_SYSTEM_ACTIONS = frozenset({
+        "create_agent", "schedule_task", "cancel_task",
+        "install_packages", "add_mcp_server", "reset_session",
+    })
+
+    @staticmethod
+    def _is_noise_message(row) -> bool:
+        """Return True if this message is internal noise (CLI commands, etc.)."""
+        # Handle both sqlite3.Row and dict
+        try:
+            kind = row["kind"]
+        except (KeyError, IndexError, TypeError):
+            return False
+        if kind in ("chat", "chat-sdk", "task", "webhook"):
+            return False
+        if kind == "system":
+            try:
+                raw = row["content"]
+            except (KeyError, IndexError):
+                return True
+            if raw:
+                try:
+                    data = json.loads(raw) if isinstance(raw, str) else raw
+                    if isinstance(data, dict):
+                        action = data.get("action") or data.get("payload", {}).get("action")
+                        if action in NanoclawTelemetrySource._USEFUL_SYSTEM_ACTIONS:
+                            return False
+                except (json.JSONDecodeError, TypeError, AttributeError):
+                    pass
+            return True  # system messages without a useful action are noise
+        return False  # unknown kinds pass through
+
     def _collect_events(self) -> List[TelemetryEvent]:
         events: List[TelemetryEvent] = []
         for session_id, watcher in list(self._sessions.items()):
             inbound_rows = watcher.fetch_inbound()
             for row in inbound_rows:
+                if self._is_noise_message(row):
+                    continue
                 event = self._build_question_event(watcher, row)
                 if event:
                     events.append(event)
             outbound_rows = watcher.fetch_outbound()
             for row in outbound_rows:
+                if self._is_noise_message(row):
+                    continue
                 event = self._build_response_event(watcher, row)
                 if event:
                     events.append(event)
