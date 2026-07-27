@@ -23,7 +23,8 @@ export function AgentGrid({ agents }: Props) {
     labelToId.set(a.label, a.id)
   }
 
-  // Resolve color for any entity ID or label
+  // Resolve color for any entity ID or label — handles the orchestrator's
+  // hardcoded color so blobs match the FlowCanvas orbit node.
   const colorForEntity = (id: string) =>
     id === 'orchestrator' ? ORCHESTRATOR_COLOR : colorForAgent(id)
 
