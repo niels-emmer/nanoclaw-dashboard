@@ -240,6 +240,10 @@ class NanoclawTelemetrySource(TelemetrySource):
         self._refresh_sessions()
 
     async def stream(self) -> AsyncIterator[TelemetryEvent]:
+        # Emit initial snapshot so the dashboard renders immediately
+        for event in self._build_initial_events():
+            yield event
+
         while True:
             events = []
             try:
@@ -393,12 +397,50 @@ class NanoclawTelemetrySource(TelemetrySource):
             ))
         return events
 
-    def _emit_topology_snapshot(self) -> Optional[TelemetryEvent]:
+    def _build_initial_events(self) -> List[TelemetryEvent]:
+        """Emit initial agent_status + topology events so the dashboard renders immediately."""
+        events: List[TelemetryEvent] = []
+        now = self._now()
+
+        # Agent status for every known agent group
+        for ag_id, group in self._agent_groups.items():
+            config = self._agent_configs.get(ag_id)
+            session_rec = next(
+                (s for s in self._session_map.values() if s.agent_group_id == ag_id),
+                None,
+            )
+            events.append(TelemetryEvent(
+                id=str(uuid4()),
+                timestamp=now,
+                type=EventType.AGENT_STATUS,
+                source=f"agent:{ag_id}",
+                target="orchestrator",
+                payload=EventPayload(
+                    summary=f"Agent {group.name} initialized",
+                    status="completed",
+                    provider=config.provider if config else None,
+                    model=config.model if config else None,
+                    skills=config.skills if config else None,
+                    container_status=session_rec.container_status if session_rec else None,
+                    heartbeat_age_ms=None,
+                ),
+                agent_state=AgentState.IDLE,
+            ))
+
+        # Topology snapshot (forced on first emission)
+        topo = self._emit_topology_snapshot(force=True)
+        if topo:
+            events.append(topo)
+
+        return events
+
+    def _emit_topology_snapshot(self, force: bool = False) -> Optional[TelemetryEvent]:
         """Emit topology_snapshot every ~30 ticks (~30s at 1s poll)."""
-        self._topology_tick += 1
-        if self._topology_tick < 30:
-            return None
-        self._topology_tick = 0
+        if not force:
+            self._topology_tick += 1
+            if self._topology_tick < 30:
+                return None
+            self._topology_tick = 0
 
         # Read messaging_group_agents for channel→agent routing
         channel_rows = self._query(
