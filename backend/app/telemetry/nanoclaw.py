@@ -8,7 +8,7 @@ import sqlite3
 import time
 from collections import OrderedDict
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, AsyncIterator, Dict, Iterable, List, Optional
 from uuid import uuid4
@@ -177,7 +177,12 @@ class SessionWatcher:
         try:
             conn = sqlite3.connect(db_path)
             conn.row_factory = sqlite3.Row
-            cursor = conn.execute(f"SELECT * FROM {table} WHERE seq > ? ORDER BY seq", (getattr(self, seq_attr),))
+            # Only fetch rows from the last 5 minutes (live stream, no history)
+            cutoff = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
+            cursor = conn.execute(
+                f"SELECT * FROM {table} WHERE seq > ? AND timestamp >= ? ORDER BY seq",
+                (getattr(self, seq_attr), cutoff),
+            )
             rows = cursor.fetchall()
             if rows:
                 setattr(self, seq_attr, rows[-1]["seq"])
