@@ -64,11 +64,12 @@ class Settings(BaseSettings):
     transport: Literal["websocket", "sse"] = Field(default="websocket")
     mock_agent_names: list[str] = Field(
         default_factory=lambda: [
-            "seer",
-            "navigator",
-            "scribe",
-            "smith",
-            "warden",
+            "researcher",
+            "coder",
+            "architect",
+            "editor",
+            "terminal",
+            "plotter",
         ]
     )
     base_interval_ms: int = Field(default=900, ge=100, le=5000)
