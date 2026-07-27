@@ -23,8 +23,8 @@ time — questions pulse outward, responses flow back — all on a single
 
 - **Orbit visualization** — SVG-based flow canvas with animated directional
   pulses (questions → agents, responses ← agents)
-- **Live agent grid** — per-agent name, state, message count, event-type prefix,
-  direction arrow, TO/FR tracking of all communication partners
+- **Live agent grid** — per-agent name, state, message count, liveness dot,
+  TO/FR tracking of all communication partners
 - **Event feed** — streaming log of the latest telemetry events
 - **Debug panel** — toggleable raw event inspector
 - **Mock mode out of the box** — works immediately without nanoclaw installed
@@ -277,16 +277,28 @@ mirrored in `frontend/src/lib/types.ts`):
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "timestamp": "2026-07-26T12:34:56.789Z",
-  "type": "question | response | agent_status",
-  "source": "orchestrator | agent:<name>",
-  "target": "agent:<name> | orchestrator",
+  "type": "question | response | agent_status | activity_update | delivery_update | approval_pending | topology_snapshot",
+  "source": "orchestrator | agent:<name> | channel:<type>",
+  "target": "agent:<name> | orchestrator | admin | dashboard",
   "payload": {
     "summary": "Delegating research task to seer",
     "duration_ms": 1200,
-    "status": "running | completed | error"
+    "status": "running | completed | error | processing | delivered | failed",
+    "current_tool": "string | null",
+    "tool_elapsed_ms": "int | null",
+    "tool_timeout_ms": "int | null",
+    "provider": "string | null",
+    "model": "string | null",
+    "skills": ["string"] | null,
+    "container_status": "string | null",
+    "heartbeat_age_ms": "int | null",
+    "retry_count": "int | null",
+    "delivery_status": "string | null",
+    "approval_action": "string | null",
+    "approval_title": "string | null"
   },
   "agent_state": "spinning_up | idle | running | error | null",
-  "schema_version": "0.1.0"
+  "schema_version": "0.2.0"
 }
 ```
 
