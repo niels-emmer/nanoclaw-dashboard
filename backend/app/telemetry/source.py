@@ -71,26 +71,10 @@ class MockTelemetrySource(TelemetrySource):
                     yield evt
                     await asyncio.sleep(self._sleep_seconds() * 0.3)
 
-            response_type = EventType.RESPONSE
-            duration = random.randint(200, 2000)
-            meta: dict[str, str] = {}
-            if agent in _AGENT_SKILLS:
-                meta["skills"] = ",".join(_AGENT_SKILLS[agent])
-            payload = EventPayload(
-                summary=f"Response from {agent}",
-                duration_ms=duration,
-                status="completed",
-                meta=meta or None,
-            )
-            response = TelemetryEvent(
-                id=str(uuid4()),
-                timestamp=_timestamp(),
-                type=response_type,
-                source=f"agent:{agent}",
-                target="orchestrator",
-                payload=payload,
-                agent_state=random.choice(list(AgentState)),
-            )
+            response = self._build_event(EventType.RESPONSE, source=f"agent:{agent}", target="orchestrator")
+            response.payload.duration_ms = random.randint(200, 2000)
+            response.payload.status = "completed"
+            response.agent_state = random.choice(list(AgentState))
             yield response
             await asyncio.sleep(self._sleep_seconds())
 
