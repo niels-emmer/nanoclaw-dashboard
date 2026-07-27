@@ -371,14 +371,14 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
                 )
               })()}
 
-              {/* State ring — pulse for running when no tool arc, spin for startup, glow for error */}
+              {/* State ring — pulse for running, spin for startup, glow for error */}
               {node.state === 'spinning_up' && (
                 <circle r={node.radius + 6} className="node-ring spinning_up" />
               )}
               {node.state === 'error' && (
                 <circle r={node.radius + 6} className="node-ring error" />
               )}
-              {node.state === 'running' && !agent?.currentTool && (
+              {node.state === 'running' && (
                 <circle r={node.radius + 6} className="node-ring running" style={{ stroke: fill }} />
               )}
 
