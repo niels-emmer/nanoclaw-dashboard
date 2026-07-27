@@ -418,6 +418,10 @@ class NanoclawTelemetrySource(TelemetrySource):
                 ))
         return events
 
+    _USEFUL_APPROVAL_ACTIONS = frozenset({
+        "install_packages", "add_mcp_server", "create_agent",
+    })
+
     def _collect_approval_events(self) -> List[TelemetryEvent]:
         """Emit approval_pending events from the pending_approvals table."""
         events: List[TelemetryEvent] = []
@@ -426,6 +430,9 @@ class NanoclawTelemetrySource(TelemetrySource):
             "SELECT action, title, status, agent_group_id, created_at FROM pending_approvals WHERE status = 'pending' ORDER BY created_at DESC LIMIT 20",
         )
         for row in rows:
+            action = row.get("action") or ""
+            if action not in self._USEFUL_APPROVAL_ACTIONS:
+                continue
             agent_id = row.get("agent_group_id") or self._orchestrator_id or "unknown"
             events.append(TelemetryEvent(
                 id=str(uuid4()),
