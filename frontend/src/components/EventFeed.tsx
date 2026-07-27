@@ -41,9 +41,12 @@ export function EventFeed({ events }: Props) {
     )
   }
 
+  // Filter out delivery signals — they're internal bookkeeping, not user-facing events
+  const visibleEvents = events.filter((e) => e.type !== 'delivery_update')
+
   return (
     <div className="flex flex-col gap-3 overflow-y-auto min-h-0" role="log" aria-live="polite">
-      {events.slice(0, 10).map((event) => {
+      {visibleEvents.slice(0, 10).map((event) => {
         const key = `${event.id}`
         const actorId = event.type === 'question' ? event.target : event.source
         const accent = colorForAgent(actorId)
