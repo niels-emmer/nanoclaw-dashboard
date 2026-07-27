@@ -23,7 +23,7 @@ Be respectful, constructive, and inclusive.
 If you have a question or want to discuss an idea before implementing, open
 a [Discussion] or join the community channels.
 
-[Discussion]: https://github.com/nanoclaw/nanoclaw-dashboard/discussions
+[Discussion]: https://github.com/niels-emmer/nanoclaw-dashboard/discussions
 
 ## How to Contribute
 
@@ -41,10 +41,10 @@ a [Discussion] or join the community channels.
 
 Open a [feature request] describing the problem you want to solve, why it
 matters, and any design sketches you have.
+[issue tracker]: https://github.com/niels-emmer/nanoclaw-dashboard/issues
 
-[issue tracker]: https://github.com/nanoclaw/nanoclaw-dashboard/issues
-[open a bug report]: https://github.com/nanoclaw/nanoclaw-dashboard/issues/new?template=bug_report.md
-[feature request]: https://github.com/nanoclaw/nanoclaw-dashboard/issues/new?template=feature_request.md
+[open a bug report]: https://github.com/niels-emmer/nanoclaw-dashboard/issues/new?template=bug_report.md
+[feature request]: https://github.com/niels-emmer/nanoclaw-dashboard/issues/new?template=feature_request.md
 
 ## Development Setup
 

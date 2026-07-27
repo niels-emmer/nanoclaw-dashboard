@@ -309,7 +309,7 @@ We welcome contributions! Please read:
 - [CONTRIBUTING.md](CONTRIBUTING.md) — setup, guidelines, PR process
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — community standards
 
-Check the [issue tracker](https://github.com/nanoclaw/nanoclaw-dashboard/issues)
+Check the [issue tracker](https://github.com/niels-emmer/nanoclaw-dashboard/issues)
 for open issues. For major changes, open an issue or discussion first to
 discuss what you'd like to change.
 
