@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { config } from '../lib/config'
 import type { AgentSnapshot, ChatBubble, EdgePulse, TelemetryEvent, TopologyData } from '../lib/types'
-import { deriveAgentSnapshot, parseTopologyMeta } from '../lib/utils'
+import { deriveAgentSnapshot, parseTopologyMeta, readableNodeLabel } from '../lib/utils'
 
 export type ConnectionState = 'connecting' | 'connected' | 'reconnecting' | 'error'
 
@@ -98,10 +98,22 @@ export const useEventStream = () => {
       // Spawn a chat bubble anchored to the relevant agent
       const bubbleAgentId =
         event.type === 'question' ? event.target : event.source
+      const sourceLabel = event.payload.meta?.sourceLabel ?? readableNodeLabel(event.source)
+      const targetLabel = event.payload.meta?.targetLabel ?? readableNodeLabel(event.target)
+      const summary = event.payload.summary
+      // Split summary into lines for display
+      const lines = summary
+        .split(/(?<=[.?!])\s+|(?<=\n)/)
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .slice(0, 3)
       const bubble: ChatBubble = {
         id: event.id,
         agentId: bubbleAgentId,
-        text: event.payload.summary,
+        fromLabel: sourceLabel,
+        toLabel: targetLabel,
+        text: summary,
+        lines: lines.length > 0 ? lines : [summary],
         type: event.type,
       }
       setBubbles((prev) => [bubble, ...prev].slice(0, 6))
