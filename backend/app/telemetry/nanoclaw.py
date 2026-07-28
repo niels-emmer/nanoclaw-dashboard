@@ -573,8 +573,8 @@ class NanoclawTelemetrySource(TelemetrySource):
                 except (json.JSONDecodeError, TypeError) as exc:
                     log.debug("agent_skills_parse_failed", agent_group_id=ag_id, error=str(exc))
             self._agent_configs[ag_id] = AgentConfig(
-                provider=row.get("provider"),
-                model=row.get("model"),
+                provider=row.get("provider") or "claude",
+                model=row.get("model") or "sonnet-5",
                 effort=row.get("effort"),
                 skills=skills,
                 assistant_name=row.get("assistant_name"),
