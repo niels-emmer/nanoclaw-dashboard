@@ -191,8 +191,10 @@ export const deriveAgentSnapshot = (
     const toolTimeoutMs = p.tool_timeout_ms ?? prevSnapshot?.toolTimeoutMs ?? null
     const containerStatus = p.container_status ?? prevSnapshot?.containerStatus ?? null
     const heartbeatAgeMs = p.heartbeat_age_ms ?? prevSnapshot?.heartbeatAgeMs ?? null
-    const provider = p.provider ?? prevSnapshot?.provider ?? null
-    const model = p.model ?? prevSnapshot?.model ?? null
+    // Provider/model belong to the primary agent (the one the event is about).
+    // Don't let a secondary agent's config leak onto other agents.
+    const provider = isPrimary ? (p.provider ?? prevSnapshot?.provider ?? null) : (prevSnapshot?.provider ?? null)
+    const model = isPrimary ? (p.model ?? prevSnapshot?.model ?? null) : (prevSnapshot?.model ?? null)
     const liveness = deriveLiveness(containerStatus, heartbeatAgeMs)
 
     // Track pending approvals
