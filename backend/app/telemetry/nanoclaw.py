@@ -177,10 +177,13 @@ class SessionWatcher:
         try:
             conn = sqlite3.connect(db_path)
             conn.row_factory = sqlite3.Row
-            # Only fetch rows from the last 5 minutes (live stream, no history)
-            cutoff = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
+            # Only fetch rows from the last 5 minutes (live stream, no history).
+            # Normalize timestamps via strftime to handle mixed formats:
+            #   messages_in  → ISO 8601  (2026-07-28T15:59:25.339Z)
+            #   messages_out → SQLite dt (2026-07-28 15:59:34)
+            cutoff = (datetime.now(timezone.utc) - timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S")
             cursor = conn.execute(
-                f"SELECT * FROM {table} WHERE seq > ? AND timestamp >= ? ORDER BY seq",
+                f"SELECT * FROM {table} WHERE seq > ? AND coalesce(strftime('%Y-%m-%d %H:%M:%S', timestamp), timestamp) >= ? ORDER BY seq",
                 (getattr(self, seq_attr), cutoff),
             )
             rows = cursor.fetchall()
