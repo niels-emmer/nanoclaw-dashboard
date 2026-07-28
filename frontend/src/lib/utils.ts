@@ -201,10 +201,21 @@ export const deriveAgentSnapshot = (
       pendingApprovals += 1
     }
 
+    // Only question/response events should transition running↔idle.
+    // activity_update processing_acks set agent_state=IDLE prematurely
+    // (the agent hasn't responded yet), which kills the pulsing ring.
+    const nextState = (() => {
+      if (!isPrimary) return prevSnapshot?.state ?? 'unknown'
+      if (event.type === 'question') return event.agent_state ?? prevSnapshot?.state ?? 'unknown'
+      if (event.type === 'response') return event.agent_state ?? prevSnapshot?.state ?? 'unknown'
+      // For all other event types, preserve the current state
+      return prevSnapshot?.state ?? 'unknown'
+    })()
+
     snapshot[id] = {
       id,
       label,
-      state: isPrimary ? (event.agent_state ?? prevSnapshot?.state ?? 'unknown') : (prevSnapshot?.state ?? 'unknown'),
+      state: nextState,
       lastSummary: isPrimary ? event.payload.summary : (prevSnapshot?.lastSummary ?? ''),
       lastEventType: isPrimary ? event.type : (prevSnapshot?.lastEventType ?? null),
       lastUpdated: isPrimary ? ts : (prevSnapshot?.lastUpdated ?? ts),
