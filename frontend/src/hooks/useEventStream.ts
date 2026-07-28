@@ -73,8 +73,10 @@ export const useEventStream = () => {
         return
       }
 
-      // Store event in history (skip topology_snapshot)
-      setEvents((prev) => [event, ...prev].slice(0, config.maxEventHistory))
+      // Store user-facing events in history (skip internal noise)
+      if (event.type !== 'delivery_update' && event.type !== 'activity_update') {
+        setEvents((prev) => [event, ...prev].slice(0, config.maxEventHistory))
+      }
       setSnapshots((prev) => deriveAgentSnapshot(prev, event))
 
       // Edge pulses for question/response/activity events
