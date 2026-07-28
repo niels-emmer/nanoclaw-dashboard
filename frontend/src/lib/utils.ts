@@ -180,7 +180,12 @@ export const deriveAgentSnapshot = (
 
     // New fields from payload
     const p = event.payload
-    const currentTool = p.current_tool ?? prevSnapshot?.currentTool ?? null
+    // Clear currentTool when a processing_ack signals completion without a new tool
+    const currentTool = (p.current_tool != null)
+      ? p.current_tool
+      : (event.type === 'activity_update' && p.status === 'completed')
+        ? null
+        : (prevSnapshot?.currentTool ?? null)
     const currentToolCategory = toolCategory(currentTool)
     const toolElapsedMs = p.tool_elapsed_ms ?? prevSnapshot?.toolElapsedMs ?? null
     const toolTimeoutMs = p.tool_timeout_ms ?? prevSnapshot?.toolTimeoutMs ?? null
