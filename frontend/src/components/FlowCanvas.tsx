@@ -19,6 +19,7 @@ import {
   PenLine,
   Search,
   Shield,
+  Terminal,
   Wallet,
   Wrench,
 } from 'lucide-react'
@@ -53,6 +54,15 @@ const ICON_MAP: Record<string, LucideIcon> = {
   shield: Shield,
   wallet: Wallet,
   wrench: Wrench,
+}
+
+const TOOL_CATEGORY_ICON: Record<string, LucideIcon> = {
+  executing: Terminal,
+  reading: Search,
+  writing: PenLine,
+  network: Globe,
+  waiting: Clock,
+  thinking: BrainCircuit,
 }
 
 const FALLBACK_ICON_NAME = 'bot'
@@ -147,6 +157,17 @@ function iconNameForAgent(nodeId: string, label: string): string {
 function toolProgress(elapsedMs: number | null, timeoutMs: number | null): number {
   if (!elapsedMs || !timeoutMs || timeoutMs <= 0) return 0.125 // subtle arc when no timeout info
   return Math.min(elapsedMs / timeoutMs, 1)
+}
+
+/** Build a stroke-dasharray string that shows dotted progress along a circumference. */
+function dottedProgressDasharray(circumference: number, progress: number, dotLen = 5, gapLen = 7): string {
+  const patternLen = dotLen + gapLen
+  const activeLen = circumference * Math.min(progress, 1)
+  const numDots = Math.floor(activeLen / patternLen)
+  const remainder = activeLen - numDots * patternLen
+  const dots = Array.from({ length: numDots }, () => `${dotLen} ${gapLen}`).join(' ')
+  const skip = circumference - activeLen
+  return `${dots}${remainder > 0 ? ` ${remainder}` : ''} ${skip}`
 }
 
 export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, onAgentClick, selectedAgentId }: FlowCanvasProps) {
@@ -350,24 +371,42 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
                 <circle r={node.radius + 8} fill="url(#orchestratorGlow)" />
               )}
 
-              {/* Tool indicator arc — uses stroke-dashoffset for smooth growth */}
+              {/* Tool indicator arc — dotted, thick, with category icon */}
               {agent?.currentTool && (() => {
-                const arcR = node.radius + 6
+                const arcR = node.radius + 8
                 const circ = 2 * Math.PI * arcR
                 const progress = toolProgress(agent.toolElapsedMs, agent.toolTimeoutMs)
+                const catColor = toolCategoryColor(agent.currentToolCategory)
+                const ToolIcon = TOOL_CATEGORY_ICON[agent.currentToolCategory] ?? BrainCircuit
                 return (
-                  <circle
-                    r={arcR}
-                    fill="none"
-                    className={`tool-arc tool-${agent.currentToolCategory}`}
-                    style={{
-                      stroke: toolCategoryColor(agent.currentToolCategory),
-                      strokeDasharray: circ,
-                      strokeDashoffset: circ * (1 - progress),
-                      transform: 'rotate(-90deg)',
-                      transformOrigin: '0 0',
-                    }}
-                  />
+                  <>
+                    {/* Faint dotted background ring */}
+                    <circle
+                      r={arcR}
+                      fill="none"
+                      stroke={catColor}
+                      strokeWidth={5}
+                      strokeDasharray="5 7"
+                      opacity={0.12}
+                      transform="rotate(-90deg)"
+                      style={{ transformOrigin: '0 0' }}
+                    />
+                    {/* Active dotted progress arc */}
+                    <circle
+                      r={arcR}
+                      fill="none"
+                      stroke={catColor}
+                      strokeWidth={5}
+                      strokeLinecap="round"
+                      strokeDasharray={dottedProgressDasharray(circ, progress)}
+                      transform="rotate(-90deg)"
+                      style={{ transformOrigin: '0 0', transition: 'stroke-dasharray 0.8s linear' }}
+                    />
+                    {/* Tool category icon at top of arc */}
+                    <g transform={`translate(0, ${-(arcR + 14)})`}>
+                      <ToolIcon size={14} color={catColor} strokeWidth={2} />
+                    </g>
+                  </>
                 )
               })()}
 
@@ -397,13 +436,15 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
                 </g>
               )}
 
-              {/* Liveness dot — bottom-right */}
-              {agent && (
+              {/* Liveness ring — dashed inner circle when stale/dead, hidden when alive */}
+              {agent && (agent.liveness === 'stale' || agent.liveness === 'dead') && (
                 <circle
-                  cx={node.radius * 0.55}
-                  cy={node.radius * 0.55}
-                  r={5}
-                  className={`liveness-dot ${agent.liveness}`}
+                  r={node.radius * 0.35}
+                  fill="none"
+                  stroke={agent.liveness === 'stale' ? '#eab308' : '#ef4444'}
+                  strokeWidth={3}
+                  strokeDasharray="5 5"
+                  opacity={0.8}
                 />
               )}
 

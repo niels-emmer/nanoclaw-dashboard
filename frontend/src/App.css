@@ -185,12 +185,9 @@
 
 /* ---- Tool indicator arc ---- */
 
-.tool-arc {
+.tool-arc-bg {
   fill: none;
-  stroke-width: 3;
-  stroke-linecap: round;
-  filter: drop-shadow(0 0 6px currentColor);
-  transition: stroke-dashoffset 1s linear;
+  stroke-width: 5;
 }
 
 /* ---- Liveness dot ---- */
@@ -396,6 +393,7 @@
   -webkit-backdrop-filter: blur(8px);
   border: 3px solid #fff;
   border-radius: 12px;
+  font-family: var(--sans);
   font-size: 17px;
   line-height: 1.4;
   color: rgba(255, 255, 255, 0.92);
