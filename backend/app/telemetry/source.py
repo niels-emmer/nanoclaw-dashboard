@@ -156,7 +156,6 @@ class MockTelemetrySource(TelemetrySource):
         self._agents = agent_names
         self._interval = base_interval_ms
         self._jitter = jitter_ms
-        self._tool_states: dict[str, dict] = {}  # agent -> {tool, started_at}
         self._topology_timer = 0.0
         self._idle_agents: set[str] = set()
 

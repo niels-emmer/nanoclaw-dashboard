@@ -42,6 +42,7 @@ async def test_mock_source_emits_new_event_types():
     assert EventType.RESPONSE in seen_types
     assert EventType.ACTIVITY_UPDATE in seen_types
     assert EventType.DELIVERY_UPDATE in seen_types
+    assert EventType.APPROVAL_PENDING in seen_types
     assert EventType.TOPOLOGY_SNAPSHOT in seen_types
 
 
@@ -63,7 +64,3 @@ async def test_mock_activity_update_has_tool_fields():
             return
 
     pytest.fail("Never got an ACTIVITY_UPDATE event")
-
-
-async def anext(ait):
-    return await ait.__anext__()
