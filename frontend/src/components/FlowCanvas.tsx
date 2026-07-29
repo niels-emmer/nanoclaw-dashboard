@@ -402,9 +402,10 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
                       transform="rotate(-90deg)"
                       style={{ transformOrigin: '0 0', transition: 'stroke-dasharray 0.8s linear' }}
                     />
-                    {/* Tool category icon at top of arc */}
-                    <g transform={`translate(0, ${-(arcR + 14)})`}>
-                      <ToolIcon size={14} color={catColor} strokeWidth={2} />
+                    {/* Tool category badge on the arc ring */}
+                    <g transform={`translate(0, ${-arcR})`}>
+                      <circle r={11} fill={catColor} stroke="#fff" strokeWidth={2} />
+                      <ToolIcon size={16} color="#fff" strokeWidth={2} />
                     </g>
                   </>
                 )
