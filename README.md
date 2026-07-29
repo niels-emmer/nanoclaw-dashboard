@@ -22,9 +22,11 @@ time — questions pulse outward, responses flow back — all on a single
 ## Features
 
 - **Orbit visualization** — SVG-based flow canvas with animated directional
-  pulses (questions → agents, responses ← agents)
-- **Live agent grid** — per-agent name, state, message count, liveness dot,
-  TO/FR tracking of all communication partners
+  pulses (questions → agents, responses ← agents), tool badges, and
+  liveness rings
+- **Live agent grid** — per-agent name, state, message count, pulsing
+  liveness indicator, error count, model/provider, TO/FR tracking of all
+  communication partners
 - **Event feed** — streaming log of the latest telemetry events
 - **Debug panel** — toggleable raw event inspector
 - **Mock mode out of the box** — works immediately without nanoclaw installed
