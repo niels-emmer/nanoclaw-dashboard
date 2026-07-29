@@ -153,23 +153,6 @@ function iconNameForAgent(nodeId: string, label: string): string {
   return FALLBACK_ICON_NAME
 }
 
-/** Compute tool progress fraction (0-1) based on elapsed vs timeout. */
-function toolProgress(elapsedMs: number | null, timeoutMs: number | null): number {
-  if (!elapsedMs || !timeoutMs || timeoutMs <= 0) return 0.125 // subtle arc when no timeout info
-  return Math.min(elapsedMs / timeoutMs, 1)
-}
-
-/** Build a stroke-dasharray string that shows dotted progress along a circumference. */
-function dottedProgressDasharray(circumference: number, progress: number, dotLen = 5, gapLen = 7): string {
-  const patternLen = dotLen + gapLen
-  const activeLen = circumference * Math.min(progress, 1)
-  const numDots = Math.floor(activeLen / patternLen)
-  const remainder = activeLen - numDots * patternLen
-  const dots = Array.from({ length: numDots }, () => `${dotLen} ${gapLen}`).join(' ')
-  const skip = circumference - activeLen
-  return `${dots}${remainder > 0 ? ` ${remainder}` : ''} ${skip}`
-}
-
 export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, onAgentClick, selectedAgentId }: FlowCanvasProps) {
   const [hoveredAgent, setHoveredAgent] = useState<string | null>(null)
 
@@ -371,46 +354,6 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
                 <circle r={node.radius + 8} fill="url(#orchestratorGlow)" />
               )}
 
-              {/* Tool indicator arc — dotted, thick, with category icon */}
-              {agent?.currentTool && (() => {
-                const arcR = node.radius + 8
-                const circ = 2 * Math.PI * arcR
-                const progress = toolProgress(agent.toolElapsedMs, agent.toolTimeoutMs)
-                const catColor = toolCategoryColor(agent.currentToolCategory)
-                const ToolIcon = TOOL_CATEGORY_ICON[agent.currentToolCategory] ?? BrainCircuit
-                return (
-                  <>
-                    {/* Faint dotted background ring */}
-                    <circle
-                      r={arcR}
-                      fill="none"
-                      stroke={catColor}
-                      strokeWidth={5}
-                      strokeDasharray="5 7"
-                      opacity={0.12}
-                      transform="rotate(-90deg)"
-                      style={{ transformOrigin: '0 0' }}
-                    />
-                    {/* Active dotted progress arc */}
-                    <circle
-                      r={arcR}
-                      fill="none"
-                      stroke={catColor}
-                      strokeWidth={5}
-                      strokeLinecap="round"
-                      strokeDasharray={dottedProgressDasharray(circ, progress)}
-                      transform="rotate(-90deg)"
-                      style={{ transformOrigin: '0 0', transition: 'stroke-dasharray 0.8s linear' }}
-                    />
-                    {/* Tool category badge on the arc ring */}
-                    <g transform={`translate(0, ${-arcR})`}>
-                      <circle r={11} fill={catColor} stroke="#fff" strokeWidth={2} />
-                      <ToolIcon size={16} color="#fff" strokeWidth={2} />
-                    </g>
-                  </>
-                )
-              })()}
-
               {/* State ring — pulse for running, spin for startup, glow for error */}
               {node.state === 'spinning_up' && (
                 <circle r={node.radius + 6} className="node-ring spinning_up" />
@@ -454,23 +397,20 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
                 {node.label}
               </text>
 
-              {/* Skills dots — compact row below the label */}
-              {agent && agent.skills.length > 0 && (
-                <g transform={`translate(0, ${node.radius + 42})`}>
-                  {agent.skills.slice(0, 6).map((skill, i) => (
-                    <circle
-                      key={skill}
-                      cx={-((Math.min(agent.skills.length, 6) - 1) * 7) / 2 + i * 7}
-                      cy={0}
-                      r={3}
-                      fill={fill}
-                      opacity={0.5}
-                    >
-                      <title>{skill}</title>
-                    </circle>
-                  ))}
-                </g>
-              )}
+              {/* Tool badge — below label, only when a tool is active */}
+              {agent?.currentTool && (() => {
+                const ToolIcon = TOOL_CATEGORY_ICON[agent.currentToolCategory] ?? BrainCircuit
+                const catColor = toolCategoryColor(agent.currentToolCategory)
+                const iconSize = 11
+                return (
+                  <g transform={`translate(0, ${node.radius + 42})`}>
+                    <circle r={9} fill={catColor} stroke="#fff" strokeWidth={1.5} />
+                    <g transform={`translate(${-iconSize / 2}, ${-iconSize / 2})`}>
+                      <ToolIcon size={iconSize} color="#fff" strokeWidth={2} />
+                    </g>
+                  </g>
+                )
+              })()}
             </g>
           )
         })}

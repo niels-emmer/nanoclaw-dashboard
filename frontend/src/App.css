@@ -183,13 +183,6 @@
   stroke-width: 1;
 }
 
-/* ---- Tool indicator arc ---- */
-
-.tool-arc-bg {
-  fill: none;
-  stroke-width: 5;
-}
-
 /* ---- Liveness dot ---- */
 
 .liveness-dot {
