@@ -204,6 +204,21 @@
 .liveness-dot.dead { fill: #ef4444; }
 .liveness-dot.unknown { fill: #6b7280; }
 
+.liveness-pulse {
+  animation: liveness-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes liveness-pulse {
+  0%, 100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 2px currentColor);
+  }
+  50% {
+    opacity: 0.5;
+    filter: drop-shadow(0 0 6px currentColor);
+  }
+}
+
 /* ---- Skills dots ---- */
 
 .skill-dot {

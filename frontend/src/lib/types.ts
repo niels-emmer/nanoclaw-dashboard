@@ -70,6 +70,7 @@ export interface AgentSnapshot {
   model: string | null
   uptimeMs: number | null
   pendingApprovals: number
+  errorCount: number
 }
 
 export interface EdgePulse {

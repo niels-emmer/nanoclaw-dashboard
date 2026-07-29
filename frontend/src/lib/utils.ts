@@ -203,6 +203,12 @@ export const deriveAgentSnapshot = (
       pendingApprovals += 1
     }
 
+    // Track error count
+    let errorCount = prevSnapshot?.errorCount ?? 0
+    if (isPrimary && (event.agent_state === 'error' || event.payload.status === 'error')) {
+      errorCount += 1
+    }
+
     // Only question/response events should transition running↔idle.
     // activity_update processing_acks set agent_state=IDLE prematurely
     // (the agent hasn't responded yet), which kills the pulsing ring.
@@ -240,6 +246,7 @@ export const deriveAgentSnapshot = (
       model,
       uptimeMs: heartbeatAgeMs ?? prevSnapshot?.uptimeMs ?? null,
       pendingApprovals,
+      errorCount,
     }
   }
 
