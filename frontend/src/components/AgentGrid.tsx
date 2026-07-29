@@ -40,33 +40,48 @@ export function AgentGrid({ agents }: Props) {
     <div className="flex flex-col gap-3 overflow-y-auto flex-1 pr-1">
       {sorted.map((agent) => {
         const tone = colorForAgent(agent.id)
+        const isActive = agent.state === 'running' && agent.liveness === 'alive'
+
         return (
           <Card key={agent.id} className="flex flex-col gap-1.5 p-3" style={{ borderColor: `${tone}40` }}>
-            <Card.Header className="flex flex-row justify-between items-center p-0">
-              <div className="flex items-baseline gap-2 min-w-0">
-                <Card.Title className="text-base capitalize truncate">{agent.label}</Card.Title>
-                {/* Liveness dot */}
-                <span className={`inline-block w-2 h-2 rounded-full liveness-dot ${agent.liveness}`} />
-                {/* Model/provider badge */}
-                {agent.provider && (
-                  <Chip size="sm" variant="soft" color="accent" className="text-[0.55rem] font-mono shrink-0">
-                    {agent.provider}/{agent.model ?? 'default'}
+            {/* Line 1: liveness dot + name | error count + message count */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span
+                  className={`inline-block w-2.5 h-2.5 rounded-full shrink-0 liveness-dot ${agent.liveness} ${isActive ? 'liveness-pulse' : ''}`}
+                />
+                <span className="text-base capitalize truncate font-semibold">{agent.label}</span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {agent.errorCount > 0 && (
+                  <Chip size="sm" variant="primary" color="danger" className="text-[0.55rem]">
+                    {agent.errorCount} err
                   </Chip>
                 )}
-                <Chip size="sm" variant="soft" color="accent" className="text-[0.65rem] shrink-0">
-                  {stateCopy[agent.state] ?? agent.state}
+                <Chip size="sm" variant="secondary" color="accent" className="shrink-0 text-[0.65rem]">
+                  {agent.activityCount} msg
                 </Chip>
               </div>
-              <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                {/* Pending approvals badge */}
-                {agent.pendingApprovals > 0 && (
-                  <Chip size="sm" variant="primary" color="danger" className="text-[0.55rem]">
-                    {agent.pendingApprovals}
-                  </Chip>
-                )}
-                <Chip size="sm" variant="secondary" color="accent" className="shrink-0">{agent.activityCount}</Chip>
-              </div>
-            </Card.Header>
+            </div>
+
+            {/* Line 2: model/provider */}
+            <div className="flex items-center gap-2">
+              {agent.provider ? (
+                <Chip size="sm" variant="soft" color="accent" className="text-[0.55rem] font-mono">
+                  {agent.provider}/{agent.model ?? 'default'}
+                </Chip>
+              ) : (
+                <span className="text-[0.55rem] text-muted font-mono">—/—</span>
+              )}
+              <Chip size="sm" variant="soft" color="accent" className="text-[0.6rem]">
+                {stateCopy[agent.state] ?? agent.state}
+              </Chip>
+              {agent.pendingApprovals > 0 && (
+                <Chip size="sm" variant="primary" color="warning" className="text-[0.55rem]">
+                  {agent.pendingApprovals} pending
+                </Chip>
+              )}
+            </div>
 
             {agent.outboundTargets.length > 0 && (
               <div className="flex flex-wrap items-center gap-1 text-xs">
