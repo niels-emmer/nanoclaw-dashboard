@@ -8,7 +8,7 @@ The dashboard is split into a FastAPI WebSocket service (`/backend`) and a Vite 
 |--------|----------------|
 | `app/config.py` | Centralizes runtime settings via `pydantic-settings` (env prefix `NANOCLAW_`). Controls transport type, mock agent list, pacing, and client limits. |
 | `app/telemetry/models.py` | Canonical event schema shared with the frontend (type, payload, agent state, schema version). |
-| `app/telemetry/source.py` | Declares `TelemetrySource` interface + `MockTelemetrySource` generator that emits alternating question/response events with jittered delays. |
+| `app/telemetry/source.py` | Declares `TelemetrySource` interface + `MockTelemetrySource` generator that emits realistic orchestrator/sub-agent traffic: question/response pairs with agent-to-agent conversations, varied agent states (idle/running/error), tool activity updates, delivery signals, approval requests, and topology snapshots. |
 | `app/telemetry/nanoclaw.py` | `NanoclawTelemetrySource` tails the Nanoclaw SQLite databases (central `v2.db` + session `inbound/outbound.db`) and emits live orchestrator/sub-agent events when enabled. |
 | `app/events.py` | `EventHub` tracks connected WebSocket clients with backpressure (max clients) and broadcasts JSON payloads. |
 | `app/main.py` | FastAPI app factory with `/health` and `/ws/events`. Lifespan task drives the telemetry loop and pushes events into `EventHub`. |
@@ -56,7 +56,7 @@ Additional fields on all event types:
 | Area | Key files | Notes |
 |------|-----------|-------|
 | Event ingestion | `src/hooks/useEventStream.ts`, `src/lib/config.ts`, `src/lib/types.ts`, `src/lib/utils.ts` | Custom hook manages the WebSocket connection (auto-reconnect, edge TTLs, snapshots). Config infers backend URL, with overrides via `VITE_BACKEND_WS_URL`. |
-| Visualization | `src/components/FlowCanvas.tsx` | SVG orbit layout with orchestrator at center, deterministic spokes for agents, animated edge pulses, tool indicator arcs (color-coded by category), liveness dots, skills dots, channel nodes on outer ring, agent-to-agent edges, hover tooltips, and click-to-filter. |
+| Visualization | `src/components/FlowCanvas.tsx` | SVG orbit layout with orchestrator at center, deterministic spokes for agents, animated edge pulses, tool badge (colored circle with white icon below label when tool active), liveness ring (dashed inner circle when stale/dead), agent-to-agent edges, hover tooltips, and click-to-filter. |
 | Details panes | `AgentGrid.tsx`, `EventFeed.tsx`, `DebugPanel.tsx`, `ConnectionStatus.tsx` | Present agent states, recent events, raw payloads, and connection indicators with purposeful typography and color tokens. |
 | Shell | `App.tsx`, `App.css`, `index.css` | Hero masthead with capability Chip rail + streaming legend feeds into a fixed two-column layout (orbit canvas + insight grid). Uses HeroUI Card/Chip/Typography components on Tailwind CSS v4. |
 
@@ -106,7 +106,7 @@ When new telemetry attributes are required, bump `schema_version`, update both t
 ## Configuration + environment
 
 - Backend config derives from env vars prefixed with `NANOCLAW_` (see `config.py`). Example knobs: `NANOCLAW_MOCK_AGENT_NAMES`, `NANOCLAW_BASE_INTERVAL_MS`, `NANOCLAW_MAX_CLIENTS`.
-- Frontend config relies on Vite env vars: `VITE_BACKEND_WS_URL`, `VITE_EVENT_HISTORY` (default 50).
+- Frontend config relies on Vite env vars: `VITE_BACKEND_WS_URL`, `VITE_EVENT_HISTORY` (default 200).
 - Node `20.19.0` is required; we vendor the tarball under `.tools/node` for deterministic teams.
 
 ## Nanoclaw integration

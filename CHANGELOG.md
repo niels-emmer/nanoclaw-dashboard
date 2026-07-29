@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.1.0] — 2026-07-29
+
+### Added
+
+- **Realistic mock telemetry** — agent-specific task pools with realistic summaries and responses, agent-to-agent conversations (architect→coder, researcher→editor, etc.), varied agent states (idle/running/error), and realistic error messages. (#24649b8)
+- **Error count tracking** — per-agent error counter in `AgentSnapshot`, displayed as a badge in the agent grid. (#9754e4d)
+- **Pulsing liveness dot** — green dot pulses in agent grid when agent is both running and alive. (#9754e4d)
+
+### Changed
+
+- **Agent grid card layout** — split crowded single-line header into two lines: line 1 (pulsing liveness dot + name | error count + message count), line 2 (model/provider + state + pending approvals). (#9754e4d)
+- **Tool arc replaced with badge** — removed dotted tool indicator rings around agent nodes; replaced with a small colored circle + white tool category icon below the agent label when a tool is active. (#e7885f5, #000ac51)
+- **Liveness dot replaced with ring** — removed bottom-right liveness dot on canvas nodes; replaced with a dashed inner circle only when stale (amber) or dead (red), hidden when alive. (#e7885f5)
+- **Skills dots removed** — removed the row of small dots below agent labels on the canvas. (#24649b8)
+- **Chat bubble font** — added explicit `font-family: var(--sans)` to fix serif fallback in SVG `foreignObject`. (#e7885f5)
+
+### Fixed
+
+- **Liveness dot not visible** — added `background` alongside `fill` so the dot renders on HTML `<span>` elements (not just SVG). (#1044732)
+- **Tool icon not centered** — added centering offset to tool badge icon. (#24649b8)
+
+### Documentation
+
+- Architecture docs updated for mock telemetry, FlowCanvas features, and event history default. (#24649b8)
+- Screenshot replaced. (#24649b8)
+- Changelog updated for v1.1.0.
+
 ## [1.0.0] — 2026-07-27
 
 ### Added
