@@ -199,10 +199,10 @@
   stroke: #fff;
   stroke-width: 1.5;
 }
-.liveness-dot.alive { fill: #22c55e; }
-.liveness-dot.stale { fill: #eab308; }
-.liveness-dot.dead { fill: #ef4444; }
-.liveness-dot.unknown { fill: #6b7280; }
+.liveness-dot.alive { fill: #22c55e; background: #22c55e; }
+.liveness-dot.stale { fill: #eab308; background: #eab308; }
+.liveness-dot.dead { fill: #ef4444; background: #ef4444; }
+.liveness-dot.unknown { fill: #6b7280; background: #6b7280; }
 
 .liveness-pulse {
   animation: liveness-pulse 1.6s ease-in-out infinite;
