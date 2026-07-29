@@ -380,10 +380,10 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
                 </g>
               )}
 
-              {/* Liveness ring — dashed inner circle when stale/dead, hidden when alive */}
+              {/* Liveness ring — dashed ring just inside the agent circle when stale/dead, hidden when alive */}
               {agent && (agent.liveness === 'stale' || agent.liveness === 'dead') && (
                 <circle
-                  r={node.radius * 0.35}
+                  r={node.radius - 4}
                   fill="none"
                   stroke={agent.liveness === 'stale' ? '#eab308' : '#ef4444'}
                   strokeWidth={3}
