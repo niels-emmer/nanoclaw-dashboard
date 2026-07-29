@@ -662,7 +662,7 @@ class NanoclawTelemetrySource(TelemetrySource):
                 provider=config.provider if config else None,
                 model=config.model if config else None,
                 skills=config.skills if config else None,
-                container_status=self._session_map.get(watcher.session_id, SessionRecord("", "", Path())).container_status,
+                container_status=self._session_map.get(watcher.session_id).container_status if watcher.session_id in self._session_map else None,
                 heartbeat_age_ms=watcher.heartbeat_age_ms(),
             ),
             agent_state=AgentState.RUNNING,
@@ -721,7 +721,7 @@ class NanoclawTelemetrySource(TelemetrySource):
             provider=config.provider if config else None,
             model=config.model if config else None,
             skills=config.skills if config else None,
-            container_status=self._session_map.get(watcher.session_id, SessionRecord("", "", Path())).container_status,
+            container_status=self._session_map.get(watcher.session_id).container_status if watcher.session_id in self._session_map else None,
             heartbeat_age_ms=watcher.heartbeat_age_ms(),
         )
 
