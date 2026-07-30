@@ -65,3 +65,21 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - Canvas visual density increased but all additions replace or augment existing elements (no new panels).
   - Token usage/cost data is not available from nanoclaw's DB schema — would require upstream changes.
   - Bumped `schema_version` from `0.1.0` to `0.2.0`.
+
+## 0008 – WebSocket event ring buffer
+- **Status**: Accepted (2026-07-29)
+- **Context**: On page refresh or client connect, the dashboard started empty and waited for live events to arrive. Operators needed immediate historical context without adding a separate REST fetching step.
+- **Decision**: Implement a bounded ring buffer (`deque(maxlen=event_buffer_size)`) inside `EventHub`. Every broadcast event is stored in the buffer. Upon client WebSocket registration, `EventHub` flushes the buffered events to the new client before live streaming begins.
+- **Consequences**:
+  - Eliminates initial empty state on dashboard refresh; dashboard populates instantly.
+  - Configured via `NANOCLAW_EVENT_BUFFER_SIZE` (default 100, max 1000). Memory impact is negligible (~50 KB for 100 events).
+  - Works identically for mock and real Nanoclaw telemetry sources without frontend contract changes.
+
+## 0009 – Canvas agent decay & brand color system
+- **Status**: Accepted (2026-07-29)
+- **Context**: As dozens of agents accumulate on the orbit canvas over long runs, the canvas becomes visually cluttered. Also, entity badges and orbit nodes needed consistent brand colors across canvas and grid.
+- **Decision**: Implement linear opacity decay on `FlowCanvas` based on `agent.lastUpdated` (`VITE_AGENT_SOLID_MINUTES` = 10m solid, `VITE_AGENT_FADE_MINUTES` = 60m linear fade, auto-removed from layout at 70m). Any new event resets `lastUpdated` to `Date.now()`. Implement brand-pinned colors for channels (`whatsapp`: `#25D366`, `matrix`/`element`: `#0DBD8B`, `slack`: `#e01e5a`, `discord`: `#5865f2`, `telegram`: `#229ed9`) and sub-agents, with normalized string key hashing for unpinned agents.
+- **Consequences**:
+  - Orbit canvas remains clean and readable on 1080p displays during extended operations.
+  - Agent color blobs in the AgentGrid match orbit canvas nodes 100% deterministically.
+  - Decay timeouts are configurable via frontend environment variables.
