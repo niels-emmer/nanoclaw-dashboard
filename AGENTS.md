@@ -100,7 +100,7 @@ nanoclaw-dashboard/
 ├── scripts/install_dashboard.sh
 ├── .github/                       # Issue/PR templates, CODEOWNERS
 ├── docker-compose.yml
-└── .env                           # Backend/frontend defaults
+└── .env.example                   # Environment template (copy to .env)
 ```
 
 ## Defaults & port mappings

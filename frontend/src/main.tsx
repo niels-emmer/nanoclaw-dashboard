@@ -4,7 +4,7 @@ import { useTheme } from '@heroui/react'
 import './index.css'
 import App from './App.tsx'
 
-function Root() {
+export function Root() {
   useTheme('dark')
   return (
     <StrictMode>
