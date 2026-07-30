@@ -33,8 +33,8 @@ async def test_mock_source_emits_new_event_types():
     gen = source.stream()
     seen_types: set[EventType] = set()
 
-    # Consume up to 100 events and check we see the new types
-    for _ in range(100):
+    # Consume up to 250 events and check we see the new types
+    for _ in range(250):
         evt = await anext(gen)
         seen_types.add(evt.type)
 

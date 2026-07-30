@@ -56,6 +56,13 @@ export const readableNodeLabel = (id: string) => {
 
 export const ORCHESTRATOR_COLOR = '#f59e0b'
 
+const BRAND_COLORS: Record<string, string> = {
+  orchestrator: ORCHESTRATOR_COLOR,
+  whatsapp: '#25D366', // Official WhatsApp green
+  matrix: '#0DBD8B',   // Official Element / Matrix green
+  element: '#0DBD8B',  // Official Element brand green
+}
+
 const palette = ['#f97316', '#38bdf8', '#a855f7', '#22d3ee', '#ef4444', '#eab308']
 
 const eventTypeColors: Record<string, string> = {
@@ -73,6 +80,10 @@ export const colorForEventType = (type: string) => {
 }
 
 export const colorForAgent = (id: string) => {
+  const cleanKey = id.toLowerCase().replace(/^agent:|^channel:/, '').trim()
+  if (BRAND_COLORS[cleanKey]) {
+    return BRAND_COLORS[cleanKey]
+  }
   let hash = 0
   for (let i = 0; i < id.length; i += 1) {
     hash = (hash << 5) - hash + id.charCodeAt(i)
