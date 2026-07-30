@@ -42,6 +42,7 @@ time — questions pulse outward, responses flow back — all on a single
 - [Connect to a Real Nanoclaw Host](#connect-to-a-real-nanoclaw-host)
 - [Debugging](#debugging)
 - [Project Structure](#project-structure)
+- [Opencode Integration](#opencode-integration)
 - [Documentation Map](#documentation-map)
 - [Contributing](#contributing)
 - [License](#license)
@@ -190,6 +191,12 @@ mock telemetry automatically.
 
 ```
 nanoclaw-dashboard/
+├── opencode.json               # Portable Opencode workspace configuration
+├── .opencode/                  # Self-contained subagents, commands, and skills
+│   ├── AGENTS.md               # Project-level coding & governance rules
+│   ├── agents/                 # Custom subagents (@explorer, @github, @reviewer, ...)
+│   ├── commands/               # Slash commands (/plan, /handoff, /decision-log)
+│   └── skills/                 # Embedded workflow skills (governance, standards, ...)
 ├── backend/                    # FastAPI WebSocket server
 │   ├── app/
 │   │   ├── main.py             # App factory, lifespan, routes
@@ -242,6 +249,16 @@ nanoclaw-dashboard/
 ├── THIRD_PARTY.md
 └── AGENTS.md                   # Agentic coding checklist
 ```
+
+## Opencode Integration
+
+This repository is self-contained for [Opencode](https://opencode.ai). Opening an Opencode session in this repository automatically loads:
+
+- **Primary Orchestrator**: Default coordinator agent (`orchestrator`) that manages general coding, planning, and delegation.
+- **Subagents**: Specialized read-only and operational subagents in `.opencode/agents/` (`@explorer`, `@github`, `@reviewer`, `@security-auditor`).
+- **Slash Commands**: Workflow commands in `.opencode/commands/` (`/plan`, `/handoff`, `/decision-log`).
+- **Embedded Skills**: Local domain skills in `.opencode/skills/` (`code-standards`, `governance`, `github-workflow`, `pr-standards`, `release-engineering`, `security-checklist`, `test-patterns`, `github-security`).
+- **Instructions**: Coding standards and enterprise governance rules in `.opencode/AGENTS.md`.
 
 ## Documentation Map
 
