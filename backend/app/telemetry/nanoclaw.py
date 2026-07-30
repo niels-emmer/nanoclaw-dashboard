@@ -356,6 +356,7 @@ class NanoclawTelemetrySource(TelemetrySource):
 
                 heartbeat = watcher.heartbeat_age_ms()
 
+                label = self._agent_label(agent_id)
                 events.append(TelemetryEvent(
                     id=str(uuid4()),
                     timestamp=self._now(),
@@ -365,6 +366,10 @@ class NanoclawTelemetrySource(TelemetrySource):
                     payload=EventPayload(
                         summary=f"Running {tool}",
                         status="processing",
+                        meta={
+                            "sourceLabel": label,
+                            "targetLabel": "Orchestrator",
+                        },
                         current_tool=tool,
                         tool_elapsed_ms=elapsed,
                         tool_timeout_ms=timeout,
@@ -380,6 +385,7 @@ class NanoclawTelemetrySource(TelemetrySource):
             # Processing acks
             ack_rows = watcher.fetch_processing_acks()
             for ack in ack_rows:
+                label = self._agent_label(agent_id)
                 events.append(TelemetryEvent(
                     id=str(uuid4()),
                     timestamp=ack.get("status_changed") or self._now(),
@@ -389,6 +395,10 @@ class NanoclawTelemetrySource(TelemetrySource):
                     payload=EventPayload(
                         summary=f"Message {ack['status']}",
                         status=ack["status"],
+                        meta={
+                            "sourceLabel": label,
+                            "targetLabel": "Orchestrator",
+                        },
                         provider=config.provider if config else None,
                         model=config.model if config else None,
                         container_status=container_status if session_rec else None,
@@ -404,6 +414,7 @@ class NanoclawTelemetrySource(TelemetrySource):
         events: List[TelemetryEvent] = []
         for session_id, watcher in list(self._sessions.items()):
             agent_id = watcher.agent_group_id
+            label = self._agent_label(agent_id)
             delivered_rows = watcher.fetch_delivered()
             for row in delivered_rows:
                 events.append(TelemetryEvent(
@@ -416,6 +427,10 @@ class NanoclawTelemetrySource(TelemetrySource):
                         summary=f"Message {row['status']}",
                         status=row["status"],
                         delivery_status=row["status"],
+                        meta={
+                            "sourceLabel": label,
+                            "targetLabel": "Orchestrator",
+                        },
                     ),
                     agent_state=AgentState.IDLE,
                 ))
@@ -438,6 +453,7 @@ class NanoclawTelemetrySource(TelemetrySource):
             if action not in self._USEFUL_APPROVAL_ACTIONS:
                 continue
             agent_id = row.get("agent_group_id") or self._orchestrator_id or "unknown"
+            label = self._agent_label(agent_id)
             events.append(TelemetryEvent(
                 id=str(uuid4()),
                 timestamp=row.get("created_at") or self._now(),
@@ -449,6 +465,10 @@ class NanoclawTelemetrySource(TelemetrySource):
                     status="pending",
                     approval_action=row.get("action"),
                     approval_title=row.get("title"),
+                    meta={
+                        "sourceLabel": label,
+                        "targetLabel": "Admin",
+                    },
                 ),
                 agent_state=AgentState.IDLE,
             ))
@@ -466,6 +486,7 @@ class NanoclawTelemetrySource(TelemetrySource):
                 (s for s in self._session_map.values() if s.agent_group_id == ag_id),
                 None,
             )
+            label = self._agent_label(ag_id)
             events.append(TelemetryEvent(
                 id=str(uuid4()),
                 timestamp=now,
@@ -473,8 +494,12 @@ class NanoclawTelemetrySource(TelemetrySource):
                 source=f"agent:{ag_id}",
                 target="orchestrator",
                 payload=EventPayload(
-                    summary=f"Agent {group.name} initialized",
+                    summary=f"Agent {label} initialized",
                     status="completed",
+                    meta={
+                        "sourceLabel": label,
+                        "targetLabel": "Orchestrator",
+                    },
                     provider=config.provider if config else None,
                     model=config.model if config else None,
                     skills=config.skills if config else None,
@@ -740,8 +765,15 @@ class NanoclawTelemetrySource(TelemetrySource):
     # ------------------------------------------------------------------
 
     def _agent_label(self, agent_group_id: str) -> str:
+        config = self._agent_configs.get(agent_group_id)
+        if config and config.assistant_name and config.assistant_name.strip():
+            return config.assistant_name.strip()
         group = self._agent_groups.get(agent_group_id)
-        return group.name if group else agent_group_id
+        if group and group.name and group.name.strip():
+            name = group.name.strip()
+            if not name.lower().startswith("ag-"):
+                return name
+        return agent_group_id
 
     def _remember_inbound(self, record: InboundRecord) -> None:
         self._inbound_cache[record.message_id] = record

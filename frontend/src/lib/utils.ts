@@ -157,11 +157,19 @@ export const deriveAgentSnapshot = (
     const prevSnapshot = prev[id]
     const ts = Date.parse(event.timestamp) || Date.now()
 
-    const label = (() => {
+    const rawCandidate = (() => {
       if (event.source === id) return event.payload.meta?.sourceLabel
       if (event.target === id) return event.payload.meta?.targetLabel
       return undefined
-    })() ?? prevSnapshot?.label ?? agentLabelFromId(id)
+    })()
+
+    const isRawId = (lbl: string | undefined) => !lbl || /^ag-/i.test(lbl)
+
+    const label = (() => {
+      if (rawCandidate && !isRawId(rawCandidate)) return rawCandidate
+      if (prevSnapshot?.label && !isRawId(prevSnapshot.label)) return prevSnapshot.label
+      return rawCandidate ?? prevSnapshot?.label ?? agentLabelFromId(id)
+    })()
 
     const outboundTargets = prevSnapshot ? [...prevSnapshot.outboundTargets] : []
     const inboundSources = prevSnapshot ? [...prevSnapshot.inboundSources] : []
