@@ -1,4 +1,7 @@
 # Universal agent rules
+
+> **Opencode Configuration**: This repository is self-contained for [Opencode](https://opencode.ai). Project config, subagents (`@explorer`, `@github`, `@reviewer`, `@security-auditor`), slash commands (`/plan`, `/handoff`, `/decision-log`), and skills live under `opencode.json` and `.opencode/`.
+
 These rules apply to every task in this tree unless overridden by a more
 specific `CLAUDE.md` or `AGENTS.md`.
 
