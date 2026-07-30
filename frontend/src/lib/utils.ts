@@ -58,12 +58,25 @@ export const ORCHESTRATOR_COLOR = '#f59e0b'
 
 const BRAND_COLORS: Record<string, string> = {
   orchestrator: ORCHESTRATOR_COLOR,
+  // Platforms & Channels
   whatsapp: '#25D366', // Official WhatsApp green
   matrix: '#0DBD8B',   // Official Element / Matrix green
   element: '#0DBD8B',  // Official Element brand green
+  slack: '#e01e5a',    // Slack brand magenta
+  discord: '#5865f2',  // Discord brand blurple
+  telegram: '#229ed9', // Telegram brand blue
+  // Pinned Agent Colors
+  researcher: '#38bdf8', // Sky blue
+  coder: '#a855f7',      // Purple
+  architect: '#f97316',  // Bright orange
+  editor: '#22d3ee',     // Cyan
+  terminal: '#ef4444',   // Red
+  plotter: '#eab308',    // Yellow
+  reviewer: '#ec4899',   // Pink
+  marvin: '#8b5cf6',     // Violet / Indigo
 }
 
-const palette = ['#f97316', '#38bdf8', '#a855f7', '#22d3ee', '#ef4444', '#eab308']
+const palette = ['#f97316', '#38bdf8', '#a855f7', '#22d3ee', '#ef4444', '#eab308', '#ec4899', '#8b5cf6', '#10b981']
 
 const eventTypeColors: Record<string, string> = {
   question: '#a78bfa',
@@ -80,13 +93,14 @@ export const colorForEventType = (type: string) => {
 }
 
 export const colorForAgent = (id: string) => {
+  if (!id) return palette[0]
   const cleanKey = id.toLowerCase().replace(/^agent:|^channel:/, '').trim()
   if (BRAND_COLORS[cleanKey]) {
     return BRAND_COLORS[cleanKey]
   }
   let hash = 0
-  for (let i = 0; i < id.length; i += 1) {
-    hash = (hash << 5) - hash + id.charCodeAt(i)
+  for (let i = 0; i < cleanKey.length; i += 1) {
+    hash = (hash << 5) - hash + cleanKey.charCodeAt(i)
     hash |= 0
   }
   const idx = Math.abs(hash) % palette.length
