@@ -67,7 +67,7 @@ nanoclaw-dashboard/
 │   ├── app/
 │   │   ├── main.py               # FastAPI app factory, lifespan, /health + /ws/events
 │   │   ├── config.py              # Pydantic settings (env prefix NANOCLAW_)
-│   │   ├── events.py              # EventHub — broadcast to WS clients
+│   │   ├── events.py              # EventHub — broadcast + ring buffer flush to WS clients
 │   │   ├── logging.py             # structlog JSON config
 │   │   ├── cli.py                 # CLI entry point
 │   │   └── telemetry/

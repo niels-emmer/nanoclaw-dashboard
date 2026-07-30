@@ -194,7 +194,7 @@ nanoclaw-dashboard/
 │   ├── app/
 │   │   ├── main.py             # App factory, lifespan, routes
 │   │   ├── config.py           # Pydantic settings (env-driven)
-│   │   ├── events.py           # EventHub — broadcast to WS clients
+│   │   ├── events.py           # EventHub — broadcast + ring buffer flush to WS clients
 │   │   ├── logging.py          # structlog JSON configuration
 │   │   ├── cli.py              # CLI entry point
 │   │   └── telemetry/
