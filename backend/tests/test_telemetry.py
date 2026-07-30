@@ -29,21 +29,26 @@ async def test_mock_source_generates_question_and_response():
 @pytest.mark.asyncio
 async def test_mock_source_emits_new_event_types():
     """Verify the mock emits all the new event types over time."""
-    source = MockTelemetrySource(["seer", "coder"], base_interval_ms=5, jitter_ms=0)
+    source = MockTelemetrySource(["seer", "coder"], base_interval_ms=1, jitter_ms=0)
     gen = source.stream()
     seen_types: set[EventType] = set()
+    expected_types = {
+        EventType.QUESTION,
+        EventType.RESPONSE,
+        EventType.ACTIVITY_UPDATE,
+        EventType.DELIVERY_UPDATE,
+        EventType.APPROVAL_PENDING,
+        EventType.TOPOLOGY_SNAPSHOT,
+    }
 
-    # Consume up to 250 events and check we see the new types
+    # Consume until all expected types are seen or max iterations reached
     for _ in range(250):
         evt = await anext(gen)
         seen_types.add(evt.type)
+        if expected_types.issubset(seen_types):
+            break
 
-    assert EventType.QUESTION in seen_types
-    assert EventType.RESPONSE in seen_types
-    assert EventType.ACTIVITY_UPDATE in seen_types
-    assert EventType.DELIVERY_UPDATE in seen_types
-    assert EventType.APPROVAL_PENDING in seen_types
-    assert EventType.TOPOLOGY_SNAPSHOT in seen_types
+    assert expected_types.issubset(seen_types)
 
 
 @pytest.mark.asyncio
