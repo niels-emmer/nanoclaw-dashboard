@@ -34,7 +34,7 @@ def build_source() -> TelemetrySource:
 
 
 telemetry_source = build_source()
-event_hub = EventHub(max_clients=settings.max_clients)
+event_hub = EventHub(max_clients=settings.max_clients, buffer_size=settings.event_buffer_size)
 _telemetry_task: Optional[asyncio.Task] = None
 
 

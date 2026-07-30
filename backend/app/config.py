@@ -75,6 +75,7 @@ class Settings(BaseSettings):
     base_interval_ms: int = Field(default=900, ge=100, le=5000)
     jitter_ms: int = Field(default=350, ge=0, le=5000)
     max_clients: int = Field(default=50, ge=1)
+    event_buffer_size: int = Field(default=100, ge=0, le=1000)
 
     # Nanoclaw integration
     enabled: bool = Field(default=False)
