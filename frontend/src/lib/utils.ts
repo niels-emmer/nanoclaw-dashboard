@@ -172,7 +172,7 @@ export const deriveAgentSnapshot = (
   for (const id of agentIds) {
     const isPrimary = id === primaryId
     const prevSnapshot = prev[id]
-    const ts = Date.parse(event.timestamp) || Date.now()
+    const ts = Date.now()
 
     const rawCandidate = (() => {
       if (event.source === id) return event.payload.meta?.sourceLabel
