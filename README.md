@@ -124,14 +124,14 @@ docker compose up --build
 - Backend health: **http://localhost:8000/health**
 
 The frontend container serves the production build via nginx and proxies
-WebSocket traffic to the backend automatically. Adjust ports in `.env`.
+WebSocket traffic to the backend automatically. Adjust ports in `.env` (copy from `.env.example`).
 
 ## Connect to a Real Nanoclaw Host
 
 By default, the dashboard uses mock telemetry. To connect to a live nanoclaw
 instance:
 
-1. Update `.env`:
+1. Create `.env` from `.env.example` and update settings:
    ```ini
    NANOCLAW_ENABLED=true
    NANOCLAW_HOST_DATA=/absolute/path/to/your/nanoclaw/checkout
@@ -240,7 +240,7 @@ nanoclaw-dashboard/
 │   ├── pull_request_template.md
 │   └── ISSUE_TEMPLATE/
 ├── docker-compose.yml
-├── .env                        # Environment defaults
+├── .env.example                # Environment template (copy to .env)
 ├── LICENSE
 ├── README.md
 ├── CONTRIBUTING.md

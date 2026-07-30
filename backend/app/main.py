@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import ipaddress
 from contextlib import asynccontextmanager, suppress
 from typing import AsyncIterator, Optional
+from urllib.parse import urlparse
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
@@ -61,6 +63,40 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
 
+def is_allowed_origin(origin: str | None, host_header: str | None = None) -> bool:
+    """Validate WebSocket origin while allowing loopback, mDNS (.local), and LAN private IPs."""
+    if not origin:
+        return True
+    try:
+        parsed = urlparse(origin)
+        host = parsed.hostname
+        if not host:
+            return False
+
+        if settings.allowed_origins:
+            if origin in settings.allowed_origins or host in settings.allowed_origins:
+                return True
+
+        if host in ("localhost", "127.0.0.1", "::1", "0.0.0.0") or host.endswith(".local"):
+            return True
+
+        if host_header:
+            req_host = host_header.split(":")[0]
+            if host == req_host:
+                return True
+
+        try:
+            ip = ipaddress.ip_address(host)
+            if ip.is_private or ip.is_loopback or ip.is_link_local:
+                return True
+        except ValueError:
+            pass
+
+        return False
+    except Exception:
+        return False
+
+
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -68,6 +104,13 @@ async def health() -> dict[str, str]:
 
 @app.websocket("/ws/events")
 async def events_socket(websocket: WebSocket) -> None:
+    origin = websocket.headers.get("origin")
+    host_header = websocket.headers.get("host")
+    if not is_allowed_origin(origin, host_header):
+        log.warning("websocket_origin_rejected", origin=origin)
+        await websocket.close(code=4003)
+        return
+
     await event_hub.register(websocket)
     try:
         while True:

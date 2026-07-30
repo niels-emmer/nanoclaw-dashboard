@@ -76,6 +76,7 @@ class Settings(BaseSettings):
     jitter_ms: int = Field(default=350, ge=0, le=5000)
     max_clients: int = Field(default=50, ge=1)
     event_buffer_size: int = Field(default=100, ge=0, le=1000)
+    allowed_origins: list[str] = Field(default_factory=list)
 
     # Nanoclaw integration
     enabled: bool = Field(default=False)
@@ -84,9 +85,9 @@ class Settings(BaseSettings):
     history_events: int = Field(default=20, ge=0, le=200)
     orchestrator_group: Optional[str] = Field(default=None)
 
-    @field_validator("mock_agent_names", mode="before")
+    @field_validator("mock_agent_names", "allowed_origins", mode="before")
     @classmethod
-    def _parse_mock_agents(cls, value: object) -> object:
+    def _parse_list_from_str(cls, value: object) -> object:
         if isinstance(value, str):
             items = [item.strip() for item in value.split(",") if item.strip()]
             return items or None
