@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import {
   Backpack,
   BarChart3,
@@ -25,8 +25,9 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
+import { config } from '../lib/config'
 import type { AgentSnapshot, AgentState, ChatBubble, EdgePulse, TopologyData } from '../lib/types'
-import { colorForAgent, ORCHESTRATOR_COLOR, toolCategoryColor, formatElapsed } from '../lib/utils'
+import { colorForAgent, ORCHESTRATOR_COLOR, toolCategoryColor, formatElapsed, computeAgentOpacity } from '../lib/utils'
 
 const WIDTH = 1000
 const HEIGHT = 560
@@ -128,6 +129,7 @@ interface NodePosition {
   radius: number
   label: string
   state: AgentState | 'unknown'
+  opacity: number
 }
 
 function edgePointOnCircle(
@@ -155,9 +157,30 @@ function iconNameForAgent(nodeId: string, label: string): string {
 
 export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, onAgentClick, selectedAgentId }: FlowCanvasProps) {
   const [hoveredAgent, setHoveredAgent] = useState<string | null>(null)
+  const [now, setNow] = useState(Date.now())
+
+  // Tick loop every 15s to update agent decay during lulls
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 15000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const agentOpacityMap = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const agent of agents) {
+      map.set(
+        agent.id,
+        computeAgentOpacity(agent.lastUpdated, config.agentSolidMinutes, config.agentFadeMinutes, now),
+      )
+    }
+    return map
+  }, [agents, now])
 
   const nodes = useMemo<NodePosition[]>(() => {
-    const nonOrchestratorAgents = agents.filter((agent) => agent.id !== orchestratorId)
+    const activeAgents = agents.filter(
+      (agent) => agent.id === orchestratorId || (agentOpacityMap.get(agent.id) ?? 1) > 0,
+    )
+    const nonOrchestratorAgents = activeAgents.filter((agent) => agent.id !== orchestratorId)
     const agentCount = Math.max(nonOrchestratorAgents.length, 1)
     const orbit = Math.min(WIDTH, HEIGHT) / 2.7
     const orchestratorSnapshot = agents.find((agent) => agent.id === orchestratorId)
@@ -168,6 +191,7 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
       radius: 70,
       label: orchestratorSnapshot?.label ?? 'orchestrator',
       state: orchestratorSnapshot?.state ?? 'idle',
+      opacity: 1.0,
     }
 
     // Greedy layout optimization: place agents that communicate adjacently
@@ -221,11 +245,12 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
         radius: 52,
         label: agent.label,
         state: agent.state,
+        opacity: agentOpacityMap.get(agent.id) ?? 1.0,
       }
     })
 
     return [orchestrator, ...spokes]
-  }, [agents, orchestratorId, topology])
+  }, [agents, orchestratorId, topology, agentOpacityMap])
 
   const nodeMap = useMemo(() => Object.fromEntries(nodes.map((node) => [node.id, node])), [nodes])
 
@@ -342,7 +367,10 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
               onMouseEnter={() => setHoveredAgent(node.id)}
               onMouseLeave={() => setHoveredAgent(null)}
               onClick={() => onAgentClick?.(node.id)}
-              style={{ cursor: onAgentClick ? 'pointer' : 'default' }}
+              style={{
+                cursor: onAgentClick ? 'pointer' : 'default',
+                opacity: node.opacity,
+              }}
             >
               {/* Selection ring */}
               {isSelected && (
