@@ -30,4 +30,6 @@ export const config = {
   wsUrl: inferWsUrl(),
   maxEventHistory: Number(import.meta.env.VITE_EVENT_HISTORY ?? 200),
   orchestratorId: import.meta.env.VITE_ORCHESTRATOR_ID ?? 'orchestrator',
+  agentSolidMinutes: Number(import.meta.env.VITE_AGENT_SOLID_MINUTES ?? 10),
+  agentFadeMinutes: Number(import.meta.env.VITE_AGENT_FADE_MINUTES ?? 60),
 }

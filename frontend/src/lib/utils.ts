@@ -1,3 +1,4 @@
+import { config } from './config'
 import type { AgentSnapshot, Liveness, TelemetryEvent, ToolCategory, TopologyData } from './types'
 
 export const formatTime = (maybeMs: number) => {
@@ -126,6 +127,22 @@ export const deriveLiveness = (
   }
   if (containerStatus === 'running') return 'alive'
   return 'unknown'
+}
+
+// Agent opacity decay calculation
+export const computeAgentOpacity = (
+  lastUpdated: number,
+  solidMinutes: number = config.agentSolidMinutes,
+  fadeMinutes: number = config.agentFadeMinutes,
+  now: number = Date.now(),
+): number => {
+  if (!fadeMinutes || fadeMinutes <= 0) return 1.0
+  const ageMs = now - lastUpdated
+  const solidMs = solidMinutes * 60_000
+  const fadeMs = fadeMinutes * 60_000
+  if (ageMs <= solidMs) return 1.0
+  if (ageMs >= solidMs + fadeMs) return 0.0
+  return Math.max(0, 1.0 - (ageMs - solidMs) / fadeMs)
 }
 
 // Topology parsing
