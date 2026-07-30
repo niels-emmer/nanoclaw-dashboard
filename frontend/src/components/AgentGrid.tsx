@@ -1,6 +1,6 @@
 import { Card, Chip } from '@heroui/react'
 import type { AgentSnapshot } from '../lib/types'
-import { colorForAgent, ORCHESTRATOR_COLOR } from '../lib/utils'
+import { colorForAgent } from '../lib/utils'
 
 interface Props {
   agents: AgentSnapshot[]
@@ -25,8 +25,7 @@ export function AgentGrid({ agents }: Props) {
 
   // Resolve color for any entity ID or label — handles the orchestrator's
   // hardcoded color so blobs match the FlowCanvas orbit node.
-  const colorForEntity = (id: string) =>
-    id === 'orchestrator' ? ORCHESTRATOR_COLOR : colorForAgent(id)
+  const colorForEntity = (id: string) => colorForAgent(id)
 
   if (agents.length === 0) {
     return (
