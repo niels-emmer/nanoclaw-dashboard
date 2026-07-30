@@ -1,6 +1,6 @@
 import { Card, Chip } from '@heroui/react'
 import type { AgentSnapshot } from '../lib/types'
-import { colorForAgent, ORCHESTRATOR_COLOR, computeAgentOpacity } from '../lib/utils'
+import { colorForAgent, ORCHESTRATOR_COLOR } from '../lib/utils'
 
 interface Props {
   agents: AgentSnapshot[]
@@ -41,11 +41,9 @@ export function AgentGrid({ agents }: Props) {
       {sorted.map((agent) => {
         const tone = colorForAgent(agent.id)
         const isActive = agent.state === 'running' && agent.liveness === 'alive'
-        const rawOpacity = computeAgentOpacity(agent.lastUpdated)
-        const gridOpacity = Math.max(0.35, rawOpacity)
 
         return (
-          <Card key={agent.id} className="flex flex-col gap-1.5 p-3" style={{ borderColor: `${tone}40`, opacity: gridOpacity }}>
+          <Card key={agent.id} className="flex flex-col gap-1.5 p-3" style={{ borderColor: `${tone}40` }}>
             {/* Line 1: liveness dot + name | error count + message count */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
