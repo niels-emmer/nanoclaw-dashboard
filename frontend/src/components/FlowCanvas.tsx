@@ -430,14 +430,15 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
                 const ToolIcon = TOOL_CATEGORY_ICON[agent.currentToolCategory] ?? BrainCircuit
                 const catColor = toolCategoryColor(agent.currentToolCategory)
                 const iconSize = 13
-                const toolName = agent.currentTool.length > 12 ? agent.currentTool.slice(0, 11) + '…' : agent.currentTool
+                const rawName = agent.currentTool.toLowerCase()
+                const toolName = rawName.length > 14 ? rawName.slice(0, 13) + '…' : rawName
                 return (
                   <g transform={`translate(0, ${node.radius + 40})`}>
                     <rect x={-40} y={-8} width={80} height={18} rx={9} fill={catColor} stroke="#fff" strokeWidth={1.5} opacity={0.95} />
-                    <g transform={`translate(${-iconSize / 2 - 16}, ${-iconSize / 2 + 1})`}>
+                    <g transform={`translate(${-36}, ${-iconSize / 2 + 1})`}>
                       <ToolIcon size={iconSize} color="#fff" strokeWidth={2} />
                     </g>
-                    <text x={6} y={5} textAnchor="middle" fill="#fff" fontSize={9} fontFamily="var(--mono)" fontWeight={500}>
+                    <text x={-20} y={5} textAnchor="start" fill="#fff" fontSize={9} fontFamily="var(--mono)" fontWeight={500}>
                       {toolName}
                     </text>
                   </g>
