@@ -1,4 +1,4 @@
-import { Card, Chip } from '@heroui/react'
+import { Chip } from '@heroui/react'
 import type { AgentSnapshot } from '../lib/types'
 import { colorForAgent } from '../lib/utils'
 
@@ -36,13 +36,12 @@ export function AgentGrid({ agents }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-3 overflow-y-auto flex-1 pr-1">
-      {sorted.map((agent) => {
-        const tone = colorForAgent(agent.id)
+    <div className="flex flex-col gap-2 overflow-y-auto flex-1 pr-1">
+      {sorted.map((agent, idx) => {
         const isActive = agent.state === 'running' && agent.liveness === 'alive'
 
         return (
-          <Card key={agent.id} className="flex flex-col gap-1.5 p-3" style={{ borderColor: `${tone}40` }}>
+          <div key={agent.id} className={`flex flex-col gap-1.5 py-2 ${idx < sorted.length - 1 ? 'border-b border-accent/10' : ''}`}>
             {/* Line 1: liveness dot + name | error count + message count */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
@@ -111,7 +110,7 @@ export function AgentGrid({ agents }: Props) {
                 })}
               </div>
             )}
-          </Card>
+          </div>
         )
       })}
     </div>
