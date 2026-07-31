@@ -293,7 +293,7 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
 
   return (
     <div className="flow-canvas">
-      <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="presentation" aria-hidden>
+      <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label={`Orchestrator topology: ${agents.length} agents connected to ${orchestratorId}. ${edges.length} active event pulses.`}>
         <defs>
           <radialGradient id="orchestratorGlow" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor={ORCHESTRATOR_COLOR} stopOpacity="0.4" />
@@ -429,13 +429,17 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
               {agent?.currentTool && (() => {
                 const ToolIcon = TOOL_CATEGORY_ICON[agent.currentToolCategory] ?? BrainCircuit
                 const catColor = toolCategoryColor(agent.currentToolCategory)
-                const iconSize = 11
+                const iconSize = 13
+                const toolName = agent.currentTool.length > 12 ? agent.currentTool.slice(0, 11) + '…' : agent.currentTool
                 return (
-                  <g transform={`translate(0, ${node.radius + 42})`}>
-                    <circle r={9} fill={catColor} stroke="#fff" strokeWidth={1.5} />
-                    <g transform={`translate(${-iconSize / 2}, ${-iconSize / 2})`}>
+                  <g transform={`translate(0, ${node.radius + 40})`}>
+                    <rect x={-40} y={-8} width={80} height={18} rx={9} fill={catColor} stroke="#fff" strokeWidth={1.5} opacity={0.95} />
+                    <g transform={`translate(${-iconSize / 2 - 16}, ${-iconSize / 2 + 1})`}>
                       <ToolIcon size={iconSize} color="#fff" strokeWidth={2} />
                     </g>
+                    <text x={6} y={5} textAnchor="middle" fill="#fff" fontSize={9} fontFamily="var(--mono)" fontWeight={500}>
+                      {toolName}
+                    </text>
                   </g>
                 )
               })()}
@@ -482,42 +486,110 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
           </foreignObject>
         )}
 
-        {/* Chat bubbles */}
-        {bubbles.map((bubble) => {
-          const node = nodeMap[bubble.agentId]
-          if (!node) return null
-          const isQuestion = bubble.type === 'question'
-          const fromLabel = isQuestion ? bubble.fromLabel : bubble.toLabel
-          let bx = node.x + node.radius + 14
-          if (bx + 352 > WIDTH - 10) {
-            bx = node.x - node.radius - 14 - 352
+        {/* Chat bubbles — non-overlapping, connected to agent nodes */}
+        {(() => {
+          const visibleBubbles = bubbles.slice(0, 3)
+          const bubbleWidth = 320
+          const bubbleHeight = 110
+          const gap = 12
+
+          // Compute positions with collision avoidance
+          const placed: Array<{ bx: number; by: number; node: NodePosition; bubble: typeof bubbles[number] }> = []
+          const occupied: Array<{ x: number; y: number; w: number; h: number }> = []
+
+          for (const bubble of visibleBubbles) {
+            const node = nodeMap[bubble.agentId]
+            if (!node) continue
+
+            // Try right side first, then left side
+            const candidates: Array<{ bx: number; by: number }> = []
+            for (const side of ['right', 'left'] as const) {
+              const baseX = side === 'right'
+                ? node.x + node.radius + 14
+                : node.x - node.radius - 14 - bubbleWidth
+              const clampedX = Math.max(4, Math.min(WIDTH - bubbleWidth - 4, baseX))
+              const baseY = Math.max(4, Math.min(HEIGHT - bubbleHeight - 4, node.y - bubbleHeight / 2))
+              candidates.push({ bx: clampedX, by: baseY })
+            }
+
+            // Find first position that doesn't overlap existing bubbles
+            let best: { bx: number; by: number } | null = null
+            for (const c of candidates) {
+              const overlaps = occupied.some(
+                (o) => c.bx < o.x + o.w + gap && c.bx + bubbleWidth + gap > o.x && c.by < o.y + o.h + gap && c.by + bubbleHeight + gap > o.y,
+              )
+              if (!overlaps) {
+                best = c
+                break
+              }
+            }
+
+            // If all overlap, stack below the lowest bubble
+            if (!best) {
+              const maxY = Math.max(0, ...occupied.map((o) => o.y + o.h))
+              best = { bx: candidates[0].bx, by: Math.min(maxY + gap, HEIGHT - bubbleHeight - 4) }
+            }
+
+            occupied.push({ x: best.bx, y: best.by, w: bubbleWidth, h: bubbleHeight })
+            placed.push({ bx: best.bx, by: best.by, node, bubble })
           }
-          const by = Math.max(8, Math.min(HEIGHT - 148, node.y - 50))
-          const tailSide = bx > node.x ? 'left' : 'right'
+
           return (
-            <foreignObject
-              key={bubble.id}
-              x={bx}
-              y={by}
-              width={352}
-              height={140}
-              className="chat-bubble-fo"
-            >
-              <div className={`chat-bubble tail-${tailSide}`}>
-                <div className="bubble-header">
-                  <span className="bubble-direction">{isQuestion ? '→' : '←'}</span>
-                  <span className="bubble-from">from: {fromLabel}</span>
-                </div>
-                <div className="bubble-divider" />
-                <div className="bubble-lines">
-                  {bubble.lines.slice(0, 3).map((line, i) => (
-                    <span key={i} className="bubble-line">{line}</span>
-                  ))}
-                </div>
-              </div>
-            </foreignObject>
+            <>
+              {/* Connector lines from agent to bubble */}
+              {placed.map(({ bx, by, node, bubble }) => {
+                const cx = bx > node.x ? bx : bx + bubbleWidth
+                const cy = by + bubbleHeight / 2
+                const nx = node.x + (bx > node.x ? node.radius : -node.radius)
+                const ny = node.y
+                return (
+                  <line
+                    key={`conn-${bubble.id}`}
+                    x1={nx} y1={ny} x2={cx} y2={cy}
+                    stroke="rgba(255,255,255,0.25)"
+                    strokeWidth={1.5}
+                    strokeDasharray="4 3"
+                    strokeLinecap="round"
+                  />
+                )
+              })}
+
+              {/* Bubbles */}
+              {placed.map(({ bx, by, bubble }, idx) => {
+                const node = nodeMap[bubble.agentId]!
+                const isQuestion = bubble.type === 'question'
+                const fromLabel = isQuestion ? bubble.fromLabel : bubble.toLabel
+                const tailSide = bx > node.x ? 'left' : 'right'
+                const opacity = idx === 0 ? 0.97 : idx === 1 ? 0.92 : 0.87
+
+                return (
+                  <foreignObject
+                    key={bubble.id}
+                    x={bx}
+                    y={by}
+                    width={bubbleWidth}
+                    height={bubbleHeight}
+                    className="chat-bubble-fo"
+                    style={{ opacity }}
+                  >
+                    <div className={`chat-bubble tail-${tailSide}`}>
+                      <div className="bubble-header">
+                        <span className="bubble-direction">{isQuestion ? '→' : '←'}</span>
+                        <span className="bubble-from">from: {fromLabel}</span>
+                      </div>
+                      <div className="bubble-divider" />
+                      <div className="bubble-lines">
+                        {bubble.lines.slice(0, 2).map((line, i) => (
+                          <span key={i} className="bubble-line">{line}</span>
+                        ))}
+                      </div>
+                    </div>
+                  </foreignObject>
+                )
+              })}
+            </>
           )
-        })}
+        })()}
       </svg>
       <div className="canvas-overlay" aria-hidden>
         <div className="grid-lines" />

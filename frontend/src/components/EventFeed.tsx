@@ -1,9 +1,13 @@
+import { useState, useMemo } from 'react'
 import type { TelemetryEvent } from '../lib/types'
 import { colorForAgent, colorForEventType, formatTime, readableNodeLabel } from '../lib/utils'
 
 interface Props {
   events: TelemetryEvent[]
 }
+
+const EVENT_TYPES = ['all', 'question', 'response', 'agent_status', 'activity_update', 'delivery_update', 'approval_pending'] as const
+type EventFilter = (typeof EVENT_TYPES)[number]
 
 function statusIcon(event: TelemetryEvent): { icon: string; color: string; label: string } {
   const p = event.payload
@@ -33,6 +37,25 @@ function statusIcon(event: TelemetryEvent): { icon: string; color: string; label
 }
 
 export function EventFeed({ events }: Props) {
+  const [filterType, setFilterType] = useState<EventFilter>('all')
+  const [showDelivery, setShowDelivery] = useState(false)
+
+  const filteredEvents = useMemo(() => {
+    let result = events
+
+    // Always hide delivery_update unless explicitly toggled
+    if (!showDelivery) {
+      result = result.filter((e) => e.type !== 'delivery_update')
+    }
+
+    // Apply type filter
+    if (filterType !== 'all') {
+      result = result.filter((e) => e.type === filterType)
+    }
+
+    return result
+  }, [events, filterType, showDelivery])
+
   if (events.length === 0) {
     return (
       <div className="min-h-[80px] grid place-content-center text-center text-muted text-sm border border-dashed border-accent/20 rounded-2xl">
@@ -41,65 +64,96 @@ export function EventFeed({ events }: Props) {
     )
   }
 
-  // Filter out system-level noise — delivery signals and tool progress updates
-  const visibleEvents = events.filter(
-    (e) => e.type !== 'delivery_update' && e.type !== 'activity_update',
-  )
-
   return (
-    <div className="flex flex-col gap-3 overflow-y-auto min-h-0" role="log" aria-live="polite">
-      {visibleEvents.slice(0, 10).map((event) => {
-        const key = `${event.id}`
-        const actorId = event.type === 'question' ? event.target : event.source
-        const accent = colorForAgent(actorId)
-        const sourceLabel = event.payload.meta?.sourceLabel ?? readableNodeLabel(event.source)
-        const targetLabel = event.payload.meta?.targetLabel ?? readableNodeLabel(event.target)
-        const status = statusIcon(event)
+    <div className="flex flex-col min-h-0">
+      {/* Filter bar */}
+      <div className="flex flex-wrap items-center gap-1.5 pb-2 shrink-0">
+        {EVENT_TYPES.map((type) => (
+          <button
+            key={type}
+            onClick={() => setFilterType(type)}
+            className={`text-[0.6rem] px-1.5 py-0.5 rounded transition-colors ${
+              filterType === type
+                ? 'bg-accent/30 text-accent font-semibold'
+                : 'bg-accent/10 text-muted hover:bg-accent/20'
+            }`}
+          >
+            {type === 'all' ? 'all' : type.replace('_', ' ')}
+          </button>
+        ))}
+        <button
+          onClick={() => setShowDelivery((v) => !v)}
+          className={`text-[0.6rem] px-1.5 py-0.5 rounded transition-colors ml-auto ${
+            showDelivery
+              ? 'bg-green-500/30 text-green-400 font-semibold'
+              : 'bg-accent/10 text-muted hover:bg-accent/20'
+          }`}
+        >
+          delivery
+        </button>
+      </div>
 
-        return (
-          <article key={key} className="flex items-start gap-3 py-2 border-b border-accent/10 last:border-b-0">
-            {/* Status icon or colored dot */}
-            {status.icon ? (
-              <span
-                className="w-4 h-4 flex items-center justify-center text-[10px] font-bold rounded-full mt-0.5 shrink-0"
-                style={{ background: status.color, color: '#fff' }}
-                title={status.label}
-              >
-                {status.icon}
-              </span>
-            ) : (
-              <span className="w-2.5 h-2.5 rounded-full mt-1 shrink-0" style={{ background: accent }} aria-hidden />
-            )}
+      {/* Event list */}
+      <div className="flex flex-col gap-3 overflow-y-auto min-h-0 flex-1 pr-1" role="log" aria-live="polite">
+        {filteredEvents.length === 0 ? (
+          <div className="text-center text-muted text-xs py-4">
+            No events match current filter
+          </div>
+        ) : (
+          filteredEvents.slice(0, 30).map((event) => {
+            const key = `${event.id}`
+            const actorId = event.type === 'question' ? event.target : event.source
+            const accent = colorForAgent(actorId)
+            const sourceLabel = event.payload.meta?.sourceLabel ?? readableNodeLabel(event.source)
+            const targetLabel = event.payload.meta?.targetLabel ?? readableNodeLabel(event.target)
+            const status = statusIcon(event)
 
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-[0.65rem] capitalize font-medium px-1.5 py-0.5 rounded" style={{ background: colorForEventType(event.type), color: '#fff' }}>
-                  {event.type.replace('_', ' ')}
-                </span>
-                <time className="text-xs text-muted ml-auto">{formatTime(Date.parse(event.timestamp))}</time>
-              </div>
-              <p className="text-sm text-foreground leading-relaxed line-clamp-2">{event.payload.summary}</p>
-              <div className="flex items-center gap-2 text-xs text-muted mt-0.5">
-                <span>{sourceLabel}</span>
-                <span className="mx-1">&rarr;</span>
-                <span>{targetLabel}</span>
-                {/* Retry badge */}
-                {event.payload.retry_count != null && event.payload.retry_count > 0 && (
-                  <span className="text-[0.55rem] font-medium px-1 py-0.5 rounded bg-amber-500/20 text-amber-400">
-                    retry {event.payload.retry_count}
+            return (
+              <article key={key} className="flex items-start gap-3 py-2 border-b border-accent/10 last:border-b-0">
+                {/* Status icon or colored dot */}
+                {status.icon ? (
+                  <span
+                    className="w-4 h-4 flex items-center justify-center text-[10px] font-bold rounded-full mt-0.5 shrink-0"
+                    style={{ background: status.color, color: '#fff' }}
+                    title={status.label}
+                  >
+                    {status.icon}
                   </span>
+                ) : (
+                  <span className="w-2.5 h-2.5 rounded-full mt-1 shrink-0" style={{ background: accent }} aria-hidden />
                 )}
-                {/* Tool name for activity events */}
-                {event.payload.current_tool && (
-                  <span className="text-[0.55rem] font-mono px-1 py-0.5 rounded bg-blue-500/20 text-blue-400">
-                    {event.payload.current_tool}
-                  </span>
-                )}
-              </div>
-            </div>
-          </article>
-        )
-      })}
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-[0.65rem] capitalize font-medium px-1.5 py-0.5 rounded" style={{ background: colorForEventType(event.type), color: '#fff' }}>
+                      {event.type.replace('_', ' ')}
+                    </span>
+                    <time className="text-xs text-muted ml-auto">{formatTime(Date.parse(event.timestamp))}</time>
+                  </div>
+                  <p className="text-sm text-foreground leading-relaxed line-clamp-2">{event.payload.summary}</p>
+                  <div className="flex items-center gap-2 text-xs text-muted mt-0.5">
+                    <span>{sourceLabel}</span>
+                    <span className="mx-1">&rarr;</span>
+                    <span>{targetLabel}</span>
+                    {/* Retry badge */}
+                    {event.payload.retry_count != null && event.payload.retry_count > 0 && (
+                      <span className="text-[0.55rem] font-medium px-1 py-0.5 rounded bg-amber-500/20 text-amber-400">
+                        retry {event.payload.retry_count}
+                      </span>
+                    )}
+                    {/* Tool name for activity events */}
+                    {event.payload.current_tool && (
+                      <span className="text-[0.55rem] font-mono px-1 py-0.5 rounded bg-blue-500/20 text-blue-400">
+                        {event.payload.current_tool}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </article>
+            )
+          })
+        )}
+      </div>
     </div>
   )
 }
