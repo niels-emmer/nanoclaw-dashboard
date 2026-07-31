@@ -381,15 +381,15 @@
   flex-direction: column;
   gap: 4px;
   padding: 10px 14px;
-  background: rgba(23, 23, 25, 0.92);
+  background: rgba(23, 23, 25, 0.96);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 3px solid #fff;
+  border: 3px solid rgba(255, 255, 255, 0.85);
   border-radius: 12px;
   font-family: var(--sans);
   font-size: 17px;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(255, 255, 255, 0.95);
   animation: bubble-life 5s ease forwards;
   pointer-events: none;
   overflow: hidden;
@@ -405,12 +405,12 @@
 
 .chat-bubble.tail-left::before {
   left: -13px;
-  border-right-color: rgba(23, 23, 25, 0.72);
+  border-right-color: rgba(23, 23, 25, 0.86);
 }
 
 .chat-bubble.tail-right::before {
   right: -13px;
-  border-left-color: rgba(23, 23, 25, 0.72);
+  border-left-color: rgba(23, 23, 25, 0.86);
 }
 
 .bubble-header {
