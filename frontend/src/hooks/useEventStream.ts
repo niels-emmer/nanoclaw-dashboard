@@ -14,6 +14,7 @@ export const useEventStream = () => {
   const [edges, setEdges] = useState<EdgePulse[]>([])
   const [bubbles, setBubbles] = useState<ChatBubble[]>([])
   const [connectionState, setConnectionState] = useState<ConnectionState>('connecting')
+  const [retryCount, setRetryCount] = useState(0)
   const [orchestratorId, setOrchestratorId] = useState(config.orchestratorId)
   const [topology, setTopology] = useState<TopologyData | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
@@ -30,7 +31,10 @@ export const useEventStream = () => {
         const ws = new WebSocket(config.wsUrl)
         wsRef.current = ws
 
-        ws.onopen = () => setConnectionState('connected')
+        ws.onopen = () => {
+          setRetryCount(0)
+          setConnectionState('connected')
+        }
         ws.onerror = () => setConnectionState('error')
         ws.onclose = () => {
           if (!isCancelled) scheduleReconnect()
@@ -55,6 +59,7 @@ export const useEventStream = () => {
       if (retryRef.current) {
         window.clearTimeout(retryRef.current)
       }
+      setRetryCount((prev) => prev + 1)
       retryRef.current = window.setTimeout(connect, 1200)
       setConnectionState('reconnecting')
     }
@@ -73,8 +78,8 @@ export const useEventStream = () => {
         return
       }
 
-      // Store user-facing events in history (skip internal noise)
-      if (event.type !== 'delivery_update' && event.type !== 'activity_update') {
+      // Store user-facing events in history (include activity_update for live-ops visibility)
+      if (event.type !== 'delivery_update') {
         setEvents((prev) => [event, ...prev].slice(0, config.maxEventHistory))
       }
       setSnapshots((prev) => deriveAgentSnapshot(prev, event))
@@ -119,7 +124,7 @@ export const useEventStream = () => {
         lines: lines.length > 0 ? lines : [summary],
         type: event.type,
       }
-      setBubbles((prev) => [bubble, ...prev].slice(0, 6))
+      setBubbles((prev) => [bubble, ...prev].slice(0, 3))
       setTimeout(() => {
         setBubbles((prev) => prev.filter((b) => b.id !== event.id))
       }, 5000)
@@ -140,5 +145,5 @@ export const useEventStream = () => {
     return Object.values(snapshots).sort((a, b) => a.label.localeCompare(b.label))
   }, [snapshots])
 
-  return { agents, events, edges, bubbles, connectionState, orchestratorId, topology }
+  return { agents, events, edges, bubbles, connectionState, retryCount, orchestratorId, topology }
 }

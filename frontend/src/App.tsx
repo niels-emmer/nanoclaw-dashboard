@@ -3,16 +3,15 @@ import { FlowCanvas } from './components/FlowCanvas'
 import { AgentGrid } from './components/AgentGrid'
 import { EventFeed } from './components/EventFeed'
 import { ConnectionStatus } from './components/ConnectionStatus'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { useEventStream } from './hooks/useEventStream'
-import { formatTime } from './lib/utils'
 import { Chip, Typography } from '@heroui/react'
 import './App.css'
 
 function App() {
-  const { agents, events, edges, bubbles, connectionState, orchestratorId, topology } = useEventStream()
+  const { agents, events, edges, bubbles, connectionState, retryCount, orchestratorId, topology } = useEventStream()
   const [filterAgentId, setFilterAgentId] = useState<string | null>(null)
-  const lastEvent = events[0]
-  const lastEventTimestamp = lastEvent ? formatTime(Date.parse(lastEvent.timestamp)) : '--'
+  const [debugOpen, setDebugOpen] = useState(false)
 
   const runningCount = agents.filter((a) => a.state === 'running').length
   const idleCount = agents.filter((a) => a.state === 'idle').length
@@ -31,7 +30,7 @@ function App() {
         </div>
         <div className="masthead-status">
           <div className="flex items-center gap-3">
-            <ConnectionStatus state={connectionState} />
+            <ConnectionStatus state={connectionState} retryCount={retryCount} />
             <dl className="status-callouts">
               <div>
                 <dt>Agents</dt>
@@ -58,18 +57,19 @@ function App() {
                 </div>
               )}
               <div>
-                <dt>Pulses</dt>
-                <dd>{edges.length}</dd>
-              </div>
-              <div>
-                <dt>Last signal</dt>
-                <dd>{lastEventTimestamp}</dd>
-              </div>
-              <div>
                 <dt>Workspace</dt>
                 <dd>{orchestratorId}</dd>
               </div>
             </dl>
+            <button
+              onClick={() => setDebugOpen((v) => !v)}
+              className={`text-xs px-2 py-1 rounded transition-colors font-mono ${
+                debugOpen ? 'bg-accent/30 text-accent' : 'bg-accent/10 text-muted hover:bg-accent/20'
+              }`}
+              title="Toggle debug panel"
+            >
+              {debugOpen ? 'debug ●' : 'debug ○'}
+            </button>
           </div>
         </div>
       </header>
@@ -147,8 +147,26 @@ function App() {
           </div>
         </aside>
       </main>
+
+      {debugOpen && events.length > 0 && (
+        <div className="fixed bottom-4 right-4 z-50 max-w-lg max-h-96 overflow-auto bg-surface/95 backdrop-blur border border-accent/20 rounded-xl p-4 shadow-xl">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-foreground">Latest raw event</span>
+            <button onClick={() => setDebugOpen(false)} className="text-xs text-muted hover:text-foreground">✕</button>
+          </div>
+          <pre className="text-[0.6rem] font-mono text-foreground/80 whitespace-pre-wrap break-all">
+            {JSON.stringify(events[0], null, 2)}
+          </pre>
+        </div>
+      )}
     </div>
   )
 }
 
-export default App
+export default function AppWithErrorBoundary() {
+  return (
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  )
+}
