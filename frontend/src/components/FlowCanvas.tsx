@@ -293,7 +293,7 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
 
   return (
     <div className="flow-canvas">
-      <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="presentation" aria-hidden>
+      <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label={`Orchestrator topology: ${agents.length} agents connected to ${orchestratorId}. ${edges.length} active event pulses.`}>
         <defs>
           <radialGradient id="orchestratorGlow" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor={ORCHESTRATOR_COLOR} stopOpacity="0.4" />
@@ -429,13 +429,17 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
               {agent?.currentTool && (() => {
                 const ToolIcon = TOOL_CATEGORY_ICON[agent.currentToolCategory] ?? BrainCircuit
                 const catColor = toolCategoryColor(agent.currentToolCategory)
-                const iconSize = 11
+                const iconSize = 13
+                const toolName = agent.currentTool.length > 12 ? agent.currentTool.slice(0, 11) + '…' : agent.currentTool
                 return (
-                  <g transform={`translate(0, ${node.radius + 42})`}>
-                    <circle r={9} fill={catColor} stroke="#fff" strokeWidth={1.5} />
-                    <g transform={`translate(${-iconSize / 2}, ${-iconSize / 2})`}>
+                  <g transform={`translate(0, ${node.radius + 40})`}>
+                    <rect x={-40} y={-8} width={80} height={18} rx={9} fill={catColor} stroke="#fff" strokeWidth={1.5} opacity={0.95} />
+                    <g transform={`translate(${-iconSize / 2 - 16}, ${-iconSize / 2 + 1})`}>
                       <ToolIcon size={iconSize} color="#fff" strokeWidth={2} />
                     </g>
+                    <text x={6} y={5} textAnchor="middle" fill="#fff" fontSize={9} fontFamily="var(--mono)" fontWeight={500}>
+                      {toolName}
+                    </text>
                   </g>
                 )
               })()}
@@ -482,26 +486,33 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
           </foreignObject>
         )}
 
-        {/* Chat bubbles */}
-        {bubbles.map((bubble) => {
+        {/* Chat bubbles — capped at 3, stacked with offset to prevent overlap */}
+        {bubbles.slice(0, 3).map((bubble, idx) => {
           const node = nodeMap[bubble.agentId]
           if (!node) return null
           const isQuestion = bubble.type === 'question'
           const fromLabel = isQuestion ? bubble.fromLabel : bubble.toLabel
+          const bubbleWidth = 320
+          const bubbleHeight = 110
+          const stackOffset = idx * (bubbleHeight + 8)
+
           let bx = node.x + node.radius + 14
-          if (bx + 352 > WIDTH - 10) {
-            bx = node.x - node.radius - 14 - 352
+          if (bx + bubbleWidth > WIDTH - 10) {
+            bx = node.x - node.radius - 14 - bubbleWidth
           }
-          const by = Math.max(8, Math.min(HEIGHT - 148, node.y - 50))
+          const by = Math.max(8 + stackOffset, Math.min(HEIGHT - bubbleHeight - 8, node.y - 50 + stackOffset))
           const tailSide = bx > node.x ? 'left' : 'right'
+          const opacity = idx === 0 ? 1 : idx === 1 ? 0.85 : 0.7
+
           return (
             <foreignObject
               key={bubble.id}
               x={bx}
               y={by}
-              width={352}
-              height={140}
+              width={bubbleWidth}
+              height={bubbleHeight}
               className="chat-bubble-fo"
+              style={{ opacity }}
             >
               <div className={`chat-bubble tail-${tailSide}`}>
                 <div className="bubble-header">
@@ -510,7 +521,7 @@ export function FlowCanvas({ orchestratorId, agents, edges, bubbles, topology, o
                 </div>
                 <div className="bubble-divider" />
                 <div className="bubble-lines">
-                  {bubble.lines.slice(0, 3).map((line, i) => (
+                  {bubble.lines.slice(0, 2).map((line, i) => (
                     <span key={i} className="bubble-line">{line}</span>
                   ))}
                 </div>

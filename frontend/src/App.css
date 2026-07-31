@@ -74,8 +74,8 @@
 
 .detail-stack {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1.1fr 0.9fr;
   gap: 0.75rem;
   min-height: 0;
   height: 100%;
@@ -152,12 +152,12 @@
     linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
   background-size: 120px 120px;
   animation: drift 16s linear infinite;
-  opacity: 0.3;
+  opacity: 0.15;
 }
 
 .canvas-overlay .grid-lines:nth-child(2) {
   animation-duration: 22s;
-  opacity: 0.1;
+  opacity: 0.08;
 }
 
 @keyframes drift {
@@ -505,5 +505,28 @@
   }
   .status-callouts {
     flex-wrap: wrap;
+  }
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .canvas-overlay .grid-lines {
+    animation: none;
+  }
+  .liveness-pulse {
+    animation: none;
+  }
+  .node-ring.running,
+  .node-ring.error,
+  .node-ring.spinning_up {
+    animation: none;
+  }
+  .edge-pulse {
+    animation: none;
+    stroke-opacity: 0.6;
+  }
+  .chat-bubble {
+    animation: none;
+    opacity: 1;
   }
 }

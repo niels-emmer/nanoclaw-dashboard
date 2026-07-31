@@ -10,13 +10,17 @@ const config: Record<ConnectionState, { label: string; color: 'success' | 'warni
 
 interface Props {
   state: ConnectionState
+  retryCount?: number
 }
 
-export function ConnectionStatus({ state }: Props) {
+export function ConnectionStatus({ state, retryCount = 0 }: Props) {
   const { label, color } = config[state]
   return (
-    <Chip color={color} variant="primary" size="sm" data-state={state}>
+    <Chip color={color} variant="primary" size="sm" data-state={state} title={retryCount > 0 ? `Reconnect attempts: ${retryCount}` : undefined}>
       {label}
+      {retryCount > 0 && state !== 'connected' && (
+        <span className="ml-1 text-[0.55rem] opacity-70">({retryCount})</span>
+      )}
     </Chip>
   )
 }
