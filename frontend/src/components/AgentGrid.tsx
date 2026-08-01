@@ -42,7 +42,7 @@ export function AgentGrid({ agents }: Props) {
 
         return (
           <div key={agent.id} className={`flex flex-col gap-1.5 py-2 ${idx < sorted.length - 1 ? 'border-b border-accent/10' : ''}`}>
-            {/* Line 1: liveness dot + name | error count + message count */}
+            {/* Single line: liveness dot + name (left) | model + status + errors + msgs (right) */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 <span
@@ -51,6 +51,16 @@ export function AgentGrid({ agents }: Props) {
                 <span className="text-base capitalize truncate font-semibold">{agent.label}</span>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
+                {agent.provider ? (
+                  <Chip size="sm" variant="soft" color="accent" className="text-[0.55rem] font-mono">
+                    {agent.provider}/{agent.model ?? 'default'}
+                  </Chip>
+                ) : (
+                  <span className="text-[0.55rem] text-muted font-mono">—/—</span>
+                )}
+                <Chip size="sm" variant="soft" color="accent" className="text-[0.6rem]">
+                  {stateCopy[agent.state] ?? agent.state}
+                </Chip>
                 {agent.errorCount > 0 && (
                   <Chip size="sm" variant="primary" color="danger" className="text-[0.55rem]">
                     {agent.errorCount} err
@@ -59,26 +69,12 @@ export function AgentGrid({ agents }: Props) {
                 <Chip size="sm" variant="secondary" color="accent" className="shrink-0 text-[0.65rem]">
                   {agent.activityCount} msg
                 </Chip>
+                {agent.pendingApprovals > 0 && (
+                  <Chip size="sm" variant="primary" color="warning" className="text-[0.55rem]">
+                    {agent.pendingApprovals} pending
+                  </Chip>
+                )}
               </div>
-            </div>
-
-            {/* Line 2: model/provider */}
-            <div className="flex items-center gap-2">
-              {agent.provider ? (
-                <Chip size="sm" variant="soft" color="accent" className="text-[0.55rem] font-mono">
-                  {agent.provider}/{agent.model ?? 'default'}
-                </Chip>
-              ) : (
-                <span className="text-[0.55rem] text-muted font-mono">—/—</span>
-              )}
-              <Chip size="sm" variant="soft" color="accent" className="text-[0.6rem]">
-                {stateCopy[agent.state] ?? agent.state}
-              </Chip>
-              {agent.pendingApprovals > 0 && (
-                <Chip size="sm" variant="primary" color="warning" className="text-[0.55rem]">
-                  {agent.pendingApprovals} pending
-                </Chip>
-              )}
             </div>
 
             {agent.outboundTargets.length > 0 && (
