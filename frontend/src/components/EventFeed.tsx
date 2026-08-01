@@ -7,7 +7,6 @@ interface Props {
 }
 
 const EVENT_TYPES = ['all', 'question', 'response', 'agent_status', 'activity_update', 'delivery_update', 'approval_pending'] as const
-type EventFilter = (typeof EVENT_TYPES)[number]
 
 function statusIcon(event: TelemetryEvent): { icon: string; color: string; label: string } {
   const p = event.payload
@@ -37,7 +36,7 @@ function statusIcon(event: TelemetryEvent): { icon: string; color: string; label
 }
 
 export function EventFeed({ events }: Props) {
-  const [filterType, setFilterType] = useState<EventFilter>('all')
+  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set())
   const [showDelivery, setShowDelivery] = useState(false)
 
   const filteredEvents = useMemo(() => {
@@ -48,13 +47,13 @@ export function EventFeed({ events }: Props) {
       result = result.filter((e) => e.type !== 'delivery_update')
     }
 
-    // Apply type filter
-    if (filterType !== 'all') {
-      result = result.filter((e) => e.type === filterType)
+    // Apply type filter — empty set means show all
+    if (activeFilters.size > 0) {
+      result = result.filter((e) => activeFilters.has(e.type))
     }
 
     return result
-  }, [events, filterType, showDelivery])
+  }, [events, activeFilters, showDelivery])
 
   if (events.length === 0) {
     return (
@@ -68,19 +67,34 @@ export function EventFeed({ events }: Props) {
     <div className="flex flex-col min-h-0">
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-1.5 pb-2 shrink-0">
-        {EVENT_TYPES.map((type) => (
-          <button
-            key={type}
-            onClick={() => setFilterType(type)}
-            className={`text-[0.6rem] px-1.5 py-0.5 rounded transition-colors ${
-              filterType === type
-                ? 'bg-accent/30 text-accent font-semibold'
-                : 'bg-accent/10 text-muted hover:bg-accent/20'
-            }`}
-          >
-            {type === 'all' ? 'all' : type.replace('_', ' ')}
-          </button>
-        ))}
+        {EVENT_TYPES.map((type) => {
+          const isAll = type === 'all'
+          const active = isAll ? activeFilters.size === 0 : activeFilters.has(type)
+          return (
+            <button
+              key={type}
+              onClick={() => {
+                if (isAll) {
+                  setActiveFilters(new Set())
+                } else {
+                  setActiveFilters((prev) => {
+                    const next = new Set(prev)
+                    if (next.has(type)) next.delete(type)
+                    else next.add(type)
+                    return next
+                  })
+                }
+              }}
+              className={`text-[0.6rem] px-1.5 py-0.5 rounded transition-colors ${
+                active
+                  ? 'bg-accent/30 text-accent font-semibold'
+                  : 'bg-accent/10 text-muted hover:bg-accent/20'
+              }`}
+            >
+              {isAll ? 'all' : type.replace('_', ' ')}
+            </button>
+          )
+        })}
         <button
           onClick={() => setShowDelivery((v) => !v)}
           className={`text-[0.6rem] px-1.5 py-0.5 rounded transition-colors ml-auto ${
