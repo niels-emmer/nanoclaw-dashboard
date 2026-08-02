@@ -5,7 +5,7 @@
     "AGENTS.md",
     "docs/OPENCODE_WORKFLOW.md"
   ],
-  "subagent_depth": 2,
+  "subagent_depth": 3,
   "share": "manual",
   "model": "opencode/deepseek-v4-flash",
   "skills": {

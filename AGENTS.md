@@ -1,8 +1,8 @@
 # Universal agent rules
 
-> **Opencode Configuration**: This repository is self-contained for [Opencode](https://opencode.ai). Project config, subagents (`@explorer`, `@github`, `@reviewer`, `@security-auditor`), slash commands (`/plan`, `/handoff`, `/decision-log`), and skills live under `.opencode/`.
+> **Opencode Configuration**: This repository is self-contained for [Opencode](https://opencode.ai). Project config, subagents (`@explorer`, `@github`, `@general`, `@scout`, `@reviewer`, `@security-auditor`, `@docs`), slash commands (`/plan`, `/handoff`, `/decision-log`, `/release`), and skills live under `.opencode/`.
 >
-> **CRITICAL FOR OPENCODE SESSIONS**: Before doing any work, use the Read tool to load `docs/OPENCODE_WORKFLOW.md`. Follow everything in that file—it is the leading source of workflow/governance rules for OpenCode usage in this repo. After reading it, continue with the instructions in this `AGENTS.md` and any additional files it references.
+> **CRITICAL FOR OPENCODE SESSIONS**: Before doing any work, load the `governance` skill and read `docs/OPENCODE_WORKFLOW.md`. Follow everything in that file—it is the leading source of workflow/governance rules for OpenCode usage in this repo. After reading it, continue with the instructions in this `AGENTS.md` and any additional files it references.
 
 These rules apply to every task in this tree unless overridden by a more
 specific `CLAUDE.md` or `AGENTS.md`.

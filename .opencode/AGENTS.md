@@ -32,6 +32,7 @@ These two steps are not optional. They are the first thing you do in every sessi
 ## Governance rules (enterprise + internet-facing apps)
 
 11. **Data Classification** — Before sending data to any cloud model, classify it: PUBLIC (any model), INTERNAL (Zen US-hosted only, zero-retention), CONFIDENTIAL (local Ollama only, no cloud egress), REGULATED (local only, no exceptions). When in doubt, treat as CONFIDENTIAL. Never paste customer PII, credentials, or production secrets into AI prompts.
+    - **No free-tier models**: Free and trial models commonly train on prompts and code. They are prohibited for any project classified INTERNAL or above. Only use models with verified zero-retention guarantees. The project default (`opencode/deepseek-v4-flash`) meets this requirement.
 12. **Secrets Isolation** — Never inline secrets, tokens, connection strings, or API keys in code, prompts, or docs. Use `{env:VAR}` references, gitignored `.env` files, or a secrets manager. If you see a secret in a prompt or file, flag it immediately and do not proceed until it is redacted.
 13. **Dependency License Gate** — Before adding a dependency, verify: OSI-approved license (MIT, Apache 2.0, BSD, LGPL — not AGPL or unlicensed), actively maintained, no critical CVEs, pinned to a specific version, from a trusted registry.
 14. **Environment Isolation** — Never mix personal and enterprise credentials, tokens, or accounts in the same session. Flag any detected cross-contamination.

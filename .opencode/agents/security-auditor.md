@@ -4,6 +4,7 @@ mode: subagent
 model: opencode/deepseek-v4-flash
 temperature: 0
 steps: 20
+color: error
 permission:
   bash: deny
   edit: deny
