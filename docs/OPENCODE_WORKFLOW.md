@@ -1,6 +1,6 @@
 # OpenCode Workflow & Governance Playbook
 
-_Last reviewed: 2026-08-02_
+_Last reviewed: 2026-08-02_ (updated: added `/start` command)
 
 This document consolidates the OpenCode reference docs that apply to the Nanoclaw dashboard repository. Every OpenCode session **must** follow these rules in addition to the repo-root `AGENTS.md` instructions. When guidance conflicts, the stricter rule wins.
 
@@ -17,12 +17,39 @@ This document consolidates the OpenCode reference docs that apply to the Nanocla
 ## Mandatory workflow for OpenCode sessions
 
 1. **Classify the data** (Enterprise doc) — treat everything here as at least _Internal_. Upgrade to _Confidential_ if customer data, secrets, or production state enter the conversation; in that case restrict to local/on-prem models only.
-2. **Load governance instructions first** — read this playbook, then `AGENTS.md`, then any file referenced by `.opencode/` agent instructions. (Rules doc)
+2. **Run `/start`** — this loads the governance skill, reads this playbook, and classifies the data. It is the single command that replaces the manual startup ritual. (See [The `/start` command](#the-start-command) below.)
 3. **Plan before non-trivial edits** — use `/plan` (Plan agent) whenever a task spans multiple files or requires more than one command. (Agents doc)
 4. **Delegate intentionally** — prefer the orchestrator primary agent for coordination, `@explorer` for read-only discovery, `@github` for CLI-driven repository/PR work, `@general` for multi-step research and implementation tasks, `@scout` for external dependency research (licenses, CVEs), `@reviewer` for regression and risk review, `@security-auditor` for security gates, and `@docs` for documentation audits. (Agents doc)
 5. **Enforce tool/permission approvals** — follow the ask/allow/deny grid defined in `.opencode/agents/*.md`. Never bypass user confirmation for denied or ask-marked operations even if auto-approve is enabled. (Tools + Permissions docs)
 6. **Verify before completion** — run the narrowest meaningful check (tests, linters, `gh` status) before reporting success. (Rules doc > Verify Before Done)
 7. **Document the session** — update todos, ADRs, and DECISIONS when behavior changes. Record AI-authored work in `/handoff`. (Rules + repo governance section)
+
+## The `/start` command
+
+`/start` is the single command that replaces the manual startup ritual. It is the **first thing you run** in every new OpenCode session on this project.
+
+### What it does
+
+1. **Loads the `governance` skill** — injects data classification rules, audit trail requirements, and dependency compliance gates.
+2. **Reads this playbook** (`docs/OPENCODE_WORKFLOW.md`) — ensures every agent knows the workflow, governance, and enforcement rules.
+3. **Classifies the data** — determines the sensitivity level (PUBLIC / INTERNAL / CONFIDENTIAL / REGULATED). Defaults to INTERNAL for this project; upgrades to CONFIDENTIAL if customer data or secrets enter the conversation.
+4. **Reports readiness** — confirms all steps completed and states the active data classification.
+
+### When to use it
+
+- **Every new session** — run `/start` before any other command or user request.
+- **After a session reset** — if context is lost or a new agent takes over, run `/start` again.
+
+### Fallback
+
+If `/start` is unavailable (e.g., command not yet registered in a fresh clone), execute the manual sequence:
+1. `skill` with name `governance`
+2. `read` on `docs/OPENCODE_WORKFLOW.md`
+3. Classify the data (default INTERNAL)
+
+### Definition
+
+The command is defined in `.opencode/commands/start.md` and handled by the orchestrator agent.
 
 ## Governance & data handling requirements
 
@@ -65,7 +92,7 @@ This document consolidates the OpenCode reference docs that apply to the Nanocla
 
 ## Repository-specific enforcement checklist
 
-- Load `docs/OPENCODE_WORKFLOW.md` (this file) before every session; its rules are authoritative for OpenCode usage.
+- Run `/start` before every session; it loads this file, the governance skill, and classifies data in one step.
 - Load `AGENTS.md` immediately after and obey its repo-specific workflows (build/test commands, threat modeling, etc.).
 - Confirm `.opencode/agents/orchestrator.md` references both `AGENTS.md` and this file in its instructions.
 - Confirm `.opencode/agents/github.md` has the correct bash permission allowlist for `gh *` and `git *` patterns.
