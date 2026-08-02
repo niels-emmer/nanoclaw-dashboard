@@ -1,12 +1,18 @@
 # Changelog
 
-## [1.1.0] — 2026-07-29
+## [1.1.0] — 2026-08-02
 
 ### Added
 
 - **Realistic mock telemetry** — agent-specific task pools with realistic summaries and responses, agent-to-agent conversations (architect→coder, researcher→editor, etc.), varied agent states (idle/running/error), and realistic error messages. (#24649b8)
 - **Error count tracking** — per-agent error counter in `AgentSnapshot`, displayed as a badge in the agent grid. (#9754e4d)
 - **Pulsing liveness dot** — green dot pulses in agent grid when agent is both running and alive. (#9754e4d)
+- **Event ring buffer** — backend retains recent events and flushes them to newly connected WebSocket clients so the dashboard populates immediately on connect. (#a4038d2)
+- **Agent decay and auto-removal** — agents that haven't sent events in 60 seconds fade out and are removed from the orbit canvas. (#575990b)
+- **Multi-toggle event type filter** — EventFeed checkboxes to show/hide specific event types (question, response, agent_status, etc.). (#422cf5a)
+- **Comprehensive dashboard UI/UX improvements** — refined layout, spacing, typography, and responsive behavior across all panels. (#67abbe0)
+- **Self-contained Opencode configuration** — portable `.opencode/` directory with subagents, slash commands, and embedded skills for AI-assisted development. (#faa337c)
+- **Official brand greens** — WhatsApp (#25D366) and Matrix/Element (#0DBD8B) colors for channel nodes. (#5963454)
 
 ### Changed
 
@@ -15,17 +21,42 @@
 - **Liveness dot replaced with ring** — removed bottom-right liveness dot on canvas nodes; replaced with a dashed inner circle only when stale (amber) or dead (red), hidden when alive. (#e7885f5)
 - **Skills dots removed** — removed the row of small dots below agent labels on the canvas. (#24649b8)
 - **Chat bubble font** — added explicit `font-family: var(--sans)` to fix serif fallback in SVG `foreignObject`. (#e7885f5)
+- **Agent entry collapsed to single line** — compact agent representation in the grid header. (#a89d692)
 
 ### Fixed
 
 - **Liveness dot not visible** — added `background` alongside `fill` so the dot renders on HTML `<span>` elements (not just SVG). (#1044732)
 - **Tool icon not centered** — added centering offset to tool badge icon. (#24649b8)
+- **Tool badge pill layout** — compact pill layout for tool category badges. (#8733b8f)
+- **Orbit node and agent grid badge colors** — aligned colors by hashing clean entity keys and pinning standard agent colors. (#b1dbd69)
+- **AgentGrid opacity** — restored full opacity and use receipt timestamp for `lastUpdated`. (#6667439)
+- **Friendly agent names from nanoclaw** — resolve friendly names from `container_configs` and preserve them in the frontend. (#abb784d)
+- **Liveness ring size** — enlarged to sit just inside the agent circle. (#ed70682)
+- **Default provider/model** — handle null values in `container_configs`. (#7e19c76)
+- **Provider/model leaking between agents** — stop cross-agent contamination in snapshots. (#936c94d)
+- **Pulsing ring** — keep active until agent responds. (#0c8fecc)
+- **Event buffer noise** — stop filling buffer with filtered noise, increase history depth. (#22b2be3)
+- **Timestamp normalization** — handle mixed ISO/SQLite timestamp formats in `_fetch_rows`. (#245c599)
+- **Stale tool arc** — clear when tool completes. (#a7ef5c4)
+- **Pulsing activity ring** — restore for running agents. (#a2ee23e)
+- **Outbound message filtering** — stop filtering outbound messages as noise in nanoclaw source. (#f21bee0)
+- **Security governance remediations** — audit findings addressed. (#5cb7ac4)
+
+### Chores
+
+- Bump oxlint from 1.75.0 to 1.76.0. (#7a77739)
+- Bump fastapi from 0.140.0 to 0.140.6. (#9406fb6)
+- Remove dead code and tighten test coverage. (#4be6b29)
 
 ### Documentation
 
 - Architecture docs updated for mock telemetry, FlowCanvas features, and event history default. (#24649b8)
 - Screenshot replaced. (#24649b8)
-- Changelog updated for v1.1.0.
+- Portable Opencode setup documented in README and Project Structure. (#9b03cd5)
+- Opencode instructions pointed to self-contained config. (#9a00259)
+- Complete documentation audit for human and agentic alignment. (#688a915)
+- Documentation audit and update for current codebase state. (#bacfd12)
+- Dashboard screenshot updated to latest version. (#47cb2ef)
 
 ## [1.0.0] — 2026-07-27
 
@@ -115,5 +146,6 @@
 
 Initial scaffold with FastAPI backend, Vite + React + TypeScript frontend, mock telemetry source, WebSocket transport, orbit canvas visualization, agent grid, event feed, debug panel, Docker Compose deployment, and CI security scanning.
 
+[1.1.0]: https://github.com/niels-emmer/nanoclaw-dashboard/releases/tag/v1.1.0
 [1.0.0]: https://github.com/niels-emmer/nanoclaw-dashboard/releases/tag/v1.0.0
 [0.9-prerelease]: https://github.com/niels-emmer/nanoclaw-dashboard/releases/tag/v0.9-prerelease
