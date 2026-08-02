@@ -33,7 +33,7 @@ You own the full workflow: understand the request, plan, implement, verify, revi
 
 | Command | When to use |
 |---------|-------------|
-| `/start` | **Every new session.** Loads governance skill, reads the workflow playbook, classifies data. Mandatory first command. |
+| `/start` | **Every new session.** Prompts for task type and description, suggests a branch name, loads governance skill, reads the workflow playbook, classifies data, creates the branch. Mandatory first command. |
 | `/plan` | Before any non-trivial implementation. Produces acceptance criteria and task list. |
 | `/handoff` | End of session or milestone. Produces a summary with verification state. |
 | `/decision-log` | When an architecture or workflow decision needs recording. |
@@ -56,23 +56,24 @@ You own the full workflow: understand the request, plan, implement, verify, revi
 
 For any request:
 
-1. **Classify** — Determine the data sensitivity level (PUBLIC / INTERNAL / CONFIDENTIAL / REGULATED). This dictates which models and tools are permitted. If the request touches enterprise or customer data, treat as CONFIDENTIAL minimum.
-   - **Verify model compliance**: Confirm every agent involved uses a model permitted for the data class. Free-tier and trial models are never permitted for INTERNAL or above — they train on prompts and code. The project default (`opencode/deepseek-v4-flash`) has verified zero-retention. Document any model override in `docs/DECISIONS.md`.
-2. **Understand** — Clarify the goal if ambiguous. Restate as concrete acceptance criteria.
-3. **Explore** — If the codebase is unfamiliar, use `@explorer` to understand structure before editing.
-4. **Plan** — For non-trivial work, use `/plan` to produce an explicit task list.
-5. **Implement** — Make the smallest correct change. Implement directly for general coding. Delegate to `@github` for GitHub operations, or `@general`/`@explorer` for specialized subtasks when context pressure is high.
-6. **Verify** — Run the narrowest meaningful check. Prefer existing test commands.
-7. **Review** — For milestone-quality work, run `@reviewer` for regression review and `@security-auditor` for security review.
-8. **Post-completion maintenance** — After every implementation milestone, automatically run the relevant maintenance tasks based on what changed. Do not ask — just execute.
+1. **Start session** — If this is a new session, run `/start` first. It will prompt for task type and description, suggest a branch name, load governance, read the playbook, classify data, and create the branch. Do not skip this step.
+2. **Classify** — Determine the data sensitivity level (PUBLIC / INTERNAL / CONFIDENTIAL / REGULATED). This dictates which models and tools are permitted. If the request touches enterprise or customer data, treat as CONFIDENTIAL minimum.
+   - **Verify model compliance**: Confirm every agent involved uses a model permitted for the data class. Free-tier and trial models are never permitted for INTERNAL or above — they train on prompts and code. The project default (`opencode/deepseek-v4-flash`) has verified zero-retention. Document any model override in `docs/decision-log.md`.
+3. **Understand** — Clarify the goal if ambiguous. Restate as concrete acceptance criteria.
+4. **Explore** — If the codebase is unfamiliar, use `@explorer` to understand structure before editing.
+5. **Plan** — For non-trivial work, use `/plan` to produce an explicit task list.
+6. **Implement** — Make the smallest correct change. Implement directly for general coding. Delegate to `@github` for GitHub operations, or `@general`/`@explorer` for specialized subtasks when context pressure is high.
+7. **Verify** — Run the narrowest meaningful check. Prefer existing test commands.
+8. **Review** — For milestone-quality work, run `@reviewer` for regression review and `@security-auditor` for security review.
+9. **Post-completion maintenance** — After every implementation milestone, automatically run the relevant maintenance tasks based on what changed. Do not ask — just execute.
    - **Code structure changed** (new files, moved modules, new routes): run `@docs` to audit docs, then apply its suggestions to `docs/ARCHITECTURE.md`.
    - **Setup or commands changed** (new env vars, new scripts, new npm/pip deps): update `README.md` (quick start, prerequisites, project structure).
    - **Dependencies changed** (added/removed npm or pip packages): update `THIRD_PARTY.md` with exact version + license.
    - **Telemetry schema or transport changed** (new event types, new payload fields, new WebSocket paths): bump `schema_version` in `backend/app/telemetry/models.py`, mirror in `frontend/src/lib/types.ts`, add ADR entry via `/decision-log`.
-   - **Governance finding surfaced** (by `@security-auditor`, `@reviewer`, or during implementation): update the relevant governance doc (`.opencode/skills/governance/SKILL.md`, `docs/OPENCODE_WORKFLOW.md`, or `.opencode/AGENTS.md`) and record the finding in `docs/DECISIONS.md`.
-   - **Architecture decision made** (new pattern, new tool, new workflow): record via `/decision-log` in `docs/DECISIONS.md`.
+   - **Governance finding surfaced** (by `@security-auditor`, `@reviewer`, or during implementation): update the relevant governance doc (`.opencode/skills/governance/SKILL.md`, `docs/OPENCODE_WORKFLOW.md`, or `.opencode/AGENTS.md`) and record the finding in `docs/decision-log.md`.
+   - **Architecture decision made** (new pattern, new tool, new workflow): record via `/decision-log` in `docs/decision-log.md`.
    - **No relevant change detected**: skip maintenance — report "No post-completion maintenance needed."
-9. **Hand off** — At session end, use `/handoff` to summarize what was done and what remains. Include what maintenance was performed in step 8.
+10. **Hand off** — At session end, use `/handoff` to summarize what was done and what remains. Include what maintenance was performed in step 9.
 
 ## Rules
 

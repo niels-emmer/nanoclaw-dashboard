@@ -22,7 +22,7 @@ Closes #(issue-number)
 
 ## Governance Checklist
 
-- [ ] `docs/DECISIONS.md` updated (if schema, transport, or architecture changed)
+- [ ] `docs/decision-log.md` updated (if schema, transport, or architecture changed)
 - [ ] `THIRD_PARTY.md` updated (if dependencies added / removed)
 - [ ] `README.md` / `docs/ARCHITECTURE.md` updated (if commands or workflows changed)
 - [ ] Threat model updated or reviewed (if network surface / data store changed)

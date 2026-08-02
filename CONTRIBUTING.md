@@ -105,7 +105,7 @@ docker compose up --build
 
 - **No secrets in code or commits.** Use environment variables.
 - Keep docs in sync: `README.md`, `docs/ARCHITECTURE.md`, `SECURITY.md`,
-  `THIRD_PARTY.md`, `docs/DECISIONS.md`.
+  `THIRD_PARTY.md`, `docs/decision-log.md`.
 - Prefer small, focused commits over large ones.
 
 ## Pull Request Process
@@ -140,7 +140,7 @@ Example: `feat: add telemetry source for agent lifecycle events`
 Before merging any PR, verify:
 
 - [ ] Threat model updated if a new network surface or data store was added
-- [ ] `docs/DECISIONS.md` updated (new ADR entry if schema, transport, or deps changed)
+- [ ] `docs/decision-log.md` updated (new ADR entry if schema, transport, or deps changed)
 - [ ] `THIRD_PARTY.md` updated if dependencies added / removed
 - [ ] `README.md`, `docs/ARCHITECTURE.md` reflect any new commands or workflows
 - [ ] `AGENTS.md` checklist items addressed

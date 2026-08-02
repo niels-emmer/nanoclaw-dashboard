@@ -38,11 +38,11 @@ while IFS= read -r -d '' src; do
     docs/*.md) ;;
     *) continue ;;
   esac
-  # Map docs/ARCHITECTURE.md → Architecture.md, docs/DECISIONS.md → Decisions.md
+  # Map docs/ARCHITECTURE.md → Architecture.md, docs/decision-log.md → Decision-Log.md
   basename="$(basename "$rel" .md)"
   case "$basename" in
     ARCHITECTURE) target="Architecture.md" ;;
-    DECISIONS)    target="Decisions.md" ;;
+    decision-log) target="Decision-Log.md" ;;
     *)            target="${basename}.md" ;;
   esac
   cp "$src" "$WIKI_DIR/$target"
@@ -61,7 +61,7 @@ Edit the source files in `docs/` instead.
 ## Pages
 
 - [Architecture](Architecture) — System design, data flow, component responsibilities
-- [Decisions](Decisions) — Architecture Decision Record (ADR) log
+- [Decision-Log](Decision-Log) — Architecture Decision Record (ADR) log
 
 ## Quick links
 

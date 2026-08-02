@@ -192,11 +192,11 @@ mock telemetry automatically.
 ```
 nanoclaw-dashboard/
 ├── opencode.json               # Portable Opencode workspace configuration
-├── .opencode/                  # Self-contained subagents, commands, and skills
-│   ├── AGENTS.md               # Project-level coding & governance rules
-│   ├── agents/                 # Custom subagents (@explorer, @github, @general, @scout, @reviewer, @security-auditor, @docs)
-│   ├── commands/               # Slash commands (/plan, /handoff, /decision-log, /release)
-│   └── skills/                 # Embedded workflow skills (governance, standards, ...)
+├── .opencode/                  # Project-specific OpenCode config (global provides universal rules)
+│   ├── AGENTS.md               # Mandatory startup ritual
+│   ├── agents/                 # Project-specific subagents (@orchestrator, @general, @scout, @docs)
+│   ├── commands/               # Project-specific commands (/start, /release, /decision-log)
+│   └── skills/                 # Project-modified skill (governance)
 ├── backend/                    # FastAPI WebSocket server
 │   ├── app/
 │   │   ├── main.py             # App factory, lifespan, routes
@@ -228,7 +228,7 @@ nanoclaw-dashboard/
 │   └── package.json
 ├── docs/
 │   ├── ARCHITECTURE.md
-│   ├── DECISIONS.md
+│   ├── decision-log.md
 │   ├── OPENCODE_WORKFLOW.md    # OpenCode session governance playbook
 │   ├── screenshot.png
 │   └── threat-models/          # STRIDE analyses
@@ -262,10 +262,10 @@ nanoclaw-dashboard/
 This repository is self-contained for [Opencode](https://opencode.ai). Opening an Opencode session in this repository automatically loads the following from `opencode.json` and `.opencode/`:
 
 - **Primary Orchestrator**: Default coordinator agent (`orchestrator`) that manages general coding, planning, and delegation. After every implementation milestone, it automatically runs post-completion maintenance: auditing docs, updating README, recording decisions, and syncing governance docs.
-- **Subagents**: Specialized read-only and operational subagents in `.opencode/agents/` (`@explorer`, `@github`, `@general`, `@scout`, `@reviewer`, `@security-auditor`, `@docs`).
-- **Slash Commands**: Workflow commands in `.opencode/commands/` (`/start`, `/plan`, `/handoff`, `/decision-log`, `/release`).
-- **Embedded Skills**: Local domain skills in `.opencode/skills/` (`code-standards`, `governance`, `github-workflow`, `pr-standards`, `release-engineering`, `security-checklist`, `test-patterns`, `github-security`).
-- **Instructions**: Coding standards and enterprise governance rules in `AGENTS.md` and `docs/OPENCODE_WORKFLOW.md`.
+- **Subagents**: Project-specific subagents in `.opencode/agents/` (`@orchestrator`, `@general`, `@scout`, `@docs`). Generic subagents (`@explorer`, `@github`, `@reviewer`, `@security-auditor`) come from your global `~/.config/opencode/agents/`.
+- **Slash Commands**: Project-specific commands in `.opencode/commands/` (`/start`, `/release`, `/decision-log`). Generic commands (`/plan`, `/handoff`) come from your global `~/.config/opencode/commands/`.
+- **Embedded Skills**: Project-modified skill in `.opencode/skills/` (`governance`). Universal skills (`code-standards`, `test-patterns`, etc.) come from your global `~/.config/opencode/skills/`.
+- **Instructions**: Project overview and workflow rules in `AGENTS.md` and `docs/OPENCODE_WORKFLOW.md`. Universal coding rules come from your global `~/.config/opencode/AGENTS.md`.
 
 ### Configuration defaults (`opencode.json`)
 
@@ -299,9 +299,9 @@ This forces the agent to manually load the `governance` skill and read `docs/OPE
 | [SECURITY.md](SECURITY.md) | Security controls, threat models, vulnerability reporting |
 | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards |
 | [THIRD_PARTY.md](THIRD_PARTY.md) | Dependency provenance ledger (exact versions + licenses) |
-| [docs/DECISIONS.md](docs/DECISIONS.md) | Architecture Decision Record (ADR) log |
+| [docs/decision-log.md](docs/decision-log.md) | Architecture Decision Record (ADR) log |
 | [docs/threat-models/](docs/threat-models/) | STRIDE analyses for exposed interfaces |
-| [AGENTS.md](AGENTS.md) | Condensed playbook for AI coding agents |
+| [AGENTS.md](AGENTS.md) | Project overview, layout, and build/test commands |
 | [frontend/README.md](frontend/README.md) | Frontend-specific development notes |
 | [Wiki](https://github.com/niels-emmer/nanoclaw-dashboard/wiki) | Rendered docs (auto-synced from `docs/`) |
 
