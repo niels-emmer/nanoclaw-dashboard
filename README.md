@@ -262,7 +262,7 @@ This repository is self-contained for [Opencode](https://opencode.ai). Configura
 
 - **Primary Orchestrator**: Default coordinator agent (`orchestrator`) that manages general coding, planning, and delegation.
 - **Subagents**: Specialized read-only and operational subagents in `.opencode/agents/` (`@explorer`, `@github`, `@reviewer`, `@security-auditor`).
-- **Slash Commands**: Workflow commands in `.opencode/commands/` (`/plan`, `/handoff`, `/decision-log`).
+- **Slash Commands**: Workflow commands in `.opencode/commands/` (`/plan`, `/handoff`, `/decision-log`, `/release`).
 - **Embedded Skills**: Local domain skills in `.opencode/skills/` (`code-standards`, `governance`, `github-workflow`, `pr-standards`, `release-engineering`, `security-checklist`, `test-patterns`, `github-security`).
 - **Instructions**: Coding standards and enterprise governance rules in `.opencode/AGENTS.md`.
 
