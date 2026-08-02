@@ -191,6 +191,7 @@ mock telemetry automatically.
 
 ```
 nanoclaw-dashboard/
+├── opencode.json               # Portable Opencode workspace configuration
 ├── .opencode/                  # Self-contained subagents, commands, and skills
 │   ├── AGENTS.md               # Project-level coding & governance rules
 │   ├── agents/                 # Custom subagents (@explorer, @github, @reviewer, ...)
@@ -258,13 +259,26 @@ nanoclaw-dashboard/
 
 ## Opencode Integration
 
-This repository is self-contained for [Opencode](https://opencode.ai). Configuration, subagents, commands, and skills live under `.opencode/`. Opening an Opencode session in this repository automatically loads:
+This repository is self-contained for [Opencode](https://opencode.ai). Opening an Opencode session in this repository automatically loads the following from `opencode.json` and `.opencode/`:
 
 - **Primary Orchestrator**: Default coordinator agent (`orchestrator`) that manages general coding, planning, and delegation.
 - **Subagents**: Specialized read-only and operational subagents in `.opencode/agents/` (`@explorer`, `@github`, `@reviewer`, `@security-auditor`).
 - **Slash Commands**: Workflow commands in `.opencode/commands/` (`/plan`, `/handoff`, `/decision-log`, `/release`).
 - **Embedded Skills**: Local domain skills in `.opencode/skills/` (`code-standards`, `governance`, `github-workflow`, `pr-standards`, `release-engineering`, `security-checklist`, `test-patterns`, `github-security`).
-- **Instructions**: Coding standards and enterprise governance rules in `.opencode/AGENTS.md`.
+- **Instructions**: Coding standards and enterprise governance rules in `AGENTS.md` and `docs/OPENCODE_WORKFLOW.md`.
+
+### Configuration defaults (`opencode.json`)
+
+| Setting | Value | Purpose |
+|---------|-------|---------|
+| `default_agent` | `orchestrator` | Sets the orchestrator as the primary session agent |
+| `model` | `opencode/deepseek-v4-flash` | Default model for all agents (each agent can override) |
+| `subagent_depth` | `2` | Allows subagents (e.g., `@github`) to spawn helpers for multi-step operations |
+| `share` | `manual` | Prevents automatic session sharing; explicit opt-in required |
+| `instructions` | `AGENTS.md`, `docs/OPENCODE_WORKFLOW.md` | Auto-loaded governance and workflow rules |
+| `skills.paths` | `.opencode/skills` | Scans the project skill directory for available skills |
+
+Every GitHub user opening this project gets the same pinned defaults. No provider gating is enforced — users can override the model or provider in their local `~/.config/opencode/opencode.json` if needed.
 
 ## Documentation Map
 
