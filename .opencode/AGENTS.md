@@ -1,5 +1,16 @@
 # Nanoclaw Dashboard Agent Instructions
 
+## ⚠️ MANDATORY STARTUP — Execute immediately, before any user response
+
+**Do not skip these. Do not defer them. Do not answer the user until both are done.**
+
+1. **Load the `governance` skill** — call `skill` with name `governance`
+2. **Read `docs/OPENCODE_WORKFLOW.md`** — call `read` on that file
+
+These two steps are not optional. They are the first thing you do in every session, regardless of what the user asks. Only after both are complete may you respond.
+
+---
+
 ## Global Coding Rules
 
 ### Edit-time rules
