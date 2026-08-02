@@ -3,7 +3,7 @@
 Document architectural decisions here (lightweight ADRs). Each entry cites rationale + governance alignment.
 
 ## 0001 – Dual-stack scaffold with FastAPI + SPA
-- **Status**: Proposed
+- **Status**: Accepted (2026-07-25)
 - **Context**: Dashboard must stream orchestrator/sub-agent telemetry in real time and render a flow-chart visualization on a 1080p display.
 - **Decision**: Build two top-level packages: `/backend` (FastAPI + WebSocket/SSE) and `/frontend` (modern SPA, e.g., Vite + React + TS). Backend emits canonical events consumed by the frontend via a single `/events` stream. Mock telemetry source exists until nanoclaw feed is available.
 - **Consequences**:
