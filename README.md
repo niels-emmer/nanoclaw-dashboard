@@ -191,7 +191,6 @@ mock telemetry automatically.
 
 ```
 nanoclaw-dashboard/
-├── opencode.json               # Portable Opencode workspace configuration
 ├── .opencode/                  # Self-contained subagents, commands, and skills
 │   ├── AGENTS.md               # Project-level coding & governance rules
 │   ├── agents/                 # Custom subagents (@explorer, @github, @reviewer, ...)
@@ -229,6 +228,7 @@ nanoclaw-dashboard/
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── DECISIONS.md
+│   ├── OPENCODE_WORKFLOW.md    # OpenCode session governance playbook
 │   ├── screenshot.png
 │   └── threat-models/          # STRIDE analyses
 ├── scripts/
@@ -237,8 +237,14 @@ nanoclaw-dashboard/
 │   └── repo_id.sh              # Resolve GitHub owner/repo identifier
 ├── .github/
 │   ├── CODEOWNERS
+│   ├── dependabot.yml          # Automated dependency updates
 │   ├── pull_request_template.md
-│   └── ISSUE_TEMPLATE/
+│   ├── ISSUE_TEMPLATE/
+│   └── workflows/
+│       ├── ci.yml              # Test + build on PR/push to main
+│       ├── release.yml         # Auto-create GitHub release on v* tag
+│       └── security.yml        # Security scanning CI
+├── CHANGELOG.md                # Release history
 ├── docker-compose.yml
 ├── .env.example                # Environment template (copy to .env)
 ├── LICENSE
@@ -252,7 +258,7 @@ nanoclaw-dashboard/
 
 ## Opencode Integration
 
-This repository is self-contained for [Opencode](https://opencode.ai). Opening an Opencode session in this repository automatically loads:
+This repository is self-contained for [Opencode](https://opencode.ai). Configuration, subagents, commands, and skills live under `.opencode/`. Opening an Opencode session in this repository automatically loads:
 
 - **Primary Orchestrator**: Default coordinator agent (`orchestrator`) that manages general coding, planning, and delegation.
 - **Subagents**: Specialized read-only and operational subagents in `.opencode/agents/` (`@explorer`, `@github`, `@reviewer`, `@security-auditor`).
