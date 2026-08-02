@@ -19,7 +19,7 @@ Classify data before sending it to any cloud-hosted model:
 ## Audit trail
 
 For enterprise sessions, maintain an audit trail of AI-driven changes:
-- `/decision-log` records architecture and workflow decisions in `docs/DECISIONS.md`.
+- `/decision-log` records architecture and workflow decisions in `docs/decision-log.md`.
 - For each change to production-adjacent code: record file, change, rationale, and attribution.
 
 ## Model selection safeguards
@@ -27,7 +27,7 @@ For enterprise sessions, maintain an audit trail of AI-driven changes:
 - **Never use free-tier or trial models** for INTERNAL, CONFIDENTIAL, or REGULATED work. Free tiers commonly train on prompts and code, which leaks proprietary logic and architecture.
 - **Verify zero-retention** before using any model. The model provider must explicitly guarantee that prompts are not stored, logged, or used for training. When in doubt, treat as CONFIDENTIAL and use a local model.
 - **Prefer the project's pinned default model** (`opencode/deepseek-v4-flash` in `opencode.json`). Only deviate when a specific task requires a different capability (e.g., a codex model for complex refactoring) and the replacement meets the data classification requirements.
-- **Document model changes** in `docs/DECISIONS.md` when overriding the project default for a task or agent.
+- **Document model changes** in `docs/decision-log.md` when overriding the project default for a task or agent.
 
 ## Dependency compliance
 

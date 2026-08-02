@@ -2,7 +2,7 @@
 description: Record a durable architecture or workflow decision in the repository decision log.
 agent: general
 ---
-Record a decision log entry in `docs/DECISIONS.md`.
+Record a decision log entry in `docs/decision-log.md`.
 
 Decision input:
 

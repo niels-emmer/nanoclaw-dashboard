@@ -129,3 +129,22 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - Free-tier model prohibition is enforced at 4 independent layers
   - New contributors get a richer agent team out of the box
   - R7 resolved: explorer uses `opencode/gpt-5.4-nano` — a lighter, zero-retention Zen-hosted model suitable for read-only file searches
+
+## 0014 – OpenCode config consolidation: global vs repo split (2026-08-02)
+- **Status**: Accepted
+- **Context**: OpenCode config was duplicated across global (`~/.config/opencode/`) and repo (`.opencode/`). The 16 universal coding rules existed in 3 places. Skills, agents, and commands were duplicated with subtle divergences. The decision-log target path differed between global (`docs/decision-log.md`) and repo (`docs/DECISIONS.md`). The global config used deprecated singular directory names (`agent/`, `command/`, `skill/`).
+- **Decision**:
+  - Renamed `docs/DECISIONS.md` → `docs/decision-log.md` (align with global convention)
+  - Moved universal 16 coding rules to global `~/.config/opencode/AGENTS.md` only; removed from repo root `AGENTS.md` and `.opencode/AGENTS.md`
+  - Moved generic agents (explorer, github, reviewer, security-auditor) to global `agents/` only
+  - Moved generic commands (handoff, plan) to global `commands/` only
+  - Moved universal skills (code-standards, test-patterns, etc.) to global `skills/` only; kept project-modified `governance` skill in repo
+  - Renamed global directories to plural (`agents/`, `commands/`, `skills/`)
+  - Consolidated global config variants: promoted `.clean` profile to active `opencode.json`, removed `.omo` (oh-my-openagent) and `.jsonc`
+  - Updated wiki sync script to map `decision-log.md` → `Decision-Log.md`
+- **Consequences**:
+  - Universal rules live once in global — every project inherits them
+  - Repo is self-contained for project-specific behavior (orchestrator, start/release commands, governance skill)
+  - New projects in empty folders inherit global agents, commands, and skills automatically
+  - No duplicated config to maintain across global and repo
+  - Wiki page renamed from `Decisions` to `Decision-Log`

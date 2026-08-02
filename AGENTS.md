@@ -1,60 +1,6 @@
-# Universal agent rules
-
-> **Opencode Configuration**: This repository is self-contained for [Opencode](https://opencode.ai). Project config, subagents (`@explorer`, `@github`, `@general`, `@scout`, `@reviewer`, `@security-auditor`, `@docs`), slash commands (`/plan`, `/handoff`, `/decision-log`, `/release`), and skills live under `.opencode/`.
+> **Opencode Configuration**: This repository is self-contained for [Opencode](https://opencode.ai). Project config, subagents (`@orchestrator`, `@general`, `@scout`, `@docs`), slash commands (`/start`, `/release`, `/decision-log`), and project-modified skills (`governance`) live under `.opencode/`. Generic subagents (`@explorer`, `@github`, `@reviewer`, `@security-auditor`), commands (`/plan`, `/handoff`), and universal skills come from your global `~/.config/opencode/` config.
 >
 > **CRITICAL FOR OPENCODE SESSIONS**: Before doing any work, load the `governance` skill and read `docs/OPENCODE_WORKFLOW.md`. Follow everything in that file—it is the leading source of workflow/governance rules for OpenCode usage in this repo. After reading it, continue with the instructions in this `AGENTS.md` and any additional files it references.
-
-These rules apply to every task in this tree unless overridden by a more
-specific `CLAUDE.md` or `AGENTS.md`.
-
-## Edit-time rules
-
-1. **Think Before Coding** — State assumptions explicitly. If uncertain,
-   ask rather than guess; stop and name what's unclear instead of guessing
-   through it. Surface tradeoffs before proceeding.
-
-2. **Simplicity First** — Write the minimum code that solves the problem.
-   No features beyond what was asked, nothing speculative. If 200 lines
-   could be 50, write the 50.
-
-3. **Surgical Changes** — Touch only what the request requires. Match
-   existing style even if you'd do it differently. No drive-by refactors
-   or unrelated "improvements".
-
-4. **Goal-Driven Execution** — Turn the task into machine-verifiable
-   success criteria before writing code. Define what "done" looks like,
-   then loop until those checks pass.
-
-## Agent self-check rules
-
-5. **Debugging Discipline** — Read the full error and stack trace before
-   acting. Reproduce the problem before attempting a fix. Change one
-   variable at a time. Beware confident wrong diagnosis: never generate a
-   fix for a problem you have not confirmed.
-
-6. **Reproduce Before Fixing** — Before fixing a bug, write a test that
-   reliably reproduces it. Fix the code. Run the test. The bug is fixed
-   only when the test passes — not when it "feels" fixed.
-
-7. **Dependency Hygiene** — Treat every added package as permanent,
-   uncontrolled code maintained on someone else's schedule. Ask whether
-   the standard library handles it first. If you add a dependency,
-   document the decision explicitly.
-
-8. **Honest Communication** — Report actionable uncertainty, not vague
-   reassurance. "I'm not sure this library supports streaming" is useful;
-   "I think this should work" is not. Never dress up a guess as
-   confidence.
-
-9. **Recognize Failure Modes** — In autonomous loops no human reviews
-   each step. Watch for and halt on the known traps: confident wrong
-   diagnosis, fixes that only "feel" right, scope creep, silent guessing
-   past confusion. Stop and flag rather than push through.
-
-10. **Verify Before Done** — Nothing is complete until its success
-    criteria are demonstrably met (tests run, output matches the goal).
-    "Looks correct" is not "runs correctly". Close the loop with
-    evidence.
 
 # Project overview
 
@@ -96,7 +42,7 @@ nanoclaw-dashboard/
 │   └── package.json
 ├── docs/
 │   ├── ARCHITECTURE.md
-│   ├── DECISIONS.md
+│   ├── decision-log.md
 │   ├── screenshot.png
 │   └── threat-models/2026-07-25.md
 ├── scripts/install_dashboard.sh
@@ -129,9 +75,9 @@ nanoclaw-dashboard/
 - Governance is normative: threat modeling, dependency pinning, SBOMs, ADRs,
   and documentation are mandatory.
 - Keep all doc files current before merging: `README.md`, `docs/ARCHITECTURE.md`,
-  `SECURITY.md`, `THIRD_PARTY.md`, `docs/DECISIONS.md`.
+  `SECURITY.md`, `THIRD_PARTY.md`, `docs/decision-log.md`.
 - Threat model every new network interface or data store; link from
-  `docs/DECISIONS.md`. Current model: `docs/threat-models/2026-07-25.md`.
+  `docs/decision-log.md`. Current model: `docs/threat-models/2026-07-25.md`.
 - When altering telemetry schema or transport: bump `schema_version`, update
   `frontend/src/lib/types.ts`, add ADR entry.
 - **Prerequisites**: Node 20.19.0, Python 3.11+.
@@ -143,7 +89,7 @@ nanoclaw-dashboard/
 - Prefer `./scripts/install_dashboard.sh` for provisioning; update it when
   workflows change.
 - Wiki is auto-synced from `docs/` via `./scripts/sync_wiki.sh`; run it
-  after changing `docs/ARCHITECTURE.md` or `docs/DECISIONS.md`.
+  after changing `docs/ARCHITECTURE.md` or `docs/decision-log.md`.
 - Container workflow: `docker compose up --build` reads `.env` defaults.
   Update Compose + nginx.conf if transport paths change.
 - Nanoclaw host integration: read-only bind mount

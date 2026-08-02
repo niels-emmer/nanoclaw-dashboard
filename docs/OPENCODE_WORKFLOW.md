@@ -1,6 +1,6 @@
 # OpenCode Workflow & Governance Playbook
 
-_Last reviewed: 2026-08-02_ (updated: added `/start` command)
+_Last reviewed: 2026-08-02_ (updated: `/start` now interactive — prompts for task type, description, and branch name)
 
 This document consolidates the OpenCode reference docs that apply to the Nanoclaw dashboard repository. Every OpenCode session **must** follow these rules in addition to the repo-root `AGENTS.md` instructions. When guidance conflicts, the stricter rule wins.
 
@@ -30,10 +30,14 @@ This document consolidates the OpenCode reference docs that apply to the Nanocla
 
 ### What it does
 
-1. **Loads the `governance` skill** — injects data classification rules, audit trail requirements, and dependency compliance gates.
-2. **Reads this playbook** (`docs/OPENCODE_WORKFLOW.md`) — ensures every agent knows the workflow, governance, and enforcement rules.
-3. **Classifies the data** — determines the sensitivity level (PUBLIC / INTERNAL / CONFIDENTIAL / REGULATED). Defaults to INTERNAL for this project; upgrades to CONFIDENTIAL if customer data or secrets enter the conversation.
-4. **Reports readiness** — confirms all steps completed and states the active data classification.
+1. **Prompts for task type** — asks the user to choose from: `feature`, `fix`, `chore`, `docs`, `refactor`, `test`.
+2. **Prompts for description** — asks for a short (2-6 word) description of the task.
+3. **Suggests a branch name** — generates `<type>/<kebab-case-description>` and asks the user to accept or edit it.
+4. **Loads the `governance` skill** — injects data classification rules, audit trail requirements, and dependency compliance gates.
+5. **Reads this playbook** (`docs/OPENCODE_WORKFLOW.md`) — ensures every agent knows the workflow, governance, and enforcement rules.
+6. **Classifies the data** — determines the sensitivity level (PUBLIC / INTERNAL / CONFIDENTIAL / REGULATED). Defaults to INTERNAL for this project; upgrades to CONFIDENTIAL if customer data or secrets enter the conversation.
+7. **Creates the branch** — runs `git checkout -b <branch-name>` to create and switch to the new branch.
+8. **Reports readiness** — confirms all steps completed, states the active data classification, and confirms the active branch.
 
 ### When to use it
 
@@ -43,9 +47,11 @@ This document consolidates the OpenCode reference docs that apply to the Nanocla
 ### Fallback
 
 If `/start` is unavailable (e.g., command not yet registered in a fresh clone), execute the manual sequence:
-1. `skill` with name `governance`
-2. `read` on `docs/OPENCODE_WORKFLOW.md`
-3. Classify the data (default INTERNAL)
+1. Ask the user for task type and description, then agree on a branch name.
+2. `skill` with name `governance`
+3. `read` on `docs/OPENCODE_WORKFLOW.md`
+4. Classify the data (default INTERNAL)
+5. `git checkout -b <branch-name>`
 
 ### Definition
 
@@ -56,7 +62,7 @@ The command is defined in `.opencode/commands/start.md` and handled by the orche
 - **Sharing disabled:** `/share` must remain `manual` or `disabled`. Do not enable automatic sharing; Enterprise doc notes this sends context to opencode.ai infrastructure. If sharing is required, scrub secrets first.
 - **Centralized config compliance:** Respect any remote or managed config pulled from `.well-known/opencode` or MDM (Config doc). Do not override managed keys (especially `permissions`, `share`, provider gating).
 - **Secrets isolation:** Never store API keys or tokens in the repo. Use `{env:VAR}` expansion from the Config doc and follow `.env.example` patterns.
-- **Audit trail:** When touching auth, transport, or telemetry data paths, add entries to `docs/DECISIONS.md` and mention security review requirements.
+- **Audit trail:** When touching auth, transport, or telemetry data paths, add entries to `docs/decision-log.md` and mention security review requirements.
 
 ## Agent & subagent policy
 
@@ -86,7 +92,7 @@ The command is defined in `.opencode/commands/start.md` and handled by the orche
 
 - **Model IDs:** Always include the `provider/model` prefix (e.g., `opencode/gpt-5.1-codex`). (Models doc)
 - **Recommended defaults:** Use one of the models listed under Recommended Models (GPT 5.1/5.2, Claude Sonnet/Opus 4.5, Gemini 3 Pro, Minimax M2.1) unless governance mandates local-only inference. (Models doc)
-- **Variants:** Prefer built-in high-reasoning variants for Plan/Security agents and balanced/default variants for Build/Orchestrator. Document any variant overrides in `docs/DECISIONS.md`. (Models doc)
+- **Variants:** Prefer built-in high-reasoning variants for Plan/Security agents and balanced/default variants for Build/Orchestrator. Document any variant overrides in `docs/decision-log.md`. (Models doc)
 - **Provider gating:** If enterprise policy requires an internal gateway, disable external providers via `enabled_providers` / `disabled_providers`. (Config + Enterprise docs)
 - **No free-tier models:** Free and trial models commonly train on prompts and code. They are prohibited for any project classified INTERNAL or above. Only use models with verified zero-retention guarantees. The project default (`opencode/deepseek-v4-flash`) meets this requirement.
 
