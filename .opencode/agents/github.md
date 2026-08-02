@@ -3,7 +3,8 @@ description: GitHub operations specialist. Handles PRs, issues, code review, CI/
 mode: subagent
 model: opencode/deepseek-v4-flash
 temperature: 0
-steps: 40
+steps: 50
+color: warning
 permission:
   edit: deny
   bash:
