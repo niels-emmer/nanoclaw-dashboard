@@ -83,3 +83,31 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - Orbit canvas remains clean and readable on 1080p displays during extended operations.
   - Agent color blobs in the AgentGrid match orbit canvas nodes 100% deterministically.
   - Decay timeouts are configurable via frontend environment variables.
+
+## 0010 – Dashboard UI/UX improvements (2026-07-31)
+- **Status**: Merged (PR #21)
+- **Context**: The dashboard needed better live traffic visibility, 1080p readability, and reduced visual noise for always-on multi-agent monitoring.
+- **Decision**: Comprehensive frontend overhaul across 4 phases: critical UX fixes (EventFeed filtering, chat bubble collision avoidance), layout rebalancing (AgentGrid/EventFeed ratio, masthead simplification), animation tuning (reduced motion support, grid opacity), and architecture improvements (Error Boundary, Debug Panel, SVG accessibility).
+- **Consequences**:
+  - EventFeed now shows `activity_update` events with type filter bar and delivery toggle
+  - Chat bubbles use collision avoidance with dashed connector lines to agent nodes
+  - AgentGrid uses border separators instead of Card wrappers for tighter spacing
+  - Agent decay tuned to 15m solid / 90m fade (from 10m/60m)
+  - Full `prefers-reduced-motion` support added
+  - Error Boundary wraps entire app with fallback UI
+
+## 0011 – Node version lockfile discipline (2026-07-31)
+- **Status**: Active
+- **Context**: CI uses Node 20.19.0 but local dev used Node 24.12.0. Different Node versions resolve different optional dependencies (`@emnapi/*`), causing `npm ci` failures in CI.
+- **Decision**: Always regenerate `package-lock.json` with the CI's Node version (20.19.0 from `.tools/node/bin/npm`).
+- **Consequences**:
+  - Lockfile must be generated with Node 20.19.0 to match CI
+  - Local dev can use any Node version, but lockfile updates require the pinned version
+
+## 0012 – `.env` git tracking removal (2026-07-30)
+- **Status**: Active
+- **Context**: `.env` was tracked in git history until commit `5cb7ac4` where it was removed with `git rm --cached .env`. Remote machines (nanoclaw host) still see it as tracked.
+- **Decision**: `.env` is now in `.gitignore` and untracked. Users with existing clones must run `git rm --cached .env` before pulling.
+- **Consequences**:
+  - New clones use `.env.example` as template
+  - Existing clones need `git rm --cached .env` + `mv .env .env.bak` + `git pull` + `mv .env.bak .env` to preserve local values
