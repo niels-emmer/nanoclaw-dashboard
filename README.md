@@ -263,7 +263,7 @@ This repository is self-contained for [Opencode](https://opencode.ai). Opening a
 
 - **Primary Orchestrator**: Default coordinator agent (`orchestrator`) that manages general coding, planning, and delegation. After every implementation milestone, it automatically runs post-completion maintenance: auditing docs, updating README, recording decisions, and syncing governance docs.
 - **Subagents**: Specialized read-only and operational subagents in `.opencode/agents/` (`@explorer`, `@github`, `@general`, `@scout`, `@reviewer`, `@security-auditor`, `@docs`).
-- **Slash Commands**: Workflow commands in `.opencode/commands/` (`/plan`, `/handoff`, `/decision-log`, `/release`).
+- **Slash Commands**: Workflow commands in `.opencode/commands/` (`/start`, `/plan`, `/handoff`, `/decision-log`, `/release`).
 - **Embedded Skills**: Local domain skills in `.opencode/skills/` (`code-standards`, `governance`, `github-workflow`, `pr-standards`, `release-engineering`, `security-checklist`, `test-patterns`, `github-security`).
 - **Instructions**: Coding standards and enterprise governance rules in `AGENTS.md` and `docs/OPENCODE_WORKFLOW.md`.
 
@@ -280,13 +280,15 @@ This repository is self-contained for [Opencode](https://opencode.ai). Opening a
 
 Every GitHub user opening this project gets the same pinned defaults. No provider gating is enforced — users can override the model or provider in their local `~/.config/opencode/opencode.json` if needed.
 
-### ⚠️ Session startup: mandatory prompt
+### ⚠️ Session startup: mandatory `/start` command
 
-The mandatory startup steps are now embedded directly in `.opencode/AGENTS.md` (loaded into every session's system prompt via `opencode.json`'s `instructions` array). The agent **should** execute them automatically. If it doesn't, use this prompt as your first message:
+Every new OpenCode session **must** begin with the `/start` command. It loads the `governance` skill, reads `docs/OPENCODE_WORKFLOW.md`, classifies the data (defaults to INTERNAL), and reports readiness — all in one step.
+
+If `/start` is unavailable (e.g., fresh clone before the command is registered), use this fallback prompt as your first message:
 
 > **"Execute the mandatory startup steps now"**
 
-This forces the agent to load the `governance` skill and read `docs/OPENCODE_WORKFLOW.md` before any work begins.
+This forces the agent to manually load the `governance` skill and read `docs/OPENCODE_WORKFLOW.md` before any work begins.
 
 ## Documentation Map
 
