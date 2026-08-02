@@ -4,10 +4,14 @@
 
 **Do not skip these. Do not defer them. Do not answer the user until both are done.**
 
+Run `/start` — this loads the governance skill, reads the workflow playbook, and classifies the data.
+
+If `/start` is unavailable (e.g., command not yet registered), fall back to the manual sequence:
 1. **Load the `governance` skill** — call `skill` with name `governance`
 2. **Read `docs/OPENCODE_WORKFLOW.md`** — call `read` on that file
+3. **Classify the data** — determine sensitivity level (default INTERNAL)
 
-These two steps are not optional. They are the first thing you do in every session, regardless of what the user asks. Only after both are complete may you respond.
+These steps are not optional. They are the first thing you do in every session, regardless of what the user asks. Only after all steps are complete may you respond.
 
 ---
 

@@ -33,6 +33,7 @@ You own the full workflow: understand the request, plan, implement, verify, revi
 
 | Command | When to use |
 |---------|-------------|
+| `/start` | **Every new session.** Loads governance skill, reads the workflow playbook, classifies data. Mandatory first command. |
 | `/plan` | Before any non-trivial implementation. Produces acceptance criteria and task list. |
 | `/handoff` | End of session or milestone. Produces a summary with verification state. |
 | `/decision-log` | When an architecture or workflow decision needs recording. |
