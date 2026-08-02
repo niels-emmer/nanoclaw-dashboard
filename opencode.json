@@ -1,0 +1,14 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "orchestrator",
+  "instructions": [
+    "AGENTS.md",
+    "docs/OPENCODE_WORKFLOW.md"
+  ],
+  "subagent_depth": 2,
+  "share": "manual",
+  "model": "opencode/deepseek-v4-flash",
+  "skills": {
+    "paths": [".opencode/skills"]
+  }
+}
