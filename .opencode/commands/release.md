@@ -11,7 +11,23 @@ Execute the full release flow interactively. Follow these steps in order.
 
 Load the `release-engineering` skill to get semver rules and the release process reference.
 
-## 2. Determine the next version
+## 2. Confirm you are on main and up to date
+
+Check the current branch:
+```bash
+git branch --show-current
+```
+
+If not `main`, abort and tell the user to switch to main first.
+
+Pull the latest from origin:
+```bash
+git pull origin main
+```
+
+If there are merge conflicts or the pull fails, abort and tell the user to resolve before retrying.
+
+## 3. Determine the next version
 
 Read the latest tag from git: `git tag -l 'v*' --sort=-v:refname | head -1`
 
@@ -22,14 +38,14 @@ Parse the current version and suggest the next MINOR bump (since releases are fe
 
 If the user provides a version, validate it matches `vMAJOR.MINOR.PATCH` format. Re-prompt if invalid.
 
-## 3. Ask for a commit title
+## 4. Ask for a commit title
 
 Suggest a default commit title and let the user accept or override:
 
 > **Commit title**: docs: update CHANGELOG for v{X.Y.Z}
 > Press Enter to accept, or type a different title:
 
-## 4. Verify main is green
+## 5. Verify main is green
 
 Run both verification gates:
 
@@ -40,12 +56,12 @@ cd ../frontend && npm run build
 
 If either fails, report the failure and abort — do not proceed with the release.
 
-## 5. Update CHANGELOG.md
+## 6. Update CHANGELOG.md
 
 Read the current `CHANGELOG.md` and the git log since the last release tag:
 
 ```bash
-git log --oneline --format="%h %s" {LAST_TAG}..HEAD
+git log --format="%h %s" {LAST_TAG}..HEAD
 ```
 
 Categorize commits by their conventional commit prefix:
@@ -95,7 +111,7 @@ Add a version reference link at the bottom of the file:
 [{VERSION}]: https://github.com/niels-emmer/nanoclaw-dashboard/releases/tag/v{VERSION}
 ```
 
-## 6. Commit and push
+## 7. Commit and push
 
 ```bash
 git add CHANGELOG.md
@@ -103,7 +119,7 @@ git commit -m "{COMMIT_TITLE}"
 git push
 ```
 
-## 7. Create and push the tag
+## 8. Create and push the tag
 
 ```bash
 git tag -a v{VERSION} -m "Release v{VERSION}"
@@ -112,7 +128,7 @@ git push origin v{VERSION}
 
 The `.github/workflows/release.yml` workflow will automatically create the GitHub Release when the tag is pushed.
 
-## 8. Confirm
+## 9. Confirm
 
 Report the release URL: `https://github.com/niels-emmer/nanoclaw-dashboard/releases/tag/v{VERSION}`
 
