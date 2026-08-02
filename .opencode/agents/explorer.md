@@ -1,7 +1,7 @@
 ---
 description: Fast read-only codebase navigator. Use to find files, trace dependencies, understand structure, or answer questions about the codebase before making changes.
 mode: subagent
-model: opencode/gemini-3.6-flash
+model: opencode/deepseek-v4-flash
 temperature: 0
 permission:
   edit: deny

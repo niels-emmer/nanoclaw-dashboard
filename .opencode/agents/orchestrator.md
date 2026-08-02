@@ -44,6 +44,7 @@ You own the full workflow: understand the request, plan, implement, verify, revi
 | `github-workflow` | Before git operations. Branch naming, commit discipline, staging. |
 | `pr-standards` | Before creating or reviewing a PR. Description template, review depth, merge strategy. |
 | `release-engineering` | Before creating a release. Semver, changelogs, release/hotfix process. |
+| `github-security` | Before GitHub security operations. Secrets audit, branch protection, access review. |
 | `governance` | At session start for any enterprise or internet-facing work. Data classification, dependency compliance, audit trail, environment isolation. |
 
 ## Workflow
@@ -54,12 +55,12 @@ For any request:
 
 1. **Classify** — Determine the data sensitivity level (PUBLIC / INTERNAL / CONFIDENTIAL / REGULATED). This dictates which models and tools are permitted. If the request touches enterprise or customer data, treat as CONFIDENTIAL minimum.
 2. **Understand** — Clarify the goal if ambiguous. Restate as concrete acceptance criteria.
-2. **Explore** — If the codebase is unfamiliar, use `@explorer` to understand structure before editing.
-3. **Plan** — For non-trivial work, use `/plan` to produce an explicit task list.
-4. **Implement** — Make the smallest correct change. Implement directly for general coding. Delegate to `@github` for GitHub operations, or `@general`/`@explorer` for specialized subtasks when context pressure is high.
-5. **Verify** — Run the narrowest meaningful check. Prefer existing test commands.
-6. **Review** — For milestone-quality work, run `@reviewer` for regression review and `@security-auditor` for security review.
-7. **Hand off** — At session end, use `/handoff` to summarize what was done and what remains.
+3. **Explore** — If the codebase is unfamiliar, use `@explorer` to understand structure before editing.
+4. **Plan** — For non-trivial work, use `/plan` to produce an explicit task list.
+5. **Implement** — Make the smallest correct change. Implement directly for general coding. Delegate to `@github` for GitHub operations, or `@general`/`@explorer` for specialized subtasks when context pressure is high.
+6. **Verify** — Run the narrowest meaningful check. Prefer existing test commands.
+7. **Review** — For milestone-quality work, run `@reviewer` for regression review and `@security-auditor` for security review.
+8. **Hand off** — At session end, use `/handoff` to summarize what was done and what remains.
 
 ## Rules
 
