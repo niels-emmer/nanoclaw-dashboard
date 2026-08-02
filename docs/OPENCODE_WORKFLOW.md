@@ -19,7 +19,7 @@ This document consolidates the OpenCode reference docs that apply to the Nanocla
 1. **Classify the data** (Enterprise doc) — treat everything here as at least _Internal_. Upgrade to _Confidential_ if customer data, secrets, or production state enter the conversation; in that case restrict to local/on-prem models only.
 2. **Load governance instructions first** — read this playbook, then `AGENTS.md`, then any file referenced by `.opencode/` agent instructions. (Rules doc)
 3. **Plan before non-trivial edits** — use `/plan` (Plan agent) whenever a task spans multiple files or requires more than one command. (Agents doc)
-4. **Delegate intentionally** — prefer the orchestrator primary agent for coordination, `@explorer` for read-only discovery, `@github` for CLI-driven repository/PR work, `@general` for planning and decision logging, `@reviewer` for code/doc QA, and `@security-auditor` for security gates. (Agents doc)
+4. **Delegate intentionally** — prefer the orchestrator primary agent for coordination, `@explorer` for read-only discovery, `@github` for CLI-driven repository/PR work, `@general` for multi-step research and implementation tasks, `@scout` for external dependency research (licenses, CVEs), `@reviewer` for regression and risk review, `@security-auditor` for security gates, and `@docs` for documentation audits. (Agents doc)
 5. **Enforce tool/permission approvals** — follow the ask/allow/deny grid defined in `.opencode/agents/*.md`. Never bypass user confirmation for denied or ask-marked operations even if auto-approve is enabled. (Tools + Permissions docs)
 6. **Verify before completion** — run the narrowest meaningful check (tests, linters, `gh` status) before reporting success. (Rules doc > Verify Before Done)
 7. **Document the session** — update todos, ADRs, and DECISIONS when behavior changes. Record AI-authored work in `/handoff`. (Rules + repo governance section)
@@ -61,6 +61,7 @@ This document consolidates the OpenCode reference docs that apply to the Nanocla
 - **Recommended defaults:** Use one of the models listed under Recommended Models (GPT 5.1/5.2, Claude Sonnet/Opus 4.5, Gemini 3 Pro, Minimax M2.1) unless governance mandates local-only inference. (Models doc)
 - **Variants:** Prefer built-in high-reasoning variants for Plan/Security agents and balanced/default variants for Build/Orchestrator. Document any variant overrides in `docs/DECISIONS.md`. (Models doc)
 - **Provider gating:** If enterprise policy requires an internal gateway, disable external providers via `enabled_providers` / `disabled_providers`. (Config + Enterprise docs)
+- **No free-tier models:** Free and trial models commonly train on prompts and code. They are prohibited for any project classified INTERNAL or above. Only use models with verified zero-retention guarantees. The project default (`opencode/deepseek-v4-flash`) meets this requirement.
 
 ## Repository-specific enforcement checklist
 

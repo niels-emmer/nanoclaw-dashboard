@@ -111,3 +111,21 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
 - **Consequences**:
   - New clones use `.env.example` as template
   - Existing clones need `git rm --cached .env` + `mv .env .env.bak` + `git pull` + `mv .env.bak .env` to preserve local values
+
+## 0013 – Agent team expansion and post-completion workflow (2026-08-02)
+- **Status**: Accepted
+- **Context**: The agent team had gaps: no explicit `@general` config, no dependency research agent, no documentation audit agent. The orchestrator's workflow stopped at handoff without automatic post-completion maintenance, causing docs to drift from code. A free-tier model was nearly selected for the explorer agent, revealing a governance gap.
+- **Decision**: 
+  - Added 3 new subagents: `@general` (multi-step tasks, edit: ask), `@scout` (dependency/CVE research, read-only), `@docs` (documentation audit, read-only)
+  - Added color configs to all agents for UI scannability
+  - Bumped `subagent_depth` from 2 to 3 for deeper delegation chains
+  - Bumped `github` steps from 40 to 50, added `steps: 25` to reviewer
+  - Added post-completion maintenance step (step 8) to orchestrator workflow: auto-audits docs, updates README, syncs governance, records decisions after every milestone
+  - Added explicit "no free-tier models" rule to governance skill, OPENCODE_WORKFLOW.md, AGENTS.md, and orchestrator rules
+  - Consolidated duplicate mandatory startup instructions (removed from orchestrator.md, kept in .opencode/AGENTS.md)
+- **Consequences**:
+  - Docs stay in sync with code automatically after each milestone
+  - Governance gaps are captured and baked into docs immediately
+  - Free-tier model prohibition is enforced at 4 independent layers
+  - New contributors get a richer agent team out of the box
+  - R7 resolved: explorer uses `opencode/gpt-5.4-nano` — a lighter, zero-retention Zen-hosted model suitable for read-only file searches

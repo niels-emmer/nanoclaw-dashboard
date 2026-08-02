@@ -1,8 +1,9 @@
 ---
 description: Fast read-only codebase navigator. Use to find files, trace dependencies, understand structure, or answer questions about the codebase before making changes.
 mode: subagent
-model: opencode/deepseek-v4-flash
+model: opencode/gpt-5.4-nano
 temperature: 0
+color: info
 permission:
   edit: deny
   bash: deny

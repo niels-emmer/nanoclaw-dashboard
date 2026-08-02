@@ -2,7 +2,9 @@
 description: Read-only regression and risk reviewer for final pass checks before handoff, PR merge, or session close.
 mode: subagent
 model: opencode/deepseek-v4-flash
-temperature: 0.1
+temperature: 0
+steps: 25
+color: success
 permission:
   edit: deny
   bash: deny

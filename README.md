@@ -194,8 +194,8 @@ nanoclaw-dashboard/
 ├── opencode.json               # Portable Opencode workspace configuration
 ├── .opencode/                  # Self-contained subagents, commands, and skills
 │   ├── AGENTS.md               # Project-level coding & governance rules
-│   ├── agents/                 # Custom subagents (@explorer, @github, @reviewer, ...)
-│   ├── commands/               # Slash commands (/plan, /handoff, /decision-log)
+│   ├── agents/                 # Custom subagents (@explorer, @github, @general, @scout, @reviewer, @security-auditor, @docs)
+│   ├── commands/               # Slash commands (/plan, /handoff, /decision-log, /release)
 │   └── skills/                 # Embedded workflow skills (governance, standards, ...)
 ├── backend/                    # FastAPI WebSocket server
 │   ├── app/
@@ -261,8 +261,8 @@ nanoclaw-dashboard/
 
 This repository is self-contained for [Opencode](https://opencode.ai). Opening an Opencode session in this repository automatically loads the following from `opencode.json` and `.opencode/`:
 
-- **Primary Orchestrator**: Default coordinator agent (`orchestrator`) that manages general coding, planning, and delegation.
-- **Subagents**: Specialized read-only and operational subagents in `.opencode/agents/` (`@explorer`, `@github`, `@reviewer`, `@security-auditor`).
+- **Primary Orchestrator**: Default coordinator agent (`orchestrator`) that manages general coding, planning, and delegation. After every implementation milestone, it automatically runs post-completion maintenance: auditing docs, updating README, recording decisions, and syncing governance docs.
+- **Subagents**: Specialized read-only and operational subagents in `.opencode/agents/` (`@explorer`, `@github`, `@general`, `@scout`, `@reviewer`, `@security-auditor`, `@docs`).
 - **Slash Commands**: Workflow commands in `.opencode/commands/` (`/plan`, `/handoff`, `/decision-log`, `/release`).
 - **Embedded Skills**: Local domain skills in `.opencode/skills/` (`code-standards`, `governance`, `github-workflow`, `pr-standards`, `release-engineering`, `security-checklist`, `test-patterns`, `github-security`).
 - **Instructions**: Coding standards and enterprise governance rules in `AGENTS.md` and `docs/OPENCODE_WORKFLOW.md`.
@@ -273,7 +273,7 @@ This repository is self-contained for [Opencode](https://opencode.ai). Opening a
 |---------|-------|---------|
 | `default_agent` | `orchestrator` | Sets the orchestrator as the primary session agent |
 | `model` | `opencode/deepseek-v4-flash` | Default model for all agents (each agent can override) |
-| `subagent_depth` | `2` | Allows subagents (e.g., `@github`) to spawn helpers for multi-step operations |
+| `subagent_depth` | `3` | Allows subagents (e.g., `@github`) to spawn helpers for multi-step operations |
 | `share` | `manual` | Prevents automatic session sharing; explicit opt-in required |
 | `instructions` | `AGENTS.md`, `docs/OPENCODE_WORKFLOW.md` | Auto-loaded governance and workflow rules |
 | `skills.paths` | `.opencode/skills` | Scans the project skill directory for available skills |
