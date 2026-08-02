@@ -280,6 +280,14 @@ This repository is self-contained for [Opencode](https://opencode.ai). Opening a
 
 Every GitHub user opening this project gets the same pinned defaults. No provider gating is enforced — users can override the model or provider in their local `~/.config/opencode/opencode.json` if needed.
 
+### ⚠️ Session startup: mandatory prompt
+
+The mandatory startup steps are now embedded directly in `.opencode/AGENTS.md` (loaded into every session's system prompt via `opencode.json`'s `instructions` array). The agent **should** execute them automatically. If it doesn't, use this prompt as your first message:
+
+> **"Execute the mandatory startup steps now"**
+
+This forces the agent to load the `governance` skill and read `docs/OPENCODE_WORKFLOW.md` before any work begins.
+
 ## Documentation Map
 
 | Location | Purpose |
