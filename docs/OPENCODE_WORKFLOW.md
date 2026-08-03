@@ -1,6 +1,6 @@
 # OpenCode Workflow & Governance Playbook
 
-_Last reviewed: 2026-08-02_ (updated: `/start` now interactive — prompts for task type, description, and branch name)
+_Last reviewed: 2026-08-03_ (updated: `/start` now interactive — prompts for task type, description, and branch name)
 
 This document consolidates the OpenCode reference docs that apply to the Nanoclaw dashboard repository. Every OpenCode session **must** follow these rules in addition to the repo-root `AGENTS.md` instructions. When guidance conflicts, the stricter rule wins.
 
@@ -16,13 +16,12 @@ This document consolidates the OpenCode reference docs that apply to the Nanocla
 
 ## Mandatory workflow for OpenCode sessions
 
-1. **Classify the data** (Enterprise doc) — treat everything here as at least _Internal_. Upgrade to _Confidential_ if customer data, secrets, or production state enter the conversation; in that case restrict to local/on-prem models only.
-2. **Run `/start`** — this loads the governance skill, reads this playbook, and classifies the data. It is the single command that replaces the manual startup ritual. (See [The `/start` command](#the-start-command) below.)
-3. **Plan before non-trivial edits** — use `/plan` (Plan agent) whenever a task spans multiple files or requires more than one command. (Agents doc)
-4. **Delegate intentionally** — prefer the orchestrator primary agent for coordination, `@explorer` for read-only discovery, `@github` for CLI-driven repository/PR work, `@general` for multi-step research and implementation tasks, `@scout` for external dependency research (licenses, CVEs), `@reviewer` for regression and risk review, `@security-auditor` for security gates, and `@docs` for documentation audits. (Agents doc)
-5. **Enforce tool/permission approvals** — follow the ask/allow/deny grid defined in `.opencode/agents/*.md`. Never bypass user confirmation for denied or ask-marked operations even if auto-approve is enabled. (Tools + Permissions docs)
-6. **Verify before completion** — run the narrowest meaningful check (tests, linters, `gh` status) before reporting success. (Rules doc > Verify Before Done)
-7. **Document the session** — update todos, ADRs, and DECISIONS when behavior changes. Record AI-authored work in `/handoff`. (Rules + repo governance section)
+1. **Run `/start`** — this loads the governance skill, reads this playbook, classifies the data, and creates a branch. It is the single command that replaces the manual startup ritual. (See [The `/start` command](#the-start-command) below.)
+2. **Plan before non-trivial edits** — use `/plan` (Plan agent) whenever a task spans multiple files or requires more than one command. (Agents doc)
+3. **Delegate intentionally** — prefer the orchestrator primary agent for coordination, `@explorer` for read-only discovery, `@github` for CLI-driven repository/PR work, `@general` for multi-step research and implementation tasks, `@scout` for external dependency research (licenses, CVEs), `@reviewer` for regression and risk review, `@security-auditor` for security gates, and `@docs` for documentation audits. (Agents doc)
+4. **Enforce tool/permission approvals** — follow the ask/allow/deny grid defined in `.opencode/agents/*.md`. Never bypass user confirmation for denied or ask-marked operations even if auto-approve is enabled. (Tools + Permissions docs)
+5. **Verify before completion** — run the narrowest meaningful check (tests, linters, `gh` status) before reporting success. (Rules doc > Verify Before Done)
+6. **Document the session** — update todos, ADRs, and DECISIONS when behavior changes. Record AI-authored work in `/handoff`. (Rules + repo governance section)
 
 ## The `/start` command
 
@@ -75,7 +74,7 @@ The command is defined in `.opencode/commands/start.md` and handled by the orche
 
 - **Default safety grid:**
   - `read`, `glob`, `grep` → allow, except `*.env*` which remain denied (Permissions doc default).
-  - `edit`/`write`/`apply_patch` → ask unless the task is part of an approved plan.
+  - `edit`/`write`/`apply_patch` → ask unless the task is part of an approved plan (individual agents may override; e.g., orchestrator has `edit: allow`).
   - `bash` → ask by default; allowlist `git status*`, `git diff*`, `gh *` for the GitHub agent only (Tools + Permissions docs).
   - `external_directory` → deny everything outside the repo unless explicitly allowlisted per task.
 - **Auto mode caution:** Even with `--auto`, explicit `deny` rules win. Avoid launching with `--auto` unless a human is actively monitoring. (Permissions doc)
@@ -98,11 +97,9 @@ The command is defined in `.opencode/commands/start.md` and handled by the orche
 
 ## Repository-specific enforcement checklist
 
-- Run `/start` before every session; it loads this file, the governance skill, and classifies data in one step.
-- Load `AGENTS.md` immediately after and obey its repo-specific workflows (build/test commands, threat modeling, etc.).
+- Load `AGENTS.md` immediately after `/start` and obey its repo-specific workflows (build/test commands, threat modeling, etc.).
 - Confirm `.opencode/agents/orchestrator.md` references both `AGENTS.md` and this file in its instructions.
-- Confirm `.opencode/agents/github.md` has the correct bash permission allowlist for `gh *` and `git *` patterns.
-- Disable `/share` unless explicitly requested for sanitized transcripts.
+- Confirm agent permission grids are correct (bash allowlist for `gh`, `git` patterns on GitHub agent).
 - Record any deviation or newly-learned governance fact in this document (update the _Last reviewed_ date) and mention it in `/handoff`.
 
 By centralizing the OpenCode workflow here, future sessions can cite this single source instead of re-reading the upstream docs every time.

@@ -22,6 +22,10 @@ Record every external dependency here with license info and notes on local modif
 | lucide-react | 1.27.0 | MIT | SVG icon library for agent graph node icons | None |
 | oxlint | 1.76.0 | MIT | JavaScript / TypeScript linter | None |
 | TypeScript | 7.0.2 | Apache-2.0 | Static type checker | None |
+| @types/node | 26.1.1 | MIT | Node.js type definitions for TypeScript | None |
+| @types/react | 19.2.17 | MIT | React type definitions for TypeScript | None |
+| @types/react-dom | 19.2.3 | MIT | React DOM type definitions for TypeScript | None |
+| @vitejs/plugin-react | 6.0.4 | MIT | Vite React plugin for Fast Refresh | None |
 | Space Grotesk / IBM Plex Sans / JetBrains Mono | Google Fonts | Open Font License | Typography per design spec | Served via Google Fonts CDN |
 
 Guidance:
