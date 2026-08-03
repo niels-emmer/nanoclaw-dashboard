@@ -7,9 +7,11 @@
 Run `/start` — this loads the governance skill, reads the workflow playbook, and classifies the data.
 
 If `/start` is unavailable (e.g., command not yet registered), fall back to the manual sequence:
-1. **Load the `governance` skill** — call `skill` with name `governance`
-2. **Read `docs/OPENCODE_WORKFLOW.md`** — call `read` on that file
-3. **Classify the data** — determine sensitivity level (default INTERNAL)
+1. **Ask the user for task type and description**, then agree on a branch name.
+2. **Load the `governance` skill** — call `skill` with name `governance`
+3. **Read `docs/OPENCODE_WORKFLOW.md`** — call `read` on that file
+4. **Classify the data** — determine sensitivity level (default INTERNAL)
+5. **Create the branch** — `git checkout -b <branch-name>`
 
 These steps are not optional. They are the first thing you do in every session, regardless of what the user asks. Only after all steps are complete may you respond.
 

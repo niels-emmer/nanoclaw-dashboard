@@ -1,6 +1,13 @@
 > **Opencode Configuration**: This repository is self-contained for [Opencode](https://opencode.ai). Project config, subagents (`@orchestrator`, `@general`, `@scout`, `@docs`), slash commands (`/start`, `/release`, `/decision-log`), and project-modified skills (`governance`) live under `.opencode/`. Generic subagents (`@explorer`, `@github`, `@reviewer`, `@security-auditor`), commands (`/plan`, `/handoff`), and universal skills come from your global `~/.config/opencode/` config.
 >
-> **CRITICAL FOR OPENCODE SESSIONS**: Before doing any work, load the `governance` skill and read `docs/OPENCODE_WORKFLOW.md`. Follow everything in that file—it is the leading source of workflow/governance rules for OpenCode usage in this repo. After reading it, continue with the instructions in this `AGENTS.md` and any additional files it references.
+> **CRITICAL FOR OPENCODE SESSIONS**: Run `/start` first — it prompts for task type and description, suggests a branch name, loads the governance skill, reads the workflow playbook, classifies data, and creates the branch. Follow everything in `docs/OPENCODE_WORKFLOW.md` — it is the leading source of workflow/governance rules for OpenCode usage in this repo. After reading it, continue with the instructions in this `AGENTS.md` and any additional files it references.
+>
+> If `/start` is unavailable, fall back to the manual sequence:
+> 1. Ask the user for task type and description, then agree on a branch name.
+> 2. Load the `governance` skill.
+> 3. Read `docs/OPENCODE_WORKFLOW.md`.
+> 4. Classify the data (default INTERNAL).
+> 5. `git checkout -b <branch-name>`.
 
 # Project overview
 
