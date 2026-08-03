@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python)](backend/pyproject.toml)
-[![Node 20.19](https://img.shields.io/badge/Node-20.19-blue?logo=node.js)](frontend/package.json)
+[![Node 20.19.0](https://img.shields.io/badge/Node-20.19.0-blue?logo=node.js)](frontend/package.json)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 Live, single-screen telemetry dashboard for **nanoclaw**, an AI agent
@@ -332,7 +332,7 @@ mirrored in `frontend/src/lib/types.ts`):
   "payload": {
     "summary": "Delegating research task to seer",
     "duration_ms": 1200,
-    "status": "running | completed | error | processing | delivered | failed",
+    "status": "running | completed | error | pending | processing | delivered | failed",
     "current_tool": "string | null",
     "tool_elapsed_ms": "int | null",
     "tool_timeout_ms": "int | null",
