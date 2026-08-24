@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.2.0] — 2026-08-24
+
+### Added
+
+- **V3 "Live Orchestration" wallboard** — complete visual redesign for a widescreen 1080p wall display:
+  - **Left-to-right hierarchical tree graph** — orchestrator at root, agents as children, sub-agents nested (derived from the `a2aEdges` graph via BFS when the topology has no explicit tree).
+  - **Human node** — a distinct node anchored above the human-facing agent (e.g. marvin); only real human channels (whatsapp/matrix/etc.) route to it, internal `channel:agent` routes to the orchestrator.
+  - **Per-agent tool history** — active tool first (color-coded round icon to the right of the blob), previously-used tools ghosted to the right.
+  - **Live activity feed** — simplified conversation stream (messages + tool calls); signalling-only cards dropped, repeated tool activity collapsed with a count.
+  - **Compact agent roster** — one-line chips that auto-hide when idle.
+  - **Agent drill-down** — click any agent to inspect state, model, current tool, skills, and recent activity.
+  - **Status strip** — orchestrator, connection, active/error/stuck/pending counts at a glance.
+  - Colorful showcase styling: ambient gradient, color-coded pulses that follow the static edge path, glowing active nodes.
+- **V2 frontend rearchitecture** — design tokens single-sourced in `index.css`, pure `eventReducer` store, componentized tree renderer, Vitest suite (47 tests).
+- **Mock sub-agent hierarchy** — route-planner + 2 sub-agents in the mock source to demonstrate the tree.
+
+### Changed
+
+- Replaced the orbit/star canvas with the left-to-right tree graph.
+- Bumped dependencies: fastapi 0.141.1, uvicorn 0.52.3, pydantic-settings 2.15.0, orjson 3.12.0, vite 8.2.2, lucide-react 1.33.0, oxlint 1.79.0, and others.
+
+### Fixed
+
+- **High-severity nanoid vulnerability** — bumped vite to pull nanoid 3.3.18 (`npm audit` now 0 vulnerabilities).
+- **Flaky backend test** — the mock source could emit an idle `agent_status` before the first question.
+- **Activity feed noise** — dropped signalling-only cards and collapsed repeated tool events.
+- **Human node routing** — internal `channel:agent` no longer draws to the Human node.
+
 ## [1.1.0] — 2026-08-02
 
 ### Added
