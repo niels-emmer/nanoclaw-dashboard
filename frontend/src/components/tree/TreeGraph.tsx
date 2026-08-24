@@ -14,11 +14,12 @@ interface TreeGraphProps {
   edges: EdgePulse[]
   topology: TopologyData | null
   humanAgentId?: string | null
+  humanLastUpdated?: number | null
   onAgentClick?: (agentId: string) => void
   selectedAgentId?: string | null
 }
 
-export function TreeGraph({ orchestratorId, agents, edges, topology, humanAgentId, onAgentClick, selectedAgentId }: TreeGraphProps) {
+export function TreeGraph({ orchestratorId, agents, edges, topology, humanAgentId, humanLastUpdated, onAgentClick, selectedAgentId }: TreeGraphProps) {
   const [hoveredAgent, setHoveredAgent] = useState<string | null>(null)
   const [now, setNow] = useState(0)
 
@@ -29,8 +30,8 @@ export function TreeGraph({ orchestratorId, agents, edges, topology, humanAgentI
   }, [])
 
   const nodes = useMemo<TreeNode[]>(
-    () => computeTreeLayout(agents, orchestratorId, topology, now, config.agentSolidMinutes, config.agentFadeMinutes, humanAgentId),
-    [agents, orchestratorId, topology, now, humanAgentId],
+    () => computeTreeLayout(agents, orchestratorId, topology, now, config.agentSolidMinutes, config.agentFadeMinutes, humanAgentId, humanLastUpdated),
+    [agents, orchestratorId, topology, now, humanAgentId, humanLastUpdated],
   )
 
   const nodeMap = useMemo(() => Object.fromEntries(nodes.map((node) => [node.id, node])), [nodes])

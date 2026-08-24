@@ -125,6 +125,42 @@ describe('eventReducer', () => {
     })
     const next = dispatch(state, internal)
     expect(next.humanAgentId).toBeNull()
+    expect(next.humanLastUpdated).toBeNull()
+  })
+
+  it('tracks the last human-channel activity time', () => {
+    let state = createInitialState('orchestrator')
+    const whatsapp = baseEvent({
+      id: '1',
+      type: 'question',
+      source: 'channel:whatsapp',
+      target: 'agent:marvin',
+      payload: { summary: 'hi', status: 'running' },
+    })
+    state = dispatch(state, whatsapp, 1000)
+    expect(state.humanLastUpdated).toBe(1000)
+
+    // Internal agent traffic must NOT advance the human activity clock.
+    const internal = baseEvent({
+      id: '2',
+      type: 'response',
+      source: 'agent:other',
+      target: 'channel:agent',
+      payload: { summary: 'internal', status: 'completed' },
+    })
+    state = dispatch(state, internal, 5000)
+    expect(state.humanLastUpdated).toBe(1000)
+
+    // A later human-channel event advances it.
+    const later = baseEvent({
+      id: '3',
+      type: 'response',
+      source: 'agent:marvin',
+      target: 'channel:whatsapp',
+      payload: { summary: 'reply', status: 'completed' },
+    })
+    state = dispatch(state, later, 9000)
+    expect(state.humanLastUpdated).toBe(9000)
   })
 
   it('does not leak provider/model to a secondary agent', () => {

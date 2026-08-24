@@ -71,7 +71,8 @@ describe('computeTreeLayout', () => {
 
   it('places a human node above the human-facing agent', () => {
     const agents = [agent('agent:marvin', 'marvin')]
-    const nodes = computeTreeLayout(agents, 'orchestrator', null, Date.now(), 15, 90, 'agent:marvin')
+    const now = Date.now()
+    const nodes = computeTreeLayout(agents, 'orchestrator', null, now, 15, 90, 'agent:marvin', now - 1000)
     const human = nodes.find((n) => n.id === 'human')
     const marvin = nodes.find((n) => n.id === 'agent:marvin')
     expect(human).toBeDefined()
@@ -84,6 +85,25 @@ describe('computeTreeLayout', () => {
     const agents = [agent('agent:marvin', 'marvin')]
     const nodes = computeTreeLayout(agents, 'orchestrator', null, Date.now(), 15, 90)
     expect(nodes.some((n) => n.id === 'human')).toBe(false)
+  })
+
+  it('fades the human node out during inactivity', () => {
+    const agents = [agent('agent:marvin', 'marvin')]
+    const now = Date.now()
+    // Recently active → fully visible.
+    const active = computeTreeLayout(agents, 'orchestrator', null, now, 15, 90, 'agent:marvin', now - 1000)
+    expect(active.find((n) => n.id === 'human')?.opacity).toBe(1)
+    // Inactive beyond solid+fade window → faded out and removed.
+    const faded = computeTreeLayout(agents, 'orchestrator', null, now, 15, 90, 'agent:marvin', now - 200 * 60 * 1000)
+    expect(faded.some((n) => n.id === 'human')).toBe(false)
+  })
+
+  it('keeps the orchestrator root fully opaque regardless of activity', () => {
+    const agents = [agent('agent:marvin', 'marvin')]
+    const now = Date.now()
+    const nodes = computeTreeLayout(agents, 'agent:marvin', null, now, 15, 90, 'agent:marvin', now - 200 * 60 * 1000)
+    const root = nodes.find((n) => n.id === 'agent:marvin')
+    expect(root?.opacity).toBe(1)
   })
 
   it('derives a hierarchy from a2aEdges via BFS from the orchestrator', () => {

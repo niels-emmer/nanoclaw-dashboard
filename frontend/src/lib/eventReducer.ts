@@ -15,6 +15,7 @@ export interface EventState {
   orchestratorId: string
   topology: TopologyData | null
   humanAgentId: string | null
+  humanLastUpdated: number | null
 }
 
 export type EventAction = { type: 'event'; event: TelemetryEvent; now: number; maxEventHistory: number }
@@ -39,6 +40,7 @@ export function createInitialState(orchestratorId: string): EventState {
     orchestratorId,
     topology: null,
     humanAgentId: null,
+    humanLastUpdated: null,
   }
 }
 
@@ -61,6 +63,11 @@ export function eventReducer(state: EventState, action: EventAction): EventState
         const candidate = humanAgentFromEvent(event)
         if (candidate) humanAgentId = candidate
       }
+
+      // Track the last time a real human-channel conversation occurred, so the
+      // human node can fade out during inactivity like the other agents.
+      let humanLastUpdated = state.humanLastUpdated
+      if (humanAgentFromEvent(event)) humanLastUpdated = now
 
       // Topology snapshots are handled separately
       if (event.type === 'topology_snapshot') {
@@ -95,7 +102,7 @@ export function eventReducer(state: EventState, action: EventAction): EventState
         ].slice(0, MAX_EDGES)
       }
 
-      return { ...state, events, snapshots, edges, orchestratorId, humanAgentId }
+      return { ...state, events, snapshots, edges, orchestratorId, humanAgentId, humanLastUpdated }
     }
 
     default:

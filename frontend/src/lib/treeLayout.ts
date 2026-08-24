@@ -78,6 +78,7 @@ export function computeTreeLayout(
   solidMinutes: number,
   fadeMinutes: number,
   humanAgentId?: string | null,
+  humanLastUpdated?: number | null,
 ): TreeNode[] {
   const opacityMap = new Map<string, number>()
   for (const agent of agents) {
@@ -145,9 +146,14 @@ export function computeTreeLayout(
     return n > 0 ? 34 + (n - 1) * 36 : 0
   }
 
+  // The human node fades out during inactivity, in line with the other agents.
+  // It only participates in layout (and rendering) while its opacity is > 0.
+  const humanOpacity =
+    humanLastUpdated != null ? computeAgentOpacity(humanLastUpdated, solidMinutes, fadeMinutes, now) : 0
+
   // Place the human node directly above the human-facing agent (e.g. marvin).
   let humanAgentPos: { x: number; y: number } | null = null
-  if (humanAgentId && positions[humanAgentId]) {
+  if (humanAgentId && positions[humanAgentId] && humanOpacity > 0) {
     const agentPos = positions[humanAgentId]
     const agentRadius = radiusFor(humanAgentId)
     humanAgentPos = {
@@ -216,7 +222,7 @@ export function computeTreeLayout(
       id: HUMAN_NODE_ID,
       label: 'Human',
       state: 'idle',
-      opacity: 1,
+      opacity: humanOpacity,
       x: humanAgentPos.x + offsetX,
       y: humanAgentPos.y + offsetY,
       radius: HUMAN_RADIUS,

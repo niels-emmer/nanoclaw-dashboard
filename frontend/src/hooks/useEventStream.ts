@@ -84,5 +84,6 @@ export const useEventStream = () => {
     orchestratorId: state.orchestratorId,
     topology: state.topology,
     humanAgentId: state.humanAgentId,
+    humanLastUpdated: state.humanLastUpdated,
   }
 }
