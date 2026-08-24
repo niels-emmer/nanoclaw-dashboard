@@ -175,7 +175,8 @@ export const parseTopologyMeta = (meta: Record<string, string> | null | undefine
   try {
     const channels = meta.channels ? JSON.parse(meta.channels) : []
     const a2aEdges = meta.a2aEdges ? JSON.parse(meta.a2aEdges) : []
-    return { channels, a2aEdges }
+    const tree = meta.tree ? JSON.parse(meta.tree) : undefined
+    return { channels, a2aEdges, tree }
   } catch {
     return null
   }
@@ -236,6 +237,20 @@ export const deriveAgentSnapshot = (
         ? null
         : (prevSnapshot?.currentTool ?? null)
     const currentToolCategory = toolCategory(currentTool)
+
+    // Maintain a recent tool history: the active tool first, previously-used
+    // tools ghosted to the right. Capped to keep the node uncluttered.
+    let tools = prevSnapshot ? [...prevSnapshot.tools] : []
+    if (p.current_tool != null) {
+      tools = [
+        { name: p.current_tool, category: toolCategory(p.current_tool), active: true },
+        ...tools.filter((t) => t.name !== p.current_tool),
+      ]
+      tools = tools.map((t, i) => (i === 0 ? t : { ...t, active: false }))
+    } else if (event.type === 'activity_update' && p.status === 'completed') {
+      tools = tools.map((t) => ({ ...t, active: false }))
+    }
+    tools = tools.slice(0, 4)
     const toolElapsedMs = p.tool_elapsed_ms ?? prevSnapshot?.toolElapsedMs ?? null
     const toolTimeoutMs = p.tool_timeout_ms ?? prevSnapshot?.toolTimeoutMs ?? null
     const containerStatus = p.container_status ?? prevSnapshot?.containerStatus ?? null
@@ -288,6 +303,7 @@ export const deriveAgentSnapshot = (
       currentToolCategory,
       toolElapsedMs,
       toolTimeoutMs,
+      tools,
       liveness,
       containerStatus,
       heartbeatAgeMs,

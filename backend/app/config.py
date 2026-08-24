@@ -70,6 +70,9 @@ class Settings(BaseSettings):
             "editor",
             "terminal",
             "plotter",
+            "route-planner",
+            "route-optimizer",
+            "route-validator",
         ]
     )
     base_interval_ms: int = Field(default=900, ge=100, le=5000)

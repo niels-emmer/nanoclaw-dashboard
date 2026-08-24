@@ -3,6 +3,12 @@ export type AgentState = 'spinning_up' | 'idle' | 'running' | 'error'
 export type ToolCategory = 'thinking' | 'reading' | 'writing' | 'executing' | 'network' | 'waiting'
 export type Liveness = 'alive' | 'stale' | 'dead' | 'unknown'
 
+export interface ToolUsage {
+  name: string
+  category: ToolCategory
+  active: boolean
+}
+
 export interface TelemetryPayload {
   summary: string
   duration_ms?: number | null
@@ -63,6 +69,7 @@ export interface AgentSnapshot {
   currentToolCategory: ToolCategory
   toolElapsedMs: number | null
   toolTimeoutMs: number | null
+  tools: ToolUsage[]
   liveness: Liveness
   containerStatus: string | null
   heartbeatAgeMs: number | null
@@ -94,4 +101,5 @@ export interface ChatBubble {
 export interface TopologyData {
   channels: Array<{ id: string; type: string; agents: string[] }>
   a2aEdges: Array<{ source: string; target: string }>
+  tree?: { root: string; children: Record<string, string[]> }
 }

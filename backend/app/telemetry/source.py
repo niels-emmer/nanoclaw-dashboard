@@ -27,6 +27,9 @@ _AGENT_SKILLS: dict[str, list[str]] = {
     "editor": ["copy-edit", "style-guide", "format"],
     "terminal": ["shell-exec", "log-parse", "env-inspect"],
     "plotter": ["chart-js", "svg-render", "data-plot"],
+    "route-planner": ["route-plan", "dependency-graph", "task-decompose"],
+    "route-optimizer": ["cost-model", "latency-opt", "route-tune"],
+    "route-validator": ["route-check", "constraint-verify", "safety-gate"],
 }
 
 _AGENT_MODELS: dict[str, tuple[str, str]] = {
@@ -36,6 +39,9 @@ _AGENT_MODELS: dict[str, tuple[str, str]] = {
     "editor": ("claude", "haiku"),
     "terminal": ("opencode", "gpt-4o"),
     "plotter": ("claude", "sonnet"),
+    "route-planner": ("claude", "opus"),
+    "route-optimizer": ("claude", "haiku"),
+    "route-validator": ("claude", "haiku"),
 }
 
 _TOOLS = ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebSearch", "WebFetch"]
@@ -85,6 +91,27 @@ _QUESTIONS: dict[str, list[str]] = {
         "Visualize the deployment frequency and change failure rate trends",
         "Build a heatmap of error rates by service and region",
     ],
+    "route-planner": [
+        "Plan the optimal routing for the multi-agent delivery pipeline",
+        "Decompose the migration task into parallel sub-agent workstreams",
+        "Design the dependency graph for the new feature rollout",
+        "Route the incoming request to the appropriate specialist agents",
+        "Coordinate the handoff between the research and implementation phases",
+    ],
+    "route-optimizer": [
+        "Tune the routing weights to minimize end-to-end latency",
+        "Optimize the cost model for the agent dispatch strategy",
+        "Adjust the parallel fan-out to balance throughput and cost",
+        "Profile the routing bottlenecks in the delivery pipeline",
+        "Recommend a cheaper model tier for low-priority sub-tasks",
+    ],
+    "route-validator": [
+        "Verify the routing plan satisfies all hard constraints",
+        "Check that every sub-task has a valid destination agent",
+        "Validate the dependency graph for cycles and deadlocks",
+        "Confirm the handoff contracts between parent and sub-agents",
+        "Gate the rollout until all routing checks pass",
+    ],
 }
 
 _RESPONSES: dict[str, list[str]] = {
@@ -129,6 +156,27 @@ _RESPONSES: dict[str, list[str]] = {
         "Latency distribution: p50=45ms, p95=120ms, p99=350ms. The p99 spike correlates with batch jobs.",
         "Deployment frequency chart: 12 deploys/week, change failure rate at 4%, well below the 15% target.",
         "Error heatmap shows the payments service in us-east-1 has the highest error rate at 2.3%.",
+    ],
+    "route-planner": [
+        "Routing plan complete: 3 parallel workstreams, each with a dedicated specialist and a shared synthesis step.",
+        "Task decomposed into 4 sub-tasks routed to researcher, coder, terminal, and plotter.",
+        "Dependency graph designed with 2 critical paths and a single merge point at the synthesizer.",
+        "Request routed to route-optimizer and route-validator for tuning and safety checks.",
+        "Handoff plan finalized: research → implementation → validation, with checkpoints at each boundary.",
+    ],
+    "route-optimizer": [
+        "Routing weights tuned: p95 latency down 18% by rebalancing fan-out across the two sub-agents.",
+        "Cost model optimized: switched 3 low-priority sub-tasks to the haiku tier, saving 22%.",
+        "Parallel fan-out adjusted to 2 concurrent sub-agents to balance throughput and cost.",
+        "Bottleneck identified at the validator gate; added a retry budget to smooth the spike.",
+        "Recommended a cheaper model tier for the route-validator's routine checks.",
+    ],
+    "route-validator": [
+        "Routing plan verified: all 4 sub-tasks have valid destinations, no cycles detected.",
+        "Constraint check passed: every handoff contract matches the parent's declared interface.",
+        "Dependency graph validated: acyclic, 2 critical paths, no deadlocks.",
+        "Handoff contracts confirmed between route-planner and both sub-agents.",
+        "Rollout gated: all routing checks green, safe to proceed.",
     ],
 }
 
@@ -411,6 +459,14 @@ class MockTelemetrySource(TelemetrySource):
             {"source": "agent:researcher", "target": "agent:editor"},
             {"source": "agent:terminal", "target": "agent:plotter"},
         ]
+        # Parent-child hierarchy (sub-agents reporting to a parent agent).
+        # Root is the orchestrator; children map a parent agent to its sub-agents.
+        tree = {
+            "root": "orchestrator",
+            "children": {
+                "agent:route-planner": ["agent:route-optimizer", "agent:route-validator"],
+            },
+        }
         return TelemetryEvent(
             id=str(uuid4()),
             timestamp=_timestamp(),
@@ -423,6 +479,7 @@ class MockTelemetrySource(TelemetrySource):
                 meta={
                     "channels": _json_dumps(channels),
                     "a2aEdges": _json_dumps(a2a_edges),
+                    "tree": _json_dumps(tree),
                 },
             ),
         )

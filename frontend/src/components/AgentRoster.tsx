@@ -1,0 +1,75 @@
+import { useEffect, useState } from 'react'
+import type { AgentSnapshot } from '../lib/types'
+import { colorForAgent } from '../lib/utils'
+import { TOOL_CATEGORY_ICON } from '../lib/icons'
+
+interface Props {
+  agents: AgentSnapshot[]
+  onSelect?: (agentId: string) => void
+  selectedAgentId?: string | null
+}
+
+const IDLE_HIDE_MS = 30_000
+
+export function AgentRoster({ agents, onSelect, selectedAgentId }: Props) {
+  const [hidden, setHidden] = useState(false)
+
+  const anyActive = agents.some((a) => a.state === 'running')
+  const lastActivity = agents.reduce((max, a) => Math.max(max, a.lastUpdated), 0)
+
+  // Auto-hide when nothing has been active for a while
+  useEffect(() => {
+    if (anyActive) {
+      setHidden(false)
+      return
+    }
+    const elapsed = Date.now() - lastActivity
+    if (elapsed > IDLE_HIDE_MS) {
+      setHidden(true)
+      return
+    }
+    const timer = setTimeout(() => setHidden(true), IDLE_HIDE_MS - elapsed)
+    return () => clearTimeout(timer)
+  }, [anyActive, lastActivity])
+
+  if (hidden) {
+    return (
+      <div className="roster-strip roster-hidden" aria-hidden>
+        <span className="text-xs text-muted">agents idle</span>
+      </div>
+    )
+  }
+
+  const sorted = [...agents].sort((a, b) => b.activityCount - a.activityCount)
+
+  return (
+    <div className="roster-strip">
+      {sorted.map((agent) => {
+        const isActive = agent.state === 'running' && agent.liveness === 'alive'
+        const isError = agent.state === 'error' || agent.errorCount > 0
+        const ToolIcon = agent.currentTool ? TOOL_CATEGORY_ICON[agent.currentToolCategory] ?? null : null
+        const isSelected = selectedAgentId === agent.id
+
+        return (
+          <button
+            key={agent.id}
+            onClick={() => onSelect?.(agent.id)}
+            className={`roster-item ${isSelected ? 'roster-selected' : ''}`}
+            style={{ borderLeftColor: colorForAgent(agent.id) }}
+          >
+            <span className={`liveness-dot ${agent.liveness} ${isActive ? 'liveness-pulse' : ''}`} />
+            <span className="roster-name">{agent.label}</span>
+            {ToolIcon && agent.currentTool && (
+              <span className="roster-tool">
+                <ToolIcon size={12} />
+                {agent.currentTool}
+              </span>
+            )}
+            <span className="roster-meta">{agent.activityCount} msg</span>
+            {isError && <span className="roster-error">err</span>}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
