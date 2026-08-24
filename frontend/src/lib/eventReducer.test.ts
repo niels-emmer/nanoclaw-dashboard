@@ -159,14 +159,6 @@ describe('eventReducer', () => {
     expect(state.events).toHaveLength(5)
   })
 
-  it('expires bubbles via the expire_bubble action', () => {
-    let state = createInitialState('orchestrator')
-    state = dispatch(state, baseEvent())
-    expect(state.bubbles).toHaveLength(1)
-    state = eventReducer(state, { type: 'expire_bubble', id: '1' })
-    expect(state.bubbles).toHaveLength(0)
-  })
-
   it('updates orchestratorId from topology metadata', () => {
     const state = createInitialState('orchestrator')
     const topo = baseEvent({

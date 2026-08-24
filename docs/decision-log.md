@@ -130,6 +130,25 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - New contributors get a richer agent team out of the box
   - R7 resolved: explorer uses `opencode/gpt-5.4-nano` — a lighter, zero-retention Zen-hosted model suitable for read-only file searches
 
+## 0014 – OpenCode config consolidation: global vs repo split (2026-08-02)
+- **Status**: Accepted
+- **Context**: OpenCode config was duplicated across global (`~/.config/opencode/`) and repo (`.opencode/`). The 16 universal coding rules existed in 3 places. Skills, agents, and commands were duplicated with subtle divergences. The decision-log target path differed between global (`docs/decision-log.md`) and repo (`docs/DECISIONS.md`). The global config used deprecated singular directory names (`agent/`, `command/`, `skill/`).
+- **Decision**:
+  - Renamed `docs/DECISIONS.md` → `docs/decision-log.md` (align with global convention)
+  - Moved universal 16 coding rules to global `~/.config/opencode/AGENTS.md` only; removed from repo root `AGENTS.md` and `.opencode/AGENTS.md`
+  - Moved generic agents (explorer, github, reviewer, security-auditor) to global `agents/` only
+  - Moved generic commands (handoff, plan) to global `commands/` only
+  - Moved universal skills (code-standards, test-patterns, etc.) to global `skills/` only; kept project-modified `governance` skill in repo
+  - Renamed global directories to plural (`agents/`, `commands/`, `skills/`)
+  - Consolidated global config variants: promoted `.clean` profile to active `opencode.json`, removed `.omo` (oh-my-openagent) and `.jsonc`
+  - Updated wiki sync script to map `decision-log.md` → `Decision-Log.md`
+- **Consequences**:
+  - Universal rules live once in global — every project inherits them
+  - Repo is self-contained for project-specific behavior (orchestrator, start/release commands, governance skill)
+  - New projects in empty folders inherit global agents, commands, and skills automatically
+  - No duplicated config to maintain across global and repo
+  - Wiki page renamed from `Decisions` to `Decision-Log`
+
 ## 0015 – V2 frontend rearchitecture (2026-08-24)
 - **Status**: Accepted
 - **Context**: The frontend works but is hard to extend: `FlowCanvas` is a 600-line monolith, `useEventStream` mixes WebSocket ingest with state derivation, design tokens are split across `index.css` and HeroUI's theme, and there is zero frontend test coverage. A v2 is planned to make the codebase maintainable and testable without changing the visual identity or the telemetry contract.
@@ -161,21 +180,15 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - Only real human channels (whatsapp/matrix/etc.) route to the Human node; internal `channel:agent` routes to the orchestrator.
   - Documented in `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/OPENCODE_WORKFLOW.md`, and `README.md`.
 
-## 0014 – OpenCode config consolidation: global vs repo split (2026-08-02)
+## 0018 – V3 live-debugging refinements: hierarchy, human node, channel routing (2026-08-24)
 - **Status**: Accepted
-- **Context**: OpenCode config was duplicated across global (`~/.config/opencode/`) and repo (`.opencode/`). The 16 universal coding rules existed in 3 places. Skills, agents, and commands were duplicated with subtle divergences. The decision-log target path differed between global (`docs/decision-log.md`) and repo (`docs/DECISIONS.md`). The global config used deprecated singular directory names (`agent/`, `command/`, `skill/`).
+- **Context**: Live debugging on the nanoclaw host surfaced behaviors not covered by ADR 0016: the real topology emits no `tree`, so sub-agents rendered flat under the orchestrator; agent-to-agent traffic (`channel:agent`) was being drawn to the Human node; and the activity feed was noisy with signalling-only cards and repeated tool events.
 - **Decision**:
-  - Renamed `docs/DECISIONS.md` → `docs/decision-log.md` (align with global convention)
-  - Moved universal 16 coding rules to global `~/.config/opencode/AGENTS.md` only; removed from repo root `AGENTS.md` and `.opencode/AGENTS.md`
-  - Moved generic agents (explorer, github, reviewer, security-auditor) to global `agents/` only
-  - Moved generic commands (handoff, plan) to global `commands/` only
-  - Moved universal skills (code-standards, test-patterns, etc.) to global `skills/` only; kept project-modified `governance` skill in repo
-  - Renamed global directories to plural (`agents/`, `commands/`, `skills/`)
-  - Consolidated global config variants: promoted `.clean` profile to active `opencode.json`, removed `.omo` (oh-my-openagent) and `.jsonc`
-  - Updated wiki sync script to map `decision-log.md` → `Decision-Log.md`
+  - Derive the tree hierarchy from `a2aEdges` via BFS from the orchestrator when no explicit `tree` is provided (agents that talk to the orchestrator are direct children; agents that only talk to a non-orchestrator agent become its sub-agents).
+  - Make the human-facing agent sticky: set once from a real human channel (whatsapp/matrix/etc.), never moved by `channel:agent` traffic. Only real human channels route to the Human node; `channel:agent` routes to the orchestrator.
+  - Reduce activity-feed noise: drop signalling-only `activity_update` cards (no `current_tool`) and collapse consecutive same-agent/same-tool activity into one card with a count.
 - **Consequences**:
-  - Universal rules live once in global — every project inherits them
-  - Repo is self-contained for project-specific behavior (orchestrator, start/release commands, governance skill)
-  - New projects in empty folders inherit global agents, commands, and skills automatically
-  - No duplicated config to maintain across global and repo
-  - Wiki page renamed from `Decisions` to `Decision-Log`
+  - The tree reflects the real shallow hierarchy (orchestrator → agents → one sublevel) even without an explicit `tree` in the topology.
+  - The Human node stays anchored above the human-facing agent regardless of agent-to-agent traffic.
+  - The activity feed surfaces real signals instead of status noise.
+  - All logic is pure and unit-tested (`deriveTreeFromEdges`, `channels`, `buildActivityFeed`).

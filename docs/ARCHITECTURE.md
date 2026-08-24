@@ -1,6 +1,6 @@
 # Architecture Overview
 
-The dashboard is split into a FastAPI WebSocket service (`/backend`) and a Vite + React + TS SPA (`/frontend`). The backend emits canonical telemetry events about the orchestrator/sub-agent conversation; the frontend ingests the stream, animates a flow canvas, and presents supporting diagnostics (agent cards, event feed, debug panel) for a single-screen 1080p display.
+The dashboard is split into a FastAPI WebSocket service (`/backend`) and a Vite + React + TS SPA (`/frontend`). The backend emits canonical telemetry events about the orchestrator/sub-agent conversation; the frontend ingests the stream, renders a left-to-right hierarchical tree graph (orchestrator root → agents → sub-agents) with a Human node, and presents supporting diagnostics (live activity feed, compact agent roster, status strip) for a single-screen 1080p wall display.
 
 ## Backend (`backend/`)
 
@@ -49,7 +49,7 @@ Additional fields on all event types:
 
 - `tests/test_app.py` covers `/health` to ensure the FastAPI stack boots.
 - `tests/test_telemetry.py` covers the mock source: question/response flow, emission of all new event types, and presence of tool state fields on activity_update events.
-- Frontend Vitest suite (`npm test`) covers pure derivation logic (`utils.test.ts`), the event reducer (`eventReducer.test.ts`), and a `FlowCanvas` render smoke test.
+- Frontend Vitest suite (`npm test`) covers pure derivation logic (`utils.test.ts`), the event reducer (`eventReducer.test.ts`), the tree layout (`treeLayout.test.ts`), and a `TreeGraph` render smoke test.
 - Structured logs surface in JSON for later ingestion into observability stacks.
 
 ## Frontend (`frontend/`)
@@ -108,7 +108,7 @@ When new telemetry attributes are required, bump `schema_version`, update both t
 ## Configuration + environment
 
 - Backend config derives from env vars prefixed with `NANOCLAW_` (see `config.py`). Example knobs: `NANOCLAW_MOCK_AGENT_NAMES`, `NANOCLAW_BASE_INTERVAL_MS`, `NANOCLAW_MAX_CLIENTS`, `NANOCLAW_EVENT_BUFFER_SIZE` (default 100).
-- Frontend config relies on Vite env vars: `VITE_BACKEND_WS_URL`, `VITE_EVENT_HISTORY` (default 200), `VITE_AGENT_SOLID_MINUTES` (default 10), `VITE_AGENT_FADE_MINUTES` (default 60).
+- Frontend config relies on Vite env vars: `VITE_BACKEND_WS_URL`, `VITE_EVENT_HISTORY` (default 200), `VITE_AGENT_SOLID_MINUTES` (default 15), `VITE_AGENT_FADE_MINUTES` (default 90).
 - Node `20.19.0` is required; we vendor the tarball under `.tools/node` for deterministic teams.
 
 ## Nanoclaw integration

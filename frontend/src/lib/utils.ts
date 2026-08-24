@@ -6,33 +6,6 @@ export const formatTime = (maybeMs: number) => {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
-export const elapsedLabel = (maybeMs: number) => {
-  const ms = Number.isNaN(maybeMs) ? Date.now() : maybeMs
-  const delta = Date.now() - ms
-  if (delta < 1000) return 'now'
-  if (delta < 60_000) return `${Math.floor(delta / 1000)}s ago`
-  if (delta < 3_600_000) return `${Math.floor(delta / 60_000)}m ago`
-  return `${Math.floor(delta / 3_600_000)}h ago`
-}
-
-export const compactAge = (maybeMs: number) => {
-  const ms = Number.isNaN(maybeMs) ? Date.now() : maybeMs
-  const delta = Date.now() - ms
-  if (delta < 1000) return 'now'
-  if (delta < 60_000) return `${Math.floor(delta / 1000)}s`
-  if (delta < 3_600_000) {
-    const m = Math.floor(delta / 60_000)
-    const s = Math.floor((delta % 60_000) / 1000)
-    return `${m}m${s}s`
-  }
-  if (delta < 86_400_000) {
-    const h = Math.floor(delta / 3_600_000)
-    const m = Math.floor((delta % 3_600_000) / 60_000)
-    return `${h}h${m}m`
-  }
-  return `${Math.floor(delta / 86_400_000)}d`
-}
-
 export const formatElapsed = (ms: number | null | undefined): string => {
   if (ms == null) return ''
   if (ms < 1000) return `${ms}ms`

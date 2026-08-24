@@ -304,7 +304,7 @@
   color: var(--muted);
 }
 
-/* ---- SVG orbit/node styles (reused) ---- */
+/* ---- SVG tree/node styles (reused) ---- */
 
 .node {
   transition: transform 0.8s ease, opacity 0.5s ease;

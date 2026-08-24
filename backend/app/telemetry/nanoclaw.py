@@ -33,7 +33,6 @@ class AgentConfig:
     """Cached container_configs data for an agent group."""
     provider: Optional[str] = None
     model: Optional[str] = None
-    effort: Optional[str] = None
     skills: Optional[List[str]] = None
     assistant_name: Optional[str] = None
 
@@ -44,7 +43,6 @@ class SessionRecord:
     agent_group_id: str
     path: Path
     container_status: Optional[str] = None
-    last_active: Optional[str] = None
 
 
 @dataclass
@@ -600,7 +598,6 @@ class NanoclawTelemetrySource(TelemetrySource):
             self._agent_configs[ag_id] = AgentConfig(
                 provider=row.get("provider") or "claude",
                 model=row.get("model") or "sonnet-5",
-                effort=row.get("effort"),
                 skills=skills,
                 assistant_name=row.get("assistant_name"),
             )
@@ -621,7 +618,6 @@ class NanoclawTelemetrySource(TelemetrySource):
                     agent_group_id=agent_group,
                     path=session_path,
                     container_status=row.get("container_status"),
-                    last_active=row.get("last_active"),
                 )
 
         # Remove stale watchers

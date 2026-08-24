@@ -1,5 +1,5 @@
-import type { AgentSnapshot, ChatBubble, EdgePulse, TelemetryEvent, TopologyData } from './types'
-import { deriveAgentSnapshot, parseTopologyMeta, readableNodeLabel } from './utils'
+import type { AgentSnapshot, EdgePulse, TelemetryEvent, TopologyData } from './types'
+import { deriveAgentSnapshot, parseTopologyMeta } from './utils'
 import { channelName, isHumanChannel } from './channels'
 
 /**
@@ -12,19 +12,15 @@ export interface EventState {
   events: TelemetryEvent[]
   snapshots: Record<string, AgentSnapshot>
   edges: EdgePulse[]
-  bubbles: ChatBubble[]
   orchestratorId: string
   topology: TopologyData | null
   humanAgentId: string | null
 }
 
-export type EventAction =
-  | { type: 'event'; event: TelemetryEvent; now: number; maxEventHistory: number }
-  | { type: 'expire_bubble'; id: string }
+export type EventAction = { type: 'event'; event: TelemetryEvent; now: number; maxEventHistory: number }
 
 const EDGE_TTL_MS = 6500
 const MAX_EDGES = 32
-const MAX_BUBBLES = 3
 
 /** Return the agent id if this event is a human-channel conversation, else null. */
 function humanAgentFromEvent(event: TelemetryEvent): string | null {
@@ -40,7 +36,6 @@ export function createInitialState(orchestratorId: string): EventState {
     events: [],
     snapshots: {},
     edges: [],
-    bubbles: [],
     orchestratorId,
     topology: null,
     humanAgentId: null,
@@ -49,9 +44,6 @@ export function createInitialState(orchestratorId: string): EventState {
 
 export function eventReducer(state: EventState, action: EventAction): EventState {
   switch (action.type) {
-    case 'expire_bubble':
-      return { ...state, bubbles: state.bubbles.filter((b) => b.id !== action.id) }
-
     case 'event': {
       const { event, now, maxEventHistory } = action
 
@@ -103,31 +95,7 @@ export function eventReducer(state: EventState, action: EventAction): EventState
         ].slice(0, MAX_EDGES)
       }
 
-      // Spawn a chat bubble only for actual messages, not status updates
-      let bubbles = state.bubbles
-      if (event.type === 'question' || event.type === 'response') {
-        const bubbleAgentId = event.type === 'question' ? event.target : event.source
-        const sourceLabel = event.payload.meta?.sourceLabel ?? readableNodeLabel(event.source)
-        const targetLabel = event.payload.meta?.targetLabel ?? readableNodeLabel(event.target)
-        const summary = event.payload.summary
-        const lines = summary
-          .split(/(?<=[.?!])\s+|(?<=\n)/)
-          .map((l) => l.trim())
-          .filter(Boolean)
-          .slice(0, 3)
-        const bubble: ChatBubble = {
-          id: event.id,
-          agentId: bubbleAgentId,
-          fromLabel: sourceLabel,
-          toLabel: targetLabel,
-          text: summary,
-          lines: lines.length > 0 ? lines : [summary],
-          type: event.type,
-        }
-        bubbles = [bubble, ...state.bubbles].slice(0, MAX_BUBBLES)
-      }
-
-      return { ...state, events, snapshots, edges, bubbles, orchestratorId, humanAgentId }
+      return { ...state, events, snapshots, edges, orchestratorId, humanAgentId }
     }
 
     default:

@@ -88,16 +88,6 @@ export interface EdgePulse {
   timestamp: number
 }
 
-export interface ChatBubble {
-  id: string
-  agentId: string
-  fromLabel: string
-  toLabel: string
-  text: string
-  lines: string[]
-  type: EventType
-}
-
 export interface TopologyData {
   channels: Array<{ id: string; type: string; agents: string[] }>
   a2aEdges: Array<{ source: string; target: string }>

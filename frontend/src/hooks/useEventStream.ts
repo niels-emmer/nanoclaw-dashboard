@@ -6,8 +6,6 @@ import { createInitialState, eventReducer } from '../lib/eventReducer'
 
 export type ConnectionState = 'connecting' | 'connected' | 'reconnecting' | 'error'
 
-const BUBBLE_TTL_MS = 5000
-
 export const useEventStream = () => {
   const [state, dispatch] = useReducer(eventReducer, config.orchestratorId, createInitialState)
   const [connectionState, setConnectionState] = useState<ConnectionState>('connecting')
@@ -60,11 +58,6 @@ export const useEventStream = () => {
 
     const handleEvent = (event: TelemetryEvent) => {
       dispatch({ type: 'event', event, now: Date.now(), maxEventHistory: config.maxEventHistory })
-
-      // Schedule bubble expiry for actual messages (question/response)
-      if (event.type === 'question' || event.type === 'response') {
-        window.setTimeout(() => dispatch({ type: 'expire_bubble', id: event.id }), BUBBLE_TTL_MS)
-      }
     }
 
     connect()
@@ -86,7 +79,6 @@ export const useEventStream = () => {
     agents,
     events: state.events,
     edges: state.edges,
-    bubbles: state.bubbles,
     connectionState,
     retryCount,
     orchestratorId: state.orchestratorId,

@@ -17,7 +17,6 @@ export interface TreeNode {
 
 export const WIDTH = 1000
 export const HEIGHT = 900
-export const CENTER = { x: WIDTH / 2, y: HEIGHT / 2 }
 
 /**
  * Derive a parent-child hierarchy from the a2aEdges graph via BFS from the
