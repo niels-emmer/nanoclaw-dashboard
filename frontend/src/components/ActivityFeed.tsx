@@ -1,16 +1,13 @@
-import { useMemo } from 'react'
-import type { TelemetryEvent } from '../lib/types'
 import { colorForEventType, formatTime, readableNodeLabel } from '../lib/utils'
 import { TOOL_CATEGORY_ICON } from '../lib/icons'
-import { buildActivityFeed, isError, type FeedItem } from '../lib/activityFeed'
+import { isError, type FeedItem } from '../lib/activityFeed'
 
 interface Props {
-  events: TelemetryEvent[]
+  feed: FeedItem[]
+  onSelect: (event: FeedItem) => void
 }
 
-export function ActivityFeed({ events }: Props) {
-  const feed = useMemo<FeedItem[]>(() => buildActivityFeed(events), [events])
-
+export function ActivityFeed({ feed, onSelect }: Props) {
   if (feed.length === 0) {
     return (
       <div className="min-h-[80px] grid place-content-center text-center text-muted text-sm">
@@ -34,7 +31,8 @@ export function ActivityFeed({ events }: Props) {
         return (
           <article
             key={event.id}
-            className={`flex items-start gap-3 py-2 border-b border-accent/10 last:border-b-0 ${error ? 'bg-red-500/10 rounded-lg px-2' : ''}`}
+            onClick={() => onSelect(event)}
+            className={`flex items-start gap-3 py-2 border-b border-accent/10 last:border-b-0 cursor-pointer transition-colors hover:bg-accent/5 ${error ? 'bg-red-500/10 rounded-lg px-2' : ''}`}
           >
             {/* Type indicator */}
             <span
