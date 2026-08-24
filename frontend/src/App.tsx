@@ -24,6 +24,7 @@ function App() {
             orchestratorId={orchestratorId}
             agents={agents}
             edges={edges}
+            events={events}
             topology={topology}
             onAgentClick={(id) => setSelectedAgentId(id === selectedAgentId ? null : id)}
             selectedAgentId={selectedAgentId}

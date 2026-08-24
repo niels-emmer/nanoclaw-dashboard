@@ -23,7 +23,10 @@ const LEVEL_GAP = 280
 const ORCHESTRATOR_RADIUS = 44
 const ACTIVE_RADIUS = 36
 const INACTIVE_RADIUS = 28
+const HUMAN_RADIUS = 30
 const LEFT_MARGIN = ORCHESTRATOR_RADIUS + 24
+
+export const HUMAN_NODE_ID = 'human'
 
 /**
  * Compute a left-to-right tree layout. Pure — given the same inputs it always
@@ -41,6 +44,7 @@ export function computeTreeLayout(
   now: number,
   solidMinutes: number,
   fadeMinutes: number,
+  humanAgentId?: string | null,
 ): TreeNode[] {
   const opacityMap = new Map<string, number>()
   for (const agent of agents) {
@@ -108,6 +112,18 @@ export function computeTreeLayout(
     return n > 0 ? 34 + (n - 1) * 36 : 0
   }
 
+  // Place the human node directly above the human-facing agent (e.g. marvin).
+  let humanAgentPos: { x: number; y: number } | null = null
+  if (humanAgentId && positions[humanAgentId]) {
+    const agentPos = positions[humanAgentId]
+    const agentRadius = radiusFor(humanAgentId)
+    humanAgentPos = {
+      x: agentPos.x,
+      y: agentPos.y - (agentRadius + HUMAN_RADIUS + 24),
+    }
+    positions[HUMAN_NODE_ID] = humanAgentPos
+  }
+
   // Center the whole tree (including tool indicators) both vertically and horizontally.
   const ys = Object.values(positions).map((p) => p.y)
   const leftEdges = Object.entries(positions).map(([id, p]) => p.x - radiusFor(id))
@@ -160,5 +176,23 @@ export function computeTreeLayout(
     }
   })
 
-  return [orchestratorNode, ...agentNodes]
+  const nodes: TreeNode[] = [orchestratorNode, ...agentNodes]
+
+  if (humanAgentPos) {
+    nodes.push({
+      id: HUMAN_NODE_ID,
+      label: 'Human',
+      state: 'idle',
+      opacity: 1,
+      x: humanAgentPos.x + offsetX,
+      y: humanAgentPos.y + offsetY,
+      radius: HUMAN_RADIUS,
+      depth: Math.round(humanAgentPos.x / LEVEL_GAP),
+      parentId: null,
+      children: [],
+      isActive: false,
+    })
+  }
+
+  return nodes
 }

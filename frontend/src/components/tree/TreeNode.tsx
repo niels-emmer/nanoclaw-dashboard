@@ -1,7 +1,10 @@
+import { User } from 'lucide-react'
 import type { AgentSnapshot } from '../../lib/types'
 import { ICON_MAP, TOOL_CATEGORY_ICON, iconNameForAgent } from '../../lib/icons'
 import { ORCHESTRATOR_COLOR, colorForAgent, toolCategoryColor } from '../../lib/utils'
-import type { TreeNode } from '../../lib/treeLayout'
+import { HUMAN_NODE_ID, type TreeNode } from '../../lib/treeLayout'
+
+const HUMAN_COLOR = '#e8e8e8'
 
 interface Props {
   node: TreeNode
@@ -14,9 +17,10 @@ interface Props {
 }
 
 export function TreeNodeView({ node, agent, isOrchestrator, isSelected, onHover, onLeave, onClick }: Props) {
-  const fill = isOrchestrator ? ORCHESTRATOR_COLOR : colorForAgent(node.id)
+  const isHuman = node.id === HUMAN_NODE_ID
+  const fill = isOrchestrator ? ORCHESTRATOR_COLOR : isHuman ? HUMAN_COLOR : colorForAgent(node.id)
   const iconName = isOrchestrator ? 'bot' : iconNameForAgent(node.id, node.label)
-  const IconComponent = ICON_MAP[iconName]
+  const IconComponent = isHuman ? User : ICON_MAP[iconName]
   const iconSize = node.radius * 1.1
 
   return (

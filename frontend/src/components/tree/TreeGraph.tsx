@@ -1,9 +1,9 @@
 import { useMemo, useState, useEffect } from 'react'
 
 import { config } from '../../lib/config'
-import type { AgentSnapshot, EdgePulse, TopologyData } from '../../lib/types'
-import { ORCHESTRATOR_COLOR, formatElapsed } from '../../lib/utils'
-import { computeTreeLayout, WIDTH, HEIGHT, type TreeNode } from '../../lib/treeLayout'
+import type { AgentSnapshot, EdgePulse, TelemetryEvent, TopologyData } from '../../lib/types'
+import { ORCHESTRATOR_COLOR, formatElapsed, deriveHumanAgentId } from '../../lib/utils'
+import { computeTreeLayout, WIDTH, HEIGHT, HUMAN_NODE_ID, type TreeNode } from '../../lib/treeLayout'
 import { TreeNodeView } from './TreeNode'
 import { TreeEdge } from './TreeEdge'
 
@@ -11,12 +11,13 @@ interface TreeGraphProps {
   orchestratorId: string
   agents: AgentSnapshot[]
   edges: EdgePulse[]
+  events: TelemetryEvent[]
   topology: TopologyData | null
   onAgentClick?: (agentId: string) => void
   selectedAgentId?: string | null
 }
 
-export function TreeGraph({ orchestratorId, agents, edges, topology, onAgentClick, selectedAgentId }: TreeGraphProps) {
+export function TreeGraph({ orchestratorId, agents, edges, events, topology, onAgentClick, selectedAgentId }: TreeGraphProps) {
   const [hoveredAgent, setHoveredAgent] = useState<string | null>(null)
   const [now, setNow] = useState(Date.now())
 
@@ -26,18 +27,23 @@ export function TreeGraph({ orchestratorId, agents, edges, topology, onAgentClic
     return () => clearInterval(timer)
   }, [])
 
+  const humanAgentId = useMemo(() => deriveHumanAgentId(events), [events])
+
   const nodes = useMemo<TreeNode[]>(
-    () => computeTreeLayout(agents, orchestratorId, topology, now, config.agentSolidMinutes, config.agentFadeMinutes),
-    [agents, orchestratorId, topology, now],
+    () => computeTreeLayout(agents, orchestratorId, topology, now, config.agentSolidMinutes, config.agentFadeMinutes, humanAgentId),
+    [agents, orchestratorId, topology, now, humanAgentId],
   )
 
   const nodeMap = useMemo(() => Object.fromEntries(nodes.map((node) => [node.id, node])), [nodes])
   const agentMap = useMemo(() => Object.fromEntries(agents.map((a) => [a.id, a])), [agents])
 
+  // Resolve pulses, mapping channel endpoints to the human node.
   const pulses = edges
     .map((edge) => {
-      const start = nodeMap[edge.source]
-      const end = nodeMap[edge.target]
+      const srcId = edge.source.startsWith('channel:') ? HUMAN_NODE_ID : edge.source
+      const tgtId = edge.target.startsWith('channel:') ? HUMAN_NODE_ID : edge.target
+      const start = nodeMap[srcId]
+      const end = nodeMap[tgtId]
       if (!start || !end) return null
       return { ...edge, start, end }
     })

@@ -69,6 +69,23 @@ describe('computeTreeLayout', () => {
     }
   })
 
+  it('places a human node above the human-facing agent', () => {
+    const agents = [agent('agent:marvin', 'marvin')]
+    const nodes = computeTreeLayout(agents, 'orchestrator', null, Date.now(), 15, 90, 'agent:marvin')
+    const human = nodes.find((n) => n.id === 'human')
+    const marvin = nodes.find((n) => n.id === 'agent:marvin')
+    expect(human).toBeDefined()
+    expect(marvin).toBeDefined()
+    expect(human!.x).toBe(marvin!.x)
+    expect(human!.y).toBeLessThan(marvin!.y)
+  })
+
+  it('omits the human node when no human-facing agent is given', () => {
+    const agents = [agent('agent:marvin', 'marvin')]
+    const nodes = computeTreeLayout(agents, 'orchestrator', null, Date.now(), 15, 90)
+    expect(nodes.some((n) => n.id === 'human')).toBe(false)
+  })
+
   it('nests sub-agents under their parent', () => {
     const agents = [
       agent('agent:route-planner', 'route-planner'),

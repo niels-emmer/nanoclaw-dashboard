@@ -318,6 +318,20 @@ export const deriveAgentSnapshot = (
   return snapshot
 }
 
+/**
+ * Identify the human-facing agent: the agent that communicates with a channel
+ * (e.g. whatsapp/matrix). Returns the agent id, or null if none.
+ */
+export const deriveHumanAgentId = (events: TelemetryEvent[]): string | null => {
+  for (const e of events) {
+    const srcIsChannel = e.source.startsWith('channel:')
+    const tgtIsChannel = e.target.startsWith('channel:')
+    if (srcIsChannel && e.target.startsWith('agent:')) return e.target
+    if (tgtIsChannel && e.source.startsWith('agent:')) return e.source
+  }
+  return null
+}
+
 export const normalizeAgentId = (event: TelemetryEvent) => {
   if (event.type === 'question') {
     return event.target.startsWith('agent:') ? event.target : event.source
