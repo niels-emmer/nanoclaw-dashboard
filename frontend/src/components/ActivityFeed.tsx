@@ -2,25 +2,14 @@ import { useMemo } from 'react'
 import type { TelemetryEvent } from '../lib/types'
 import { colorForEventType, formatTime, readableNodeLabel } from '../lib/utils'
 import { TOOL_CATEGORY_ICON } from '../lib/icons'
+import { buildActivityFeed, isError, type FeedItem } from '../lib/activityFeed'
 
 interface Props {
   events: TelemetryEvent[]
 }
 
-// Clean conversation stream: messages + tool calls. Delivery/topology noise dropped.
-const VISIBLE_TYPES = new Set(['question', 'response', 'activity_update', 'approval_pending', 'agent_status'])
-
-function isError(event: TelemetryEvent): boolean {
-  return event.payload.status === 'error' || event.agent_state === 'error'
-}
-
 export function ActivityFeed({ events }: Props) {
-  const feed = useMemo(() => {
-    return events
-      .filter((e) => VISIBLE_TYPES.has(e.type))
-      .filter((e) => !(e.type === 'agent_status' && !isError(e))) // drop benign status, keep errors
-      .slice(0, 40)
-  }, [events])
+  const feed = useMemo<FeedItem[]>(() => buildActivityFeed(events), [events])
 
   if (feed.length === 0) {
     return (
@@ -40,6 +29,7 @@ export function ActivityFeed({ events }: Props) {
         const ToolIcon = isTool && event.payload.current_tool
           ? TOOL_CATEGORY_ICON[event.payload.current_tool.toLowerCase()] ?? null
           : null
+        const count = event.count ?? 1
 
         return (
           <article
@@ -70,6 +60,11 @@ export function ActivityFeed({ events }: Props) {
               {isTool && event.payload.current_tool && (
                 <div className="flex items-center gap-2 text-xs text-muted mt-0.5">
                   <span className="font-mono text-accent">{event.payload.current_tool}</span>
+                  {count > 1 && (
+                    <span className="text-[0.6rem] font-semibold px-1.5 py-0.5 rounded bg-accent/15 text-accent">
+                      ×{count}
+                    </span>
+                  )}
                   {event.payload.tool_elapsed_ms != null && (
                     <span>{Math.round(event.payload.tool_elapsed_ms / 1000)}s</span>
                   )}
