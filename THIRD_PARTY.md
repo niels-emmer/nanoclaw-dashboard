@@ -5,11 +5,11 @@ Record every external dependency here with license info and notes on local modif
 | Component | Version/Commit | License | Purpose | Local Changes |
 |-----------|----------------|---------|---------|---------------|
 | FastAPI | 0.141.1 | MIT | Backend HTTP/WebSocket framework | None |
-| Uvicorn | 0.52.3 | BSD-3-Clause | ASGI server for FastAPI app + dev reload | None |
+| Uvicorn | 0.52.4 | BSD-3-Clause | ASGI server for FastAPI app + dev reload | None |
 | pydantic-settings | 2.15.0 | MIT | Environment-driven configuration | None |
 | orjson | 3.12.0 | Apache-2.0 / MIT | High-performance JSON serialization | None |
 | structlog | 26.1.0 | Apache-2.0 / MIT | Structured JSON logging | None |
-| python-dotenv | 1.2.2 | BSD-3-Clause | Parse .env files | None |
+| python-dotenv | 1.2.3 | BSD-3-Clause | Parse .env files | None |
 | pytest | 9.1.1 | MIT | Backend test framework | None |
 | httpx | 0.28.1 | BSD-3-Clause | Async HTTP client for tests | None |
 | pytest-asyncio | 1.4.0 | Apache-2.0 | Asyncio support for pytest | None |
@@ -29,7 +29,7 @@ Record every external dependency here with license info and notes on local modif
 | vitest | 4.1.11 | MIT | Frontend test runner | None |
 | jsdom | 29.1.1 | MIT | DOM environment for component tests | None |
 | @testing-library/react | 16.3.2 | MIT | React component testing utilities | None |
-| @testing-library/jest-dom | 6.9.1 | MIT | DOM matchers for Vitest | None |
+| @testing-library/jest-dom | 7.0.1 | MIT | DOM matchers for Vitest | None |
 | Space Grotesk / IBM Plex Sans / JetBrains Mono | Google Fonts | Open Font License | Typography per design spec | Served via Google Fonts CDN |
 
 Guidance:
