@@ -1,4 +1,3 @@
-import { config } from './config'
 import type { AgentSnapshot, Liveness, TelemetryEvent, ToolCategory, TopologyData } from './types'
 
 export const formatTime = (maybeMs: number) => {
@@ -157,8 +156,8 @@ export const deriveLiveness = (
 // Agent opacity decay calculation
 export const computeAgentOpacity = (
   lastUpdated: number,
-  solidMinutes: number = config.agentSolidMinutes,
-  fadeMinutes: number = config.agentFadeMinutes,
+  solidMinutes: number,
+  fadeMinutes: number,
   now: number = Date.now(),
 ): number => {
   if (!fadeMinutes || fadeMinutes <= 0) return 1.0
