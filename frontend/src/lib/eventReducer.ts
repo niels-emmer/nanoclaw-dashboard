@@ -14,6 +14,7 @@ export interface EventState {
   bubbles: ChatBubble[]
   orchestratorId: string
   topology: TopologyData | null
+  humanAgentId: string | null
 }
 
 export type EventAction =
@@ -24,6 +25,19 @@ const EDGE_TTL_MS = 6500
 const MAX_EDGES = 32
 const MAX_BUBBLES = 3
 
+// Real human-facing channels. "agent" and other internal channels are excluded
+// so agent-to-agent traffic never moves the human node.
+const HUMAN_CHANNELS = new Set(['whatsapp', 'matrix', 'telegram', 'signal', 'slack', 'discord', 'email', 'sms'])
+
+/** Return the agent id if this event is a human-channel conversation, else null. */
+function humanAgentFromEvent(event: TelemetryEvent): string | null {
+  const srcChannel = event.source.startsWith('channel:') ? event.source.slice('channel:'.length) : null
+  const tgtChannel = event.target.startsWith('channel:') ? event.target.slice('channel:'.length) : null
+  if (srcChannel && HUMAN_CHANNELS.has(srcChannel) && event.target.startsWith('agent:')) return event.target
+  if (tgtChannel && HUMAN_CHANNELS.has(tgtChannel) && event.source.startsWith('agent:')) return event.source
+  return null
+}
+
 export function createInitialState(orchestratorId: string): EventState {
   return {
     events: [],
@@ -32,6 +46,7 @@ export function createInitialState(orchestratorId: string): EventState {
     bubbles: [],
     orchestratorId,
     topology: null,
+    humanAgentId: null,
   }
 }
 
@@ -48,6 +63,14 @@ export function eventReducer(state: EventState, action: EventAction): EventState
       const orchestratorMeta = event.payload.meta?.orchestratorId
       if (orchestratorMeta && orchestratorMeta !== orchestratorId) {
         orchestratorId = orchestratorMeta
+      }
+
+      // Human-facing agent is sticky: set once from a real human-channel event,
+      // never moved by agent-to-agent traffic.
+      let humanAgentId = state.humanAgentId
+      if (!humanAgentId) {
+        const candidate = humanAgentFromEvent(event)
+        if (candidate) humanAgentId = candidate
       }
 
       // Topology snapshots are handled separately
@@ -107,7 +130,7 @@ export function eventReducer(state: EventState, action: EventAction): EventState
         bubbles = [bubble, ...state.bubbles].slice(0, MAX_BUBBLES)
       }
 
-      return { ...state, events, snapshots, edges, bubbles, orchestratorId }
+      return { ...state, events, snapshots, edges, bubbles, orchestratorId, humanAgentId }
     }
 
     default:

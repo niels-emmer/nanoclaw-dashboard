@@ -1,8 +1,8 @@
 import { useMemo, useState, useEffect } from 'react'
 
 import { config } from '../../lib/config'
-import type { AgentSnapshot, EdgePulse, TelemetryEvent, TopologyData } from '../../lib/types'
-import { ORCHESTRATOR_COLOR, formatElapsed, deriveHumanAgentId } from '../../lib/utils'
+import type { AgentSnapshot, EdgePulse, TopologyData } from '../../lib/types'
+import { ORCHESTRATOR_COLOR, formatElapsed } from '../../lib/utils'
 import { computeTreeLayout, WIDTH, HEIGHT, HUMAN_NODE_ID, type TreeNode } from '../../lib/treeLayout'
 import { TreeNodeView } from './TreeNode'
 import { TreeEdge } from './TreeEdge'
@@ -11,13 +11,13 @@ interface TreeGraphProps {
   orchestratorId: string
   agents: AgentSnapshot[]
   edges: EdgePulse[]
-  events: TelemetryEvent[]
   topology: TopologyData | null
+  humanAgentId?: string | null
   onAgentClick?: (agentId: string) => void
   selectedAgentId?: string | null
 }
 
-export function TreeGraph({ orchestratorId, agents, edges, events, topology, onAgentClick, selectedAgentId }: TreeGraphProps) {
+export function TreeGraph({ orchestratorId, agents, edges, topology, humanAgentId, onAgentClick, selectedAgentId }: TreeGraphProps) {
   const [hoveredAgent, setHoveredAgent] = useState<string | null>(null)
   const [now, setNow] = useState(Date.now())
 
@@ -26,8 +26,6 @@ export function TreeGraph({ orchestratorId, agents, edges, events, topology, onA
     const timer = setInterval(() => setNow(Date.now()), 15000)
     return () => clearInterval(timer)
   }, [])
-
-  const humanAgentId = useMemo(() => deriveHumanAgentId(events), [events])
 
   const nodes = useMemo<TreeNode[]>(
     () => computeTreeLayout(agents, orchestratorId, topology, now, config.agentSolidMinutes, config.agentFadeMinutes, humanAgentId),

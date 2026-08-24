@@ -90,6 +90,43 @@ describe('eventReducer', () => {
     expect(tools[1]).toEqual({ name: 'Bash', category: 'executing', active: false })
   })
 
+  it('sets the human-facing agent from a real channel and keeps it sticky', () => {
+    let state = createInitialState('orchestrator')
+    const whatsapp = baseEvent({
+      id: '1',
+      type: 'question',
+      source: 'channel:whatsapp',
+      target: 'agent:marvin',
+      payload: { summary: 'hi', status: 'running' },
+    })
+    state = dispatch(state, whatsapp)
+    expect(state.humanAgentId).toBe('agent:marvin')
+
+    // An internal "channel:agent" event must NOT move the human node.
+    const internal = baseEvent({
+      id: '2',
+      type: 'response',
+      source: 'agent:other',
+      target: 'channel:agent',
+      payload: { summary: 'internal', status: 'completed' },
+    })
+    state = dispatch(state, internal, 2000)
+    expect(state.humanAgentId).toBe('agent:marvin')
+  })
+
+  it('does not treat internal agent channels as human', () => {
+    const state = createInitialState('orchestrator')
+    const internal = baseEvent({
+      id: '1',
+      type: 'response',
+      source: 'agent:other',
+      target: 'channel:agent',
+      payload: { summary: 'internal', status: 'completed' },
+    })
+    const next = dispatch(state, internal)
+    expect(next.humanAgentId).toBeNull()
+  })
+
   it('does not leak provider/model to a secondary agent', () => {
     let state = createInitialState('orchestrator')
     const a2a = baseEvent({

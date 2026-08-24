@@ -41,7 +41,7 @@ const topology: TopologyData = {
 describe('TreeGraph', () => {
   it('renders orchestrator and agent nodes', () => {
     const agents = [agent('orchestrator', 'orchestrator'), agent('agent:researcher', 'researcher')]
-    render(<TreeGraph orchestratorId="orchestrator" agents={agents} edges={[]} events={[]} topology={null} />)
+    render(<TreeGraph orchestratorId="orchestrator" agents={agents} edges={[]} topology={null} />)
     expect(screen.getByText('orchestrator')).toBeInTheDocument()
     expect(screen.getByText('researcher')).toBeInTheDocument()
   })
@@ -57,7 +57,7 @@ describe('TreeGraph', () => {
         tools: [{ name: 'Bash', category: 'executing' as const, active: true }],
       },
     ]
-    render(<TreeGraph orchestratorId="orchestrator" agents={agents} edges={[]} events={[]} topology={null} />)
+    render(<TreeGraph orchestratorId="orchestrator" agents={agents} edges={[]} topology={null} />)
     expect(document.querySelector('.tool-indicator')).toBeInTheDocument()
   })
 
@@ -66,7 +66,7 @@ describe('TreeGraph', () => {
     const edges: EdgePulse[] = [
       { id: 'e1', source: 'orchestrator', target: 'agent:researcher', type: 'question', timestamp: Date.now() },
     ]
-    render(<TreeGraph orchestratorId="orchestrator" agents={agents} edges={edges} events={[]} topology={null} />)
+    render(<TreeGraph orchestratorId="orchestrator" agents={agents} edges={edges} topology={null} />)
     expect(document.querySelector('.edge-pulse')).toBeInTheDocument()
   })
 
@@ -77,7 +77,7 @@ describe('TreeGraph', () => {
       agent('agent:route-optimizer', 'route-optimizer'),
       agent('agent:route-validator', 'route-validator'),
     ]
-    render(<TreeGraph orchestratorId="orchestrator" agents={agents} edges={[]} events={[]} topology={topology} />)
+    render(<TreeGraph orchestratorId="orchestrator" agents={agents} edges={[]} topology={topology} />)
     expect(document.querySelectorAll('.tree-edge').length).toBeGreaterThanOrEqual(2)
   })
 })

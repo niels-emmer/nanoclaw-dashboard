@@ -9,7 +9,7 @@ import { useEventStream } from './hooks/useEventStream'
 import './App.css'
 
 function App() {
-  const { agents, events, edges, connectionState, retryCount, orchestratorId, topology } = useEventStream()
+  const { agents, events, edges, connectionState, retryCount, orchestratorId, topology, humanAgentId } = useEventStream()
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
 
   const selectedAgent = selectedAgentId ? agents.find((a) => a.id === selectedAgentId) : null
@@ -24,8 +24,8 @@ function App() {
             orchestratorId={orchestratorId}
             agents={agents}
             edges={edges}
-            events={events}
             topology={topology}
+            humanAgentId={humanAgentId}
             onAgentClick={(id) => setSelectedAgentId(id === selectedAgentId ? null : id)}
             selectedAgentId={selectedAgentId}
           />

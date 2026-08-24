@@ -91,5 +91,6 @@ export const useEventStream = () => {
     retryCount,
     orchestratorId: state.orchestratorId,
     topology: state.topology,
+    humanAgentId: state.humanAgentId,
   }
 }
