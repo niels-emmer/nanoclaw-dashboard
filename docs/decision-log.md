@@ -155,7 +155,7 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
 ## 0017 – Live-debugging & deployment workflow (2026-08-24)
 - **Status**: Accepted
 - **Context**: The dashboard's real use case is a widescreen 1080p wall display on a live nanoclaw host. Iterating on the UI requires a tight loop so the user can inspect each change on the live box.
-- **Decision**: Adopt a **fix → validate → push → deploy** loop. Validate with `pytest` + `npm run lint && npm run build && npm test`; commit with `[ai]` attribution; push to `main`; deploy on the host (`nanoclaw-host`, nanoclaw-host-ip) via `git pull origin main && docker compose up --build -d`.
+- **Decision**: Adopt a **fix → validate → push → deploy** loop. Validate with `pytest` + `npm run lint && npm run build && npm test`; commit with `[ai]` attribution; push to `main`; deploy on the host (host name/IP/folder are private — stored in the orchestrator's memory, not in this public repo) via `git pull origin main && docker compose up --build -d`.
 - **Consequences**:
   - The host runs `NANOCLAW_ENABLED=true` (real data), so the tree renders the real agent hierarchy and channel traffic.
   - Only real human channels (whatsapp/matrix/etc.) route to the Human node; internal `channel:agent` routes to the orchestrator.

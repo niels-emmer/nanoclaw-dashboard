@@ -151,20 +151,20 @@ SQLite databases (`data/v2.db`, per-session `inbound.db`/`outbound.db`)
 for live events. If the mount is missing or unreadable, it falls back to
 mock telemetry automatically.
 
-## Deploy to the Live Host
+## Deploy to a Live Host
 
-The production host is **`nanoclaw-host`** (nanoclaw-host-ip), running the stack in
-Docker at `~/nanoclaw-dashboard` with `NANOCLAW_ENABLED=true` (real data).
+To run the dashboard against a live nanoclaw instance (real data), deploy the
+stack on the host with `NANOCLAW_ENABLED=true`:
 
 ```bash
 # on the host
-cd ~/nanoclaw-dashboard
+cd <repo>
 git pull origin main
 docker compose up --build -d
 ```
 
-Frontend serves on `http://nanoclaw-host:4173`, backend on `:8000`. The live-debugging
-loop is **fix → validate (lint/build/test) → push to main → deploy to host**.
+Frontend serves on `:4173`, backend on `:8000`. The live-debugging loop is
+**fix → validate (lint/build/test) → push to main → deploy to host**.
 
 ## Debugging
 
@@ -183,10 +183,8 @@ loop is **fix → validate (lint/build/test) → push to main → deploy to host
   VITE_BACKEND_WS_URL=ws://myhost:8000/ws/events npm run dev
   ```
 - Check the browser's developer console for WebSocket errors
-- Toggle the **Debug Panel** (button at the bottom of the dashboard) to
-  inspect the latest raw event
 
-### Nothing appears on the orbit canvas
+### Nothing appears on the tree graph
 
 - With mock telemetry (default), events appear after ~1 second
 - If you're using nanoclaw integration, verify `NANOCLAW_ENABLED=true` and
@@ -231,16 +229,27 @@ nanoclaw-dashboard/
 │   └── requirements.txt
 ├── frontend/                   # Vite + React + TypeScript SPA
 │   ├── src/
-│   │   ├── components/         # FlowCanvas, AgentGrid, EventFeed, DebugPanel, ...
+│   │   ├── components/
+│   │   │   ├── tree/           # TreeGraph, TreeNode, TreeEdge (left-to-right tree)
+│   │   │   ├── ActivityFeed.tsx  # Simplified conversation stream
+│   │   │   ├── AgentRoster.tsx   # Compact auto-hiding agent strip
+│   │   │   ├── AgentDetail.tsx   # Click-to-expand drill-down panel
+│   │   │   └── StatusStrip.tsx   # Top status bar
 │   │   ├── hooks/
-│   │   │   └── useEventStream.ts  # WebSocket ingest + retry logic
+│   │   │   └── useEventStream.ts  # Thin WS ingest + dispatch into reducer
 │   │   ├── lib/
-│   │   │   ├── types.ts        # Telemetry types (mirrors backend)
-│   │   │   ├── config.ts       # Backend URL resolution
-│   │   │   └── utils.ts        # Shared utilities
+│   │   │   ├── eventReducer.ts  # Pure reducer (events, snapshots, edges, humanAgentId)
+│   │   │   ├── treeLayout.ts    # Left-to-right tree layout (pure)
+│   │   │   ├── treePaths.ts     # Edge/pulse path helpers (pure)
+│   │   │   ├── channels.ts      # Human vs internal channel detection
+│   │   │   ├── activityFeed.ts  # Feed filtering + collapse logic (pure)
+│   │   │   ├── icons.ts         # Agent/tool icon keyword map
+│   │   │   ├── types.ts         # Telemetry types (mirrors backend)
+│   │   │   ├── config.ts        # Backend URL resolution
+│   │   │   └── utils.ts         # Snapshot/liveness/opacity derivation
 │   │   ├── App.tsx
 │   │   ├── App.css
-│   │   └── index.css           # Typography + color tokens
+│   │   └── index.css           # Design tokens (colors + typography)
 │   ├── Dockerfile
 │   ├── nginx.conf
 │   └── package.json

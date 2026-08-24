@@ -97,9 +97,9 @@ The command is defined in `.opencode/commands/start.md` and handled by the orche
 
 ## Live-debugging & deployment workflow
 
-When the user is debugging on the live nanoclaw host (`nanoclaw-host`, nanoclaw-host-ip,
-Docker stack at `~/nanoclaw-dashboard`), follow this tight loop so they can
-inspect each change on the live box:
+When the user is debugging on the live nanoclaw host (host name/IP/folder are
+private — stored in the orchestrator's memory, not in this public repo), follow
+this tight loop so they can inspect each change on the live box:
 
 1. **Fix** — make the smallest change.
 2. **Validate** — `cd backend && pytest && cd ../frontend && npm run lint && npm run build && npm test`.
@@ -112,8 +112,8 @@ Notes:
   real agent hierarchy and channel traffic.
 - Only real human channels (whatsapp/matrix/etc.) route to the Human node;
   internal `channel:agent` routes to the orchestrator.
-- If SSH access is needed, the host alias is `nanoclaw-host`; do not store or echo
-  credentials in prompts or logs.
+- If SSH access is needed, the host alias is stored in the orchestrator's
+  memory; do not store or echo credentials in prompts or logs.
 
 ## Repository-specific enforcement checklist
 

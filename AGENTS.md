@@ -88,8 +88,9 @@ nanoclaw-dashboard/
 
 ## Live nanoclaw host
 
-- The production host is **`nanoclaw-host`** (nanoclaw-host-ip), running the stack in
-  Docker at `~/nanoclaw-dashboard` with `NANOCLAW_ENABLED=true` (real data).
+- The production host runs the stack in Docker with `NANOCLAW_ENABLED=true`
+  (real data). Host name/IP/folder are private — stored in the orchestrator's
+  memory, not in this public repo.
 - Deploy: `git pull origin main && docker compose up --build -d` on the host.
   Frontend serves on :4173, backend on :8000.
 - Live-debugging loop: **fix → validate (lint/build/test) → push to main →
