@@ -16,19 +16,22 @@ time — questions pulse outward, responses flow back — all on a single
          width="720" style="border-radius: 8px" />
   </a>
   <br />
-  <em>Orbit canvas, agent grid, and event feed — everything fits on one screen.</em>
+  <em>Tree graph, live activity feed, and agent roster — everything fits on one screen.</em>
 </p>
 
 ## Features
 
-- **Orbit visualization** — SVG-based flow canvas with animated directional
-  pulses (questions → agents, responses ← agents), tool badges, and
-  liveness rings
-- **Live agent grid** — per-agent name, state, message count, pulsing
-  liveness indicator, error count, model/provider, TO/FR tracking of all
-  communication partners
-- **Event feed** — streaming log of the latest telemetry events
-- **Debug panel** — toggleable raw event inspector
+- **Hierarchical tree graph** — left-to-right tree with the orchestrator at
+  root and sub-agents nested, animated color-coded pulses (questions →
+  agents, responses ← agents), glowing active agents, and per-agent tool
+  history (active tool first, previously-used tools ghosted to the right)
+- **Live activity feed** — simplified conversation stream of messages and
+  tool calls, with errors highlighted
+- **Compact agent roster** — one-line agent chips that auto-hide when idle
+- **Agent drill-down** — click any agent to inspect its state, model, current
+  tool, skills, and recent activity
+- **Status strip** — orchestrator, connection, active/error/stuck/pending
+  counts at a glance
 - **Mock mode out of the box** — works immediately without nanoclaw installed
 - **Real nanoclaw integration** — read-only tail of the nanoclaw SQLite
   database for live production data
