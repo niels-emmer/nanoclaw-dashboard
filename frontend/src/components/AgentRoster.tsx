@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { AgentSnapshot } from '../lib/types'
 import { colorForAgent } from '../lib/utils'
-import { TOOL_CATEGORY_ICON } from '../lib/icons'
+import { ICON_MAP, TOOL_CATEGORY_ICON } from '../lib/icons'
 
 interface Props {
   agents: AgentSnapshot[]
@@ -41,7 +41,6 @@ export function AgentRoster({ agents, onSelect, selectedAgentId }: Props) {
       {sorted.map((agent) => {
         const isActive = agent.state === 'running' && agent.liveness === 'alive'
         const isError = agent.state === 'error' || agent.errorCount > 0
-        const ToolIcon = agent.currentTool ? TOOL_CATEGORY_ICON[agent.currentToolCategory] ?? null : null
         const isSelected = selectedAgentId === agent.id
 
         return (
@@ -53,10 +52,20 @@ export function AgentRoster({ agents, onSelect, selectedAgentId }: Props) {
           >
             <span className={`liveness-dot ${agent.liveness} ${isActive ? 'liveness-pulse' : ''}`} />
             <span className="roster-name">{agent.label}</span>
-            {ToolIcon && agent.currentTool && (
-              <span className="roster-tool">
-                <ToolIcon size={12} />
-                {agent.currentTool}
+            {agent.tools.length > 0 && (
+              <span className="roster-tools">
+                {agent.tools.map((tool) => {
+                  const ToolIcon = TOOL_CATEGORY_ICON[tool.category] ?? ICON_MAP.brain
+                  return (
+                    <span
+                      key={tool.name}
+                      className={`roster-tool-icon ${tool.active ? '' : 'roster-tool-ghost'}`}
+                      title={tool.name}
+                    >
+                      <ToolIcon size={12} />
+                    </span>
+                  )
+                })}
               </span>
             )}
             <span className="roster-meta">{agent.activityCount} msg</span>

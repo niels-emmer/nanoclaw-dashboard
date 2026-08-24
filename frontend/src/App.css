@@ -259,13 +259,20 @@
   font-weight: 600;
 }
 
-.roster-tool {
+.roster-tools {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  font-family: var(--mono);
-  font-size: 0.7rem;
+  gap: 0.2rem;
+}
+
+.roster-tool-icon {
+  display: inline-flex;
+  align-items: center;
   color: var(--accent);
+}
+
+.roster-tool-ghost {
+  opacity: 0.45;
 }
 
 .roster-meta {
