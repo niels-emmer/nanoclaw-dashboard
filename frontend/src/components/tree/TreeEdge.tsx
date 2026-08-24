@@ -1,5 +1,6 @@
 import type { EdgePulse } from '../../lib/types'
 import { HUMAN_NODE_ID, type TreeNode } from '../../lib/treeLayout'
+import { edgePath, staticPath } from '../../lib/treePaths'
 
 interface ResolvedPulse extends EdgePulse {
   start: TreeNode
@@ -10,16 +11,6 @@ interface Props {
   nodes: TreeNode[]
   nodeMap: Record<string, TreeNode>
   pulses: ResolvedPulse[]
-}
-
-/** Smooth horizontal elbow curve from parent (right edge) to child (left edge). */
-function edgePath(start: TreeNode, end: TreeNode): string {
-  const x1 = start.x + start.radius
-  const y1 = start.y
-  const x2 = end.x - end.radius
-  const y2 = end.y
-  const mid = (x1 + x2) / 2
-  return `M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}`
 }
 
 export function TreeEdge({ nodes, nodeMap, pulses }: Props) {
@@ -51,15 +42,18 @@ export function TreeEdge({ nodes, nodeMap, pulses }: Props) {
         )
       })}
 
-      {/* Live communication pulses */}
-      {pulses.map((pulse) => (
-        <path
-          key={pulse.id}
-          d={edgePath(pulse.start, pulse.end)}
-          className={`edge-pulse pulse-${pulse.type}`}
-          fill="none"
-        />
-      ))}
+      {/* Live communication pulses — follow the same path as the static edge */}
+      {pulses.map((pulse) => {
+        const d = staticPath(pulse.start, pulse.end) ?? edgePath(pulse.start, pulse.end)
+        return (
+          <path
+            key={pulse.id}
+            d={d}
+            className={`edge-pulse pulse-${pulse.type}`}
+            fill="none"
+          />
+        )
+      })}
     </>
   )
 }
