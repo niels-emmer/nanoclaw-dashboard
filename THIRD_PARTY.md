@@ -27,7 +27,7 @@ Record every external dependency here with license info and notes on local modif
 | @types/react-dom | 19.2.4 | MIT | React DOM type definitions for TypeScript | None |
 | @vitejs/plugin-react | 6.1.0 | MIT | Vite React plugin for Fast Refresh | None |
 | vitest | 4.1.11 | MIT | Frontend test runner | None |
-| jsdom | 29.1.1 | MIT | DOM environment for component tests | None |
+| jsdom | 29.1.1 | MIT | DOM environment for component tests | Pinned at 29.x: jsdom 30 pulls undici 8.x, which requires Node >= 22.5 (`markAsUncloneable`); project pins Node 20.19.0. Revisit on a Node 22+ upgrade. |
 | @testing-library/react | 16.3.2 | MIT | React component testing utilities | None |
 | @testing-library/jest-dom | 7.0.1 | MIT | DOM matchers for Vitest | None |
 | Space Grotesk / IBM Plex Sans / JetBrains Mono | Google Fonts | Open Font License | Typography per design spec | Served via Google Fonts CDN |
