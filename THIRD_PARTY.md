@@ -26,6 +26,10 @@ Record every external dependency here with license info and notes on local modif
 | @types/react | 19.2.17 | MIT | React type definitions for TypeScript | None |
 | @types/react-dom | 19.2.3 | MIT | React DOM type definitions for TypeScript | None |
 | @vitejs/plugin-react | 6.0.4 | MIT | Vite React plugin for Fast Refresh | None |
+| vitest | 4.1.11 | MIT | Frontend test runner | None |
+| jsdom | 29.1.1 | MIT | DOM environment for component tests | None |
+| @testing-library/react | 16.3.2 | MIT | React component testing utilities | None |
+| @testing-library/jest-dom | 6.9.1 | MIT | DOM matchers for Vitest | None |
 | Space Grotesk / IBM Plex Sans / JetBrains Mono | Google Fonts | Open Font License | Typography per design spec | Served via Google Fonts CDN |
 
 Guidance:
