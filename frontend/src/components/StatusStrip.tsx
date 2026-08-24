@@ -2,7 +2,6 @@ import type { AgentSnapshot } from '../lib/types'
 import type { ConnectionState } from '../hooks/useEventStream'
 
 interface Props {
-  orchestratorId: string
   connectionState: ConnectionState
   retryCount: number
   agents: AgentSnapshot[]
@@ -15,7 +14,7 @@ const connLabel: Record<ConnectionState, { text: string; cls: string }> = {
   error: { text: 'Signal lost', cls: 'text-red-400' },
 }
 
-export function StatusStrip({ orchestratorId, connectionState, retryCount, agents }: Props) {
+export function StatusStrip({ connectionState, retryCount, agents }: Props) {
   const active = agents.filter((a) => a.state === 'running').length
   const errors = agents.filter((a) => a.state === 'error' || a.errorCount > 0).length
   const stuck = agents.filter((a) => a.state === 'running' && a.liveness === 'stale').length
@@ -25,8 +24,7 @@ export function StatusStrip({ orchestratorId, connectionState, retryCount, agent
   return (
     <header className="status-strip">
       <div className="status-title">
-        <span className="status-orchestrator">{orchestratorId}</span>
-        <span className="status-sub">orchestrator</span>
+        <span className="status-orchestrator">NanoClaw Live Dashboard</span>
       </div>
 
       <div className="status-metrics">
