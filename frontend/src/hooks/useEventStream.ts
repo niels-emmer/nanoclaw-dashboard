@@ -1,25 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 
 import { config } from '../lib/config'
-import type { AgentSnapshot, ChatBubble, EdgePulse, TelemetryEvent, TopologyData } from '../lib/types'
-import { deriveAgentSnapshot, parseTopologyMeta, readableNodeLabel } from '../lib/utils'
+import type { TelemetryEvent } from '../lib/types'
+import { createInitialState, eventReducer } from '../lib/eventReducer'
 
 export type ConnectionState = 'connecting' | 'connected' | 'reconnecting' | 'error'
 
-const EDGE_TTL_MS = 6500
+const BUBBLE_TTL_MS = 5000
 
 export const useEventStream = () => {
-  const [events, setEvents] = useState<TelemetryEvent[]>([])
-  const [snapshots, setSnapshots] = useState<Record<string, AgentSnapshot>>({})
-  const [edges, setEdges] = useState<EdgePulse[]>([])
-  const [bubbles, setBubbles] = useState<ChatBubble[]>([])
+  const [state, dispatch] = useReducer(eventReducer, config.orchestratorId, createInitialState)
   const [connectionState, setConnectionState] = useState<ConnectionState>('connecting')
   const [retryCount, setRetryCount] = useState(0)
-  const [orchestratorId, setOrchestratorId] = useState(config.orchestratorId)
-  const [topology, setTopology] = useState<TopologyData | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
   const retryRef = useRef<number | null>(null)
-  const orchestratorRef = useRef(config.orchestratorId)
 
   useEffect(() => {
     let isCancelled = false
@@ -65,69 +59,12 @@ export const useEventStream = () => {
     }
 
     const handleEvent = (event: TelemetryEvent) => {
-      const orchestratorMeta = event.payload.meta?.orchestratorId
-      if (orchestratorMeta && orchestratorMeta !== orchestratorRef.current) {
-        orchestratorRef.current = orchestratorMeta
-        setOrchestratorId(orchestratorMeta)
-      }
+      dispatch({ type: 'event', event, now: Date.now(), maxEventHistory: config.maxEventHistory })
 
-      // Handle topology snapshots separately
-      if (event.type === 'topology_snapshot') {
-        const topo = parseTopologyMeta(event.payload.meta)
-        if (topo) setTopology(topo)
-        return
+      // Schedule bubble expiry for actual messages (question/response)
+      if (event.type === 'question' || event.type === 'response') {
+        window.setTimeout(() => dispatch({ type: 'expire_bubble', id: event.id }), BUBBLE_TTL_MS)
       }
-
-      // Store user-facing events in history (include activity_update for live-ops visibility)
-      if (event.type !== 'delivery_update') {
-        setEvents((prev) => [event, ...prev].slice(0, config.maxEventHistory))
-      }
-      setSnapshots((prev) => deriveAgentSnapshot(prev, event))
-
-      // Edge pulses for question/response/activity events
-      if (event.type === 'question' || event.type === 'response' || event.type === 'activity_update') {
-        setEdges((prev) => {
-          const now = Date.now()
-          const next = [
-            {
-              id: event.id,
-              source: event.source,
-              target: event.target,
-              type: event.type,
-              timestamp: now,
-            },
-            ...prev.filter((edge) => now - edge.timestamp < EDGE_TTL_MS),
-          ]
-          return next.slice(0, 32)
-        })
-      }
-
-      // Spawn a chat bubble only for actual messages, not status updates
-      if (event.type !== 'question' && event.type !== 'response') return
-      const bubbleAgentId =
-        event.type === 'question' ? event.target : event.source
-      const sourceLabel = event.payload.meta?.sourceLabel ?? readableNodeLabel(event.source)
-      const targetLabel = event.payload.meta?.targetLabel ?? readableNodeLabel(event.target)
-      const summary = event.payload.summary
-      // Split summary into lines for display
-      const lines = summary
-        .split(/(?<=[.?!])\s+|(?<=\n)/)
-        .map((l) => l.trim())
-        .filter(Boolean)
-        .slice(0, 3)
-      const bubble: ChatBubble = {
-        id: event.id,
-        agentId: bubbleAgentId,
-        fromLabel: sourceLabel,
-        toLabel: targetLabel,
-        text: summary,
-        lines: lines.length > 0 ? lines : [summary],
-        type: event.type,
-      }
-      setBubbles((prev) => [bubble, ...prev].slice(0, 3))
-      setTimeout(() => {
-        setBubbles((prev) => prev.filter((b) => b.id !== event.id))
-      }, 5000)
     }
 
     connect()
@@ -142,8 +79,17 @@ export const useEventStream = () => {
   }, [])
 
   const agents = useMemo(() => {
-    return Object.values(snapshots).sort((a, b) => a.label.localeCompare(b.label))
-  }, [snapshots])
+    return Object.values(state.snapshots).sort((a, b) => a.label.localeCompare(b.label))
+  }, [state.snapshots])
 
-  return { agents, events, edges, bubbles, connectionState, retryCount, orchestratorId, topology }
+  return {
+    agents,
+    events: state.events,
+    edges: state.edges,
+    bubbles: state.bubbles,
+    connectionState,
+    retryCount,
+    orchestratorId: state.orchestratorId,
+    topology: state.topology,
+  }
 }
