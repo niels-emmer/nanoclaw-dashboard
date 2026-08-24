@@ -20,7 +20,7 @@ interface TreeGraphProps {
 
 export function TreeGraph({ orchestratorId, agents, edges, topology, humanAgentId, onAgentClick, selectedAgentId }: TreeGraphProps) {
   const [hoveredAgent, setHoveredAgent] = useState<string | null>(null)
-  const [now, setNow] = useState(Date.now())
+  const [now, setNow] = useState(0)
 
   // Tick loop every 15s to update agent decay during lulls
   useEffect(() => {

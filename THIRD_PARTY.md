@@ -19,13 +19,13 @@ Record every external dependency here with license info and notes on local modif
 | @heroui/react | 3.2.2 | Apache-2.0 | UI component library | None |
 | @heroui/styles | 3.2.2 | Apache-2.0 | HeroUI pre-built component styles | None |
 | @tailwindcss/vite | 4.3.3 | MIT | Tailwind Vite integration plugin | None |
-| lucide-react | 1.27.0 | MIT | SVG icon library for agent graph node icons | None |
-| oxlint | 1.76.0 | MIT | JavaScript / TypeScript linter | None |
+| lucide-react | 1.33.0 | MIT | SVG icon library for agent graph node icons | None |
+| oxlint | 1.79.0 | MIT | JavaScript / TypeScript linter | None |
 | TypeScript | 7.0.2 | Apache-2.0 | Static type checker | None |
-| @types/node | 26.1.1 | MIT | Node.js type definitions for TypeScript | None |
-| @types/react | 19.2.17 | MIT | React type definitions for TypeScript | None |
-| @types/react-dom | 19.2.3 | MIT | React DOM type definitions for TypeScript | None |
-| @vitejs/plugin-react | 6.0.4 | MIT | Vite React plugin for Fast Refresh | None |
+| @types/node | 26.2.0 | MIT | Node.js type definitions for TypeScript | None |
+| @types/react | 19.2.18 | MIT | React type definitions for TypeScript | None |
+| @types/react-dom | 19.2.4 | MIT | React DOM type definitions for TypeScript | None |
+| @vitejs/plugin-react | 6.1.0 | MIT | Vite React plugin for Fast Refresh | None |
 | vitest | 4.1.11 | MIT | Frontend test runner | None |
 | jsdom | 29.1.1 | MIT | DOM environment for component tests | None |
 | @testing-library/react | 16.3.2 | MIT | React component testing utilities | None |

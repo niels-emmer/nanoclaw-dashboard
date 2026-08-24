@@ -12,25 +12,19 @@ interface Props {
 const IDLE_HIDE_MS = 30_000
 
 export function AgentRoster({ agents, onSelect, selectedAgentId }: Props) {
-  const [hidden, setHidden] = useState(false)
+  const [now, setNow] = useState(0)
+
+  // Tick every second so the roster auto-hides after an idle timeout.
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   const anyActive = agents.some((a) => a.state === 'running')
   const lastActivity = agents.reduce((max, a) => Math.max(max, a.lastUpdated), 0)
 
-  // Auto-hide when nothing has been active for a while
-  useEffect(() => {
-    if (anyActive) {
-      setHidden(false)
-      return
-    }
-    const elapsed = Date.now() - lastActivity
-    if (elapsed > IDLE_HIDE_MS) {
-      setHidden(true)
-      return
-    }
-    const timer = setTimeout(() => setHidden(true), IDLE_HIDE_MS - elapsed)
-    return () => clearTimeout(timer)
-  }, [anyActive, lastActivity])
+  // Auto-hide when nothing has been active for a while.
+  const hidden = !anyActive && now > 0 && now - lastActivity > IDLE_HIDE_MS
 
   if (hidden) {
     return (
