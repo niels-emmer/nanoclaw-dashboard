@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeTreeLayout } from './treeLayout'
+import { computeTreeLayout, deriveTreeFromEdges } from './treeLayout'
 import type { AgentSnapshot, TopologyData } from './types'
 
 const agent = (id: string, label: string, state: AgentSnapshot['state'] = 'idle'): AgentSnapshot => ({
@@ -84,6 +84,38 @@ describe('computeTreeLayout', () => {
     const agents = [agent('agent:marvin', 'marvin')]
     const nodes = computeTreeLayout(agents, 'orchestrator', null, Date.now(), 15, 90)
     expect(nodes.some((n) => n.id === 'human')).toBe(false)
+  })
+
+  it('derives a hierarchy from a2aEdges via BFS from the orchestrator', () => {
+    const edges = [
+      { source: 'agent:marvin', target: 'agent:wp1a1j' },
+      { source: 'agent:wp1a1j', target: 'agent:marvin' },
+      { source: 'agent:marvin', target: 'agent:other' },
+      { source: 'agent:wp1a1j', target: 'agent:local-guide' },
+      { source: 'agent:local-guide', target: 'agent:wp1a1j' },
+    ]
+    const tree = deriveTreeFromEdges('agent:marvin', edges)
+    expect(tree.children['agent:marvin']).toContain('agent:wp1a1j')
+    expect(tree.children['agent:marvin']).toContain('agent:other')
+    expect(tree.children['agent:wp1a1j']).toContain('agent:local-guide')
+  })
+
+  it('nests sub-agents under their parent from derived edges', () => {
+    const agents = [
+      agent('agent:marvin', 'marvin'),
+      agent('agent:wp1a1j', 'wp1a1j'),
+      agent('agent:local-guide', 'local guide'),
+    ]
+    const topology: TopologyData = {
+      channels: [],
+      a2aEdges: [
+        { source: 'agent:marvin', target: 'agent:wp1a1j' },
+        { source: 'agent:wp1a1j', target: 'agent:local-guide' },
+      ],
+    }
+    const nodes = computeTreeLayout(agents, 'agent:marvin', topology, Date.now(), 15, 90)
+    const localGuide = nodes.find((n) => n.id === 'agent:local-guide')
+    expect(localGuide?.parentId).toBe('agent:wp1a1j')
   })
 
   it('nests sub-agents under their parent', () => {

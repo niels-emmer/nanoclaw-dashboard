@@ -19,6 +19,40 @@ export const WIDTH = 1000
 export const HEIGHT = 900
 export const CENTER = { x: WIDTH / 2, y: HEIGHT / 2 }
 
+/**
+ * Derive a parent-child hierarchy from the a2aEdges graph via BFS from the
+ * orchestrator. Agents that talk to the orchestrator become direct children;
+ * agents that only talk to a non-orchestrator agent become its sub-agents.
+ * Used when the topology does not provide an explicit `tree`.
+ */
+export function deriveTreeFromEdges(
+  orchestratorId: string,
+  a2aEdges: Array<{ source: string; target: string }>,
+): { root: string; children: Record<string, string[]> } {
+  const adj = new Map<string, string[]>()
+  for (const edge of a2aEdges) {
+    const a = edge.source
+    const b = edge.target
+    if (!adj.has(a)) adj.set(a, [])
+    if (!adj.has(b)) adj.set(b, [])
+    adj.get(a)!.push(b)
+    adj.get(b)!.push(a)
+  }
+  const children: Record<string, string[]> = {}
+  const visited = new Set<string>([orchestratorId])
+  const queue = [orchestratorId]
+  while (queue.length > 0) {
+    const node = queue.shift()!
+    for (const neighbor of adj.get(node) ?? []) {
+      if (visited.has(neighbor)) continue
+      visited.add(neighbor)
+      children[node] = [...(children[node] ?? []), neighbor]
+      queue.push(neighbor)
+    }
+  }
+  return { root: orchestratorId, children }
+}
+
 const LEVEL_GAP = 280
 const ORCHESTRATOR_RADIUS = 44
 const ACTIVE_RADIUS = 36
@@ -61,14 +95,14 @@ export function computeTreeLayout(
   for (const agent of activeAgents) {
     childrenMap[orchestratorId] = [...(childrenMap[orchestratorId] ?? []), agent.id]
   }
-  // Apply explicit hierarchy: move sub-agents under their parent.
-  if (topology?.tree?.children) {
-    for (const [parent, subs] of Object.entries(topology.tree.children)) {
-      for (const sub of subs) {
-        if (!agentById.has(sub)) continue
-        childrenMap[orchestratorId] = (childrenMap[orchestratorId] ?? []).filter((id) => id !== sub)
-        childrenMap[parent] = [...(childrenMap[parent] ?? []), sub]
-      }
+  // Apply hierarchy: use the explicit tree if provided, else derive it from the
+  // a2aEdges graph (BFS from the orchestrator). Move sub-agents under their parent.
+  const treeChildren = topology?.tree?.children ?? deriveTreeFromEdges(orchestratorId, topology?.a2aEdges ?? []).children
+  for (const [parent, subs] of Object.entries(treeChildren)) {
+    for (const sub of subs) {
+      if (!agentById.has(sub)) continue
+      childrenMap[orchestratorId] = (childrenMap[orchestratorId] ?? []).filter((id) => id !== sub)
+      childrenMap[parent] = [...(childrenMap[parent] ?? []), sub]
     }
   }
 
