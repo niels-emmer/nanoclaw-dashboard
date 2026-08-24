@@ -141,6 +141,17 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - Visual identity preserved; verified against `docs/screenshot.png` after token consolidation and canvas decomposition.
   - **Completed 2026-08-24**: all six phases merged. `FlowCanvas` decomposed into `canvas/` sub-components; derivation moved to a pure `eventReducer`; design tokens single-sourced in `index.css`; Vitest suite added (26 tests) with a `test-frontend` CI job. Also fixed a pre-existing flaky backend test (`test_mock_source_generates_question_and_response`) that assumed the first mock event was always a question.
 
+## 0016 – V3 live orchestration wallboard (2026-08-24)
+- **Status**: Accepted
+- **Context**: The v2 dashboard worked but was not suited to its real use case: a widescreen 1080p wall display (TV via HDMI, Firefox) whose purpose is to show "what's happening right now" for a multi-agent framework demo. Pain points: the orbit/star canvas was mostly empty and misrepresented the actual tree/spoke communication; the tool indicator was illegible; the agents panel was 25% static; and the most active element (the event feed) was the smallest.
+- **Decision**: Overhaul the UI into a four-zone "live orchestration" wallboard: a left-to-right hierarchical tree graph (orchestrator root, sub-agents nested), a promoted live activity feed, a compact auto-hiding agent roster, a click-to-expand agent detail panel, and a top status strip with error/stuck/pending alerts. Colorful showcase styling (ambient gradient, color-coded pulses, glowing active nodes, per-agent tool history). Backend mock source extended with `route-planner` + 2 sub-agents and a `tree` field in the topology snapshot to drive the hierarchy.
+- **Consequences**:
+  - The tree layout reflects the real shallow hierarchy (orchestrator → agents → one sublevel) instead of a forced star.
+  - Tool visibility improved: active tool first, previously-used tools ghosted to the right, color-coded by category.
+  - The layout is tuned for widescreen 1080p; smaller windows degrade gracefully via responsive CSS.
+  - Backend schema unchanged (`schema_version` stays `0.2.0`); the `tree` field is additive metadata in the topology snapshot.
+  - Frontend remains testable: `computeTreeLayout` is pure and covered by non-overlap + hierarchy tests.
+
 ## 0014 – OpenCode config consolidation: global vs repo split (2026-08-02)
 - **Status**: Accepted
 - **Context**: OpenCode config was duplicated across global (`~/.config/opencode/`) and repo (`.opencode/`). The 16 universal coding rules existed in 3 places. Skills, agents, and commands were duplicated with subtle divergences. The decision-log target path differed between global (`docs/decision-log.md`) and repo (`docs/DECISIONS.md`). The global config used deprecated singular directory names (`agent/`, `command/`, `skill/`).
