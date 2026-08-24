@@ -131,7 +131,7 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - R7 resolved: explorer uses `opencode/gpt-5.4-nano` — a lighter, zero-retention Zen-hosted model suitable for read-only file searches
 
 ## 0015 – V2 frontend rearchitecture (2026-08-24)
-- **Status**: Proposed
+- **Status**: Accepted
 - **Context**: The frontend works but is hard to extend: `FlowCanvas` is a 600-line monolith, `useEventStream` mixes WebSocket ingest with state derivation, design tokens are split across `index.css` and HeroUI's theme, and there is zero frontend test coverage. A v2 is planned to make the codebase maintainable and testable without changing the visual identity or the telemetry contract.
 - **Decision**: Rebuild the frontend architecture in six phases: (1) dead-code cleanup + polish, (2) consolidate design tokens into one explicit layer, (3) extract pure derivation logic out of `useEventStream` into a testable reducer, (4) decompose `FlowCanvas` into focused components, (5) add Vitest coverage for pure logic, (6) verify + update docs. Full plan in `docs/v2-plan.md`.
 - **Consequences**:
@@ -139,6 +139,7 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - Frontend becomes testable and cheaper to extend for v3+ features (drill-downs, timelines, sparklines).
   - Vitest + `@testing-library/react` added as dev-only dependencies; `THIRD_PARTY.md` updated accordingly.
   - Visual identity preserved; verified against `docs/screenshot.png` after token consolidation and canvas decomposition.
+  - **Completed 2026-08-24**: all six phases merged. `FlowCanvas` decomposed into `canvas/` sub-components; derivation moved to a pure `eventReducer`; design tokens single-sourced in `index.css`; Vitest suite added (26 tests) with a `test-frontend` CI job. Also fixed a pre-existing flaky backend test (`test_mock_source_generates_question_and_response`) that assumed the first mock event was always a question.
 
 ## 0014 – OpenCode config consolidation: global vs repo split (2026-08-02)
 - **Status**: Accepted

@@ -1,6 +1,6 @@
 # V2 Frontend Plan — Nanoclaw Dashboard
 
-_Status: Proposed (2026-08-24) · Branch: `feature/v2-frontend-rearchitecture`_
+_Status: Completed (2026-08-24) · Branch: `feature/v2-frontend-rearchitecture`_
 
 ## Objective
 
@@ -37,37 +37,37 @@ unless a test runner requires it.
 ## Task List (phased)
 
 ### Phase 1 — Cleanup & polish (low risk, do first)
-- [ ] Delete `DebugPanel.tsx` (dead — App.tsx uses inline panel)
-- [ ] Delete `assets/hero.png`, `react.svg`, `vite.svg`
-- [ ] Fix `index.html` `<title>` → "Nanoclaw Dashboard"
-- [ ] Update `frontend/README.md` (remove DebugPanel reference)
+- [x] Delete `DebugPanel.tsx` (dead — App.tsx uses inline panel)
+- [x] Delete `assets/hero.png`, `react.svg`, `vite.svg`
+- [x] Fix `index.html` `<title>` → "Nanoclaw Dashboard"
+- [x] Update `frontend/README.md` (remove DebugPanel reference)
 
 ### Phase 2 — Design system consolidation
-- [ ] Create a single `src/styles/tokens.css` (or extend `index.css`) defining all tokens: `--bg`, `--surface`, `--fg`, `--muted`, `--accent`, `--display`, `--sans`, `--mono`, spacing, radii
-- [ ] Replace HeroUI-derived `var(--accent/--surface/--foreground/--background)` usages in `App.css` with explicit tokens
-- [ ] Verify no visual regression against `docs/screenshot.png`
+- [x] Define all color tokens (`--background`, `--foreground`, `--surface`, `--accent`, `--muted`) explicitly in `index.css` `:root`, overriding HeroUI dark-theme defaults
+- [x] Remove unused `--bg` / `--fg-muted` tokens; unify `--fg` → `--foreground`
+- [x] Verify no visual regression against `docs/screenshot.png`
 
 ### Phase 3 — State management refactor
-- [ ] Extract `deriveAgentSnapshot`, `deriveLiveness`, `computeAgentOpacity`, `parseTopologyMeta`, `normalizeAgentId` into a pure `lib/derive.ts` (or keep in `utils.ts` but make it dependency-free of `config`)
-- [ ] Refactor `useEventStream` to a thin ingest layer: WS connect/reconnect + dispatch events into a `useReducer`-backed store
-- [ ] Move edge/bubble TTL logic into the reducer (pure, testable)
+- [x] Make `lib/utils.ts` config-free (`computeAgentOpacity` takes explicit params)
+- [x] Refactor `useEventStream` to a thin ingest layer: WS connect/reconnect + dispatch events into a `useReducer`-backed store
+- [x] Move edge/bubble TTL logic into the pure `eventReducer`
 
 ### Phase 4 — Componentize FlowCanvas
-- [ ] Split into: `OrbitLayout` (node positioning), `AgentNode`, `EdgeLayer` (spines + pulses + a2a), `ChatBubbleLayer`, `TooltipLayer`
-- [ ] Keep `FlowCanvas` as the composition root; props contract unchanged
-- [ ] Extract the icon-keyword map (`ICON_KEYWORDS`) into `lib/icons.ts`
+- [x] Split into: `lib/orbitLayout.ts` (node positioning), `AgentNode`, `EdgeLayer` (spines + pulses + a2a), `ChatBubbleLayer`, `TooltipLayer`
+- [x] Keep `FlowCanvas` as the composition root; props contract unchanged
+- [x] Extract the icon-keyword map (`ICON_KEYWORDS`) into `lib/icons.ts`
 
 ### Phase 5 — Frontend tests
-- [ ] Add Vitest + `@testing-library/react` (dev deps only)
-- [ ] Unit tests: `deriveAgentSnapshot` (state transitions, tool clearing, provider isolation), `deriveLiveness`, `computeAgentOpacity`, `parseTopologyMeta`, `colorForAgent`
-- [ ] Component smoke test: `FlowCanvas` renders nodes given mock agents/edges
-- [ ] Wire `npm test` script + CI job
+- [x] Add Vitest + `@testing-library/react` (dev deps only)
+- [x] Unit tests: `deriveAgentSnapshot` (state transitions, tool clearing, provider isolation), `deriveLiveness`, `computeAgentOpacity`, `parseTopologyMeta`, `colorForAgent`
+- [x] Component smoke test: `FlowCanvas` renders nodes given mock agents/edges
+- [x] Wire `npm test` script + CI job
 
 ### Phase 6 — Verification & docs
-- [ ] Run full gate: `pytest` (backend) + `lint` + `build` + `test` (frontend)
-- [ ] Update `THIRD_PARTY.md` (Vitest, testing-library)
-- [ ] Add ADR entry via `/decision-log` for the v2 architecture
-- [ ] Update `docs/ARCHITECTURE.md` component responsibilities
+- [x] Run full gate: `pytest` (backend) + `lint` + `build` + `test` (frontend)
+- [x] Update `THIRD_PARTY.md` (Vitest, testing-library)
+- [x] Add ADR entry via `/decision-log` for the v2 architecture
+- [x] Update `docs/ARCHITECTURE.md` component responsibilities
 
 ## Verification Strategy
 
