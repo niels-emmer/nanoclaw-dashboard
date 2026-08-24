@@ -1,5 +1,5 @@
 import type { EdgePulse } from '../../lib/types'
-import type { TreeNode } from '../../lib/treeLayout'
+import { HUMAN_NODE_ID, type TreeNode } from '../../lib/treeLayout'
 
 interface ResolvedPulse extends EdgePulse {
   start: TreeNode
@@ -30,6 +30,17 @@ export function TreeEdge({ nodes, nodeMap, pulses }: Props) {
         if (!node.parentId) return null
         const parent = nodeMap[node.parentId]
         if (!parent) return null
+        // Human node connects vertically to its agent (it sits directly above).
+        if (node.id === HUMAN_NODE_ID) {
+          return (
+            <line
+              key="human-link"
+              x1={node.x} y1={node.y + node.radius}
+              x2={parent.x} y2={parent.y - parent.radius}
+              className="human-link"
+            />
+          )
+        }
         return (
           <path
             key={`edge-${parent.id}-${node.id}`}

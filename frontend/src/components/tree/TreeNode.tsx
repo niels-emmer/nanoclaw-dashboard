@@ -4,7 +4,7 @@ import { ICON_MAP, TOOL_CATEGORY_ICON, iconNameForAgent } from '../../lib/icons'
 import { ORCHESTRATOR_COLOR, colorForAgent, toolCategoryColor } from '../../lib/utils'
 import { HUMAN_NODE_ID, type TreeNode } from '../../lib/treeLayout'
 
-const HUMAN_COLOR = '#e8e8e8'
+const HUMAN_COLOR = '#2dd4bf'
 
 interface Props {
   node: TreeNode

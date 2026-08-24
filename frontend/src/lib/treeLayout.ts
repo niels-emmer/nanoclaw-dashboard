@@ -23,7 +23,7 @@ const LEVEL_GAP = 280
 const ORCHESTRATOR_RADIUS = 44
 const ACTIVE_RADIUS = 36
 const INACTIVE_RADIUS = 28
-const HUMAN_RADIUS = 30
+const HUMAN_RADIUS = 34
 const LEFT_MARGIN = ORCHESTRATOR_RADIUS + 24
 
 export const HUMAN_NODE_ID = 'human'
@@ -119,7 +119,7 @@ export function computeTreeLayout(
     const agentRadius = radiusFor(humanAgentId)
     humanAgentPos = {
       x: agentPos.x,
-      y: agentPos.y - (agentRadius + HUMAN_RADIUS + 24),
+      y: agentPos.y - (agentRadius + HUMAN_RADIUS + 48),
     }
     positions[HUMAN_NODE_ID] = humanAgentPos
   }
@@ -188,7 +188,7 @@ export function computeTreeLayout(
       y: humanAgentPos.y + offsetY,
       radius: HUMAN_RADIUS,
       depth: Math.round(humanAgentPos.x / LEVEL_GAP),
-      parentId: null,
+      parentId: humanAgentId ?? null,
       children: [],
       isActive: false,
     })

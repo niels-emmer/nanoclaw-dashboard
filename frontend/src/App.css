@@ -160,6 +160,13 @@
   stroke-linecap: round;
 }
 
+.human-link {
+  stroke: rgba(45, 212, 191, 0.5);
+  stroke-width: 2;
+  stroke-dasharray: 4, 4;
+  stroke-linecap: round;
+}
+
 .feed-panel {
   display: flex;
   flex-direction: column;
