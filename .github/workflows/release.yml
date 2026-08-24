@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@c95fe6059398bd2b10e8f9e2e2b6af4b1b2b3c3f # v2.2.1
+        uses: softprops/action-gh-release@fe965f7af51af5f2602596916f38a38df2e33de0 # v3.0.2
         with:
           generate_release_notes: false
           body: "See [CHANGELOG](CHANGELOG.md) for full details."
