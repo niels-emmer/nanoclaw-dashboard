@@ -126,16 +126,39 @@ When new telemetry attributes are required, bump `schema_version`, update both t
   It maps `messages_in.source_session_id` to discover agent-to-agent traffic and correlates `messages_out.in_reply_to` with the cached inbound rows for response edges.
 - Safety: only read operations are performed. If the mount is missing/unreadable the backend logs a warning and falls back to the mock generator.
 
+### Channel semantics & the Human node
+
+- Events carry `channel:<type>` endpoints. **Real human channels** are
+  whatsapp/matrix/telegram/signal/slack/discord/email/sms (see
+  `frontend/src/lib/channels.ts`). The **internal `channel:agent`** bus is
+  agent-to-agent traffic, not human.
+- The frontend derives a **sticky human-facing agent** (the agent that talks to
+  a real human channel — e.g. marvin). It is set once in the reducer and never
+  moved by `channel:agent` traffic, so the **Human node stays anchored** above
+  that agent.
+- Pulse routing: real human channels draw to the Human node; `channel:agent`
+  draws to the orchestrator (sub-agent replies go to the orchestrator, not the
+  human).
+
 ## Observability + debugging
 
 - Backend logs: JSON via structlog, ready for ingestion.
-- Frontend: connection status chip, live edge pulses, and a collapsible debug panel that dumps the latest raw event payload for onboarding/troubleshooting.
+- Frontend: status strip, live edge pulses, and a click-to-expand agent detail panel for troubleshooting.
 
 ## Containerization
 
 - `backend/Dockerfile` packages the FastAPI app on top of `python:3.11-slim` and exposes port `8000`.
 - `frontend/Dockerfile` builds the SPA with `node:20.19.0`, then serves the `dist/` bundle via nginx. `frontend/nginx.conf` proxies `/ws/` traffic to the backend container, so browsers can use same-origin WebSocket URLs.
 - `docker-compose.yml` wires both services together, reading defaults from `.env` and exposing ports `BACKEND_PORT` (default `8000`) and `FRONTEND_PORT` (default `4173`).
+
+## Deployment (live nanoclaw host)
+
+- The production host is **`nanoclaw-host`** (nanoclaw-host-ip), running the stack in
+  Docker at `~/nanoclaw-dashboard` with `NANOCLAW_ENABLED=true` (real data).
+- Deploy: `git pull origin main && docker compose up --build -d` on the host.
+  Frontend serves on :4173, backend on :8000.
+- Live-debugging loop: **fix → validate (lint/build/test) → push to main →
+  deploy to host** so the user can inspect changes on the live box.
 
 ## Future extensions
 

@@ -152,6 +152,15 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - Backend schema unchanged (`schema_version` stays `0.2.0`); the `tree` field is additive metadata in the topology snapshot.
   - Frontend remains testable: `computeTreeLayout` is pure and covered by non-overlap + hierarchy tests.
 
+## 0017 – Live-debugging & deployment workflow (2026-08-24)
+- **Status**: Accepted
+- **Context**: The dashboard's real use case is a widescreen 1080p wall display on a live nanoclaw host. Iterating on the UI requires a tight loop so the user can inspect each change on the live box.
+- **Decision**: Adopt a **fix → validate → push → deploy** loop. Validate with `pytest` + `npm run lint && npm run build && npm test`; commit with `[ai]` attribution; push to `main`; deploy on the host (`nanoclaw-host`, nanoclaw-host-ip) via `git pull origin main && docker compose up --build -d`.
+- **Consequences**:
+  - The host runs `NANOCLAW_ENABLED=true` (real data), so the tree renders the real agent hierarchy and channel traffic.
+  - Only real human channels (whatsapp/matrix/etc.) route to the Human node; internal `channel:agent` routes to the orchestrator.
+  - Documented in `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/OPENCODE_WORKFLOW.md`, and `README.md`.
+
 ## 0014 – OpenCode config consolidation: global vs repo split (2026-08-02)
 - **Status**: Accepted
 - **Context**: OpenCode config was duplicated across global (`~/.config/opencode/`) and repo (`.opencode/`). The 16 universal coding rules existed in 3 places. Skills, agents, and commands were duplicated with subtle divergences. The decision-log target path differed between global (`docs/decision-log.md`) and repo (`docs/DECISIONS.md`). The global config used deprecated singular directory names (`agent/`, `command/`, `skill/`).

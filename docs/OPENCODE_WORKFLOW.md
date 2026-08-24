@@ -95,6 +95,26 @@ The command is defined in `.opencode/commands/start.md` and handled by the orche
 - **Provider gating:** If enterprise policy requires an internal gateway, disable external providers via `enabled_providers` / `disabled_providers`. (Config + Enterprise docs)
 - **No free-tier models:** Free and trial models commonly train on prompts and code. They are prohibited for any project classified INTERNAL or above. Only use models with verified zero-retention guarantees. The project default (`opencode/deepseek-v4-flash`) meets this requirement.
 
+## Live-debugging & deployment workflow
+
+When the user is debugging on the live nanoclaw host (`nanoclaw-host`, nanoclaw-host-ip,
+Docker stack at `~/nanoclaw-dashboard`), follow this tight loop so they can
+inspect each change on the live box:
+
+1. **Fix** — make the smallest change.
+2. **Validate** — `cd backend && pytest && cd ../frontend && npm run lint && npm run build && npm test`.
+3. **Push** — commit with `[ai]` attribution in the body, push to `main`.
+4. **Deploy** — on the host: `git pull origin main && docker compose up --build -d`.
+5. Verify the host is healthy (`curl :8000/health`, frontend title on :4173).
+
+Notes:
+- The host runs `NANOCLAW_ENABLED=true` (real data), so the tree renders the
+  real agent hierarchy and channel traffic.
+- Only real human channels (whatsapp/matrix/etc.) route to the Human node;
+  internal `channel:agent` routes to the orchestrator.
+- If SSH access is needed, the host alias is `nanoclaw-host`; do not store or echo
+  credentials in prompts or logs.
+
 ## Repository-specific enforcement checklist
 
 - Load `AGENTS.md` immediately after `/start` and obey its repo-specific workflows (build/test commands, threat modeling, etc.).

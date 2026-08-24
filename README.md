@@ -151,6 +151,21 @@ SQLite databases (`data/v2.db`, per-session `inbound.db`/`outbound.db`)
 for live events. If the mount is missing or unreadable, it falls back to
 mock telemetry automatically.
 
+## Deploy to the Live Host
+
+The production host is **`nanoclaw-host`** (nanoclaw-host-ip), running the stack in
+Docker at `~/nanoclaw-dashboard` with `NANOCLAW_ENABLED=true` (real data).
+
+```bash
+# on the host
+cd ~/nanoclaw-dashboard
+git pull origin main
+docker compose up --build -d
+```
+
+Frontend serves on `http://nanoclaw-host:4173`, backend on `:8000`. The live-debugging
+loop is **fix → validate (lint/build/test) → push to main → deploy to host**.
+
 ## Debugging
 
 ### Backend isn't starting

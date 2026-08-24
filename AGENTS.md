@@ -11,11 +11,17 @@
 
 # Project overview
 
-Single-screen 1080p dashboard for the nanoclaw orchestrator delegating work
-to sub-agents. Backend streams mock telemetry over WebSocket by default (no
-nanoclaw install needed); frontend SPA renders the orbit canvas + agent/event
-panes. Maintain: centered orchestrator, directional pulses (outward for
-questions, inward for responses), 1080p-friendly layout.
+Single-screen **widescreen 1080p wall display** (TV via HDMI, Firefox) for the
+nanoclaw orchestrator delegating work to sub-agents. Its purpose is to show
+**"what's happening right now"** — to give people a feel for what nanoclaw,
+orchestration, and multi-agent frameworks are about. Backend streams mock
+telemetry over WebSocket by default (no nanoclaw install needed); frontend SPA
+renders a **left-to-right hierarchical tree graph** (orchestrator root →
+agents → sub-agents), a live activity feed, a compact agent roster, and a
+status strip. Maintain: tree graph with the orchestrator at root, a **Human
+node** above the human-facing agent (e.g. marvin), per-agent tool history
+(active tool first, ghosted to the right), color-coded pulses, and a
+glanceable 1080p layout.
 
 ## File layout at a glance
 
@@ -37,13 +43,24 @@ nanoclaw-dashboard/
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
-│   │   ├── components/            # FlowCanvas, AgentGrid, EventFeed, DebugPanel, ConnectionStatus
-│   │   ├── hooks/useEventStream.ts  # WebSocket ingest + reconnect + edge derivation
+│   │   ├── components/
+│   │   │   ├── tree/              # TreeGraph, TreeNode, TreeEdge (left-to-right tree)
+│   │   │   ├── ActivityFeed.tsx   # Simplified conversation stream
+│   │   │   ├── AgentRoster.tsx    # Compact auto-hiding agent strip
+│   │   │   ├── AgentDetail.tsx    # Click-to-expand drill-down panel
+│   │   │   └── StatusStrip.tsx    # Top status bar (active/error/stuck/pending)
+│   │   ├── hooks/useEventStream.ts  # Thin WS ingest + dispatch into reducer
 │   │   ├── lib/
+│   │   │   ├── eventReducer.ts    # Pure reducer (events, snapshots, edges, humanAgentId)
+│   │   │   ├── treeLayout.ts      # Left-to-right tree layout (pure)
+│   │   │   ├── treePaths.ts       # Edge/pulse path helpers (pure)
+│   │   │   ├── channels.ts        # Human vs internal channel detection
+│   │   │   ├── activityFeed.ts    # Feed filtering + collapse logic (pure)
+│   │   │   ├── icons.ts           # Agent/tool icon keyword map
 │   │   │   ├── types.ts           # Telemetry TS types (mirrors backend models.py)
 │   │   │   ├── config.ts          # Backend URL resolution
-│   │   │   └── utils.ts
-│   │   ├── App.tsx / App.css / index.css  # Shell + color/typography tokens
+│   │   │   └── utils.ts           # Snapshot/liveness/opacity derivation
+│   │   ├── App.tsx / App.css / index.css  # 4-zone shell + design tokens
 │   ├── Dockerfile
 │   ├── nginx.conf                 # Proxies /ws/ to backend container
 │   └── package.json
@@ -69,10 +86,25 @@ nanoclaw-dashboard/
 - Mock telemetry is the default (NANOCLAW_ENABLED=false); no nanoclaw host needed.
 - Override WebSocket endpoint: `VITE_BACKEND_WS_URL` env var.
 
+## Live nanoclaw host
+
+- The production host is **`nanoclaw-host`** (nanoclaw-host-ip), running the stack in
+  Docker at `~/nanoclaw-dashboard` with `NANOCLAW_ENABLED=true` (real data).
+- Deploy: `git pull origin main && docker compose up --build -d` on the host.
+  Frontend serves on :4173, backend on :8000.
+- Live-debugging loop: **fix → validate (lint/build/test) → push to main →
+  deploy to host** so the user can inspect changes on the live box.
+
 ## Visual + UX requirements
 
-- Animate directional edges for questions vs responses; differentiate state
-  changes (agent spin-up, in-flight, response) with motion + color.
+- Left-to-right tree graph with the orchestrator at root and sub-agents nested.
+- **Human node** above the human-facing agent (sticky — set once from a real
+  human channel, never moved by agent-to-agent traffic).
+- Per-agent **tool history**: active tool first (color-coded round icon to the
+  right of the blob), previously-used tools ghosted to the right.
+- Color-coded pulses (question/response/activity) that follow the same path as
+  the static edge; only real human channels (whatsapp/matrix/etc.) route to the
+  Human node — internal `channel:agent` routes to the orchestrator.
 - Purposeful typography (Space Grotesk + IBM Plex Sans, no default system
   stack), dark background with gradient, defined color story.
 - Meaningful motion only—avoid noisy micro-animations.
@@ -88,7 +120,7 @@ nanoclaw-dashboard/
 - When altering telemetry schema or transport: bump `schema_version`, update
   `frontend/src/lib/types.ts`, add ADR entry.
 - **Prerequisites**: Node 20.19.0, Python 3.11+.
-- **Before pushing**: `cd backend && pytest && cd ../frontend && npm run lint && npm run build`.
+- **Before pushing**: `cd backend && pytest && cd ../frontend && npm run lint && npm run build && npm test`.
 - **Lockfile discipline**: global `~/.npmrc` has `package-lock=false`. Always use
   `npm install --package-lock` (or `npm ci`) when updating frontend dependencies,
   otherwise `package-lock.json` won't be regenerated and CI will fail on `npm ci`.
