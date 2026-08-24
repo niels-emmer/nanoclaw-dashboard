@@ -49,18 +49,20 @@ Additional fields on all event types:
 
 - `tests/test_app.py` covers `/health` to ensure the FastAPI stack boots.
 - `tests/test_telemetry.py` covers the mock source: question/response flow, emission of all new event types, and presence of tool state fields on activity_update events.
+- Frontend Vitest suite (`npm test`) covers pure derivation logic (`utils.test.ts`), the event reducer (`eventReducer.test.ts`), and a `FlowCanvas` render smoke test.
 - Structured logs surface in JSON for later ingestion into observability stacks.
 
 ## Frontend (`frontend/`)
 
 | Area | Key files | Notes |
 |------|-----------|-------|
-| Event ingestion | `src/hooks/useEventStream.ts`, `src/lib/config.ts`, `src/lib/types.ts`, `src/lib/utils.ts` | Custom hook manages the WebSocket connection (auto-reconnect, edge TTLs, snapshots). Config infers backend URL, with overrides via `VITE_BACKEND_WS_URL`. |
-| Visualization | `src/components/FlowCanvas.tsx` | SVG orbit layout with orchestrator at center, deterministic spokes for agents, animated edge pulses, tool badge (colored circle with white icon below label when tool active), liveness ring (dashed inner circle when stale/dead), agent-to-agent edges, hover tooltips, and click-to-filter. |
-| Details panes | `AgentGrid.tsx`, `EventFeed.tsx`, `DebugPanel.tsx`, `ConnectionStatus.tsx` | Present agent states, recent events, raw payloads, and connection indicators with purposeful typography and color tokens. |
-| Shell | `App.tsx`, `App.css`, `index.css` | Hero masthead with capability Chip rail + streaming legend feeds into a fixed two-column layout (orbit canvas + insight grid). Uses HeroUI Card/Chip/Typography components on Tailwind CSS v4. |
+| Event ingestion | `src/hooks/useEventStream.ts`, `src/lib/eventReducer.ts`, `src/lib/config.ts`, `src/lib/types.ts` | `useEventStream` is a thin ingest layer: it owns the WebSocket connection + auto-reconnect and dispatches each event into a pure `useReducer` store (`eventReducer`). The reducer derives events, agent snapshots, edge pulses, chat bubbles, orchestrator id, and topology — all time-injected and unit-testable. |
+| Derivation helpers | `src/lib/utils.ts`, `src/lib/orbitLayout.ts`, `src/lib/icons.ts` | Pure, config-free helpers: agent snapshot/liveness/opacity derivation, orbit node layout (`computeNodes`), and the agent icon keyword map. |
+| Visualization | `src/components/FlowCanvas.tsx` + `src/components/canvas/` | `FlowCanvas` is a thin composition root. Rendering is split into `AgentNode`, `EdgeLayer` (spines + pulses + a2a), `ChatBubbleLayer`, and `TooltipLayer`. SVG orbit layout with orchestrator at center, deterministic spokes for agents, animated edge pulses, tool badge, liveness ring, agent-to-agent edges, hover tooltips, and click-to-filter. |
+| Details panes | `AgentGrid.tsx`, `EventFeed.tsx`, `ConnectionStatus.tsx` | Present agent states, recent events, and connection indicators with purposeful typography and color tokens. |
+| Shell | `App.tsx`, `App.css`, `index.css` | Hero masthead with status callouts + streaming legend feeds into a fixed two-column layout (orbit canvas + insight grid). Uses HeroUI Chip/Typography components on Tailwind CSS v4. Design tokens (colors + typography) are single-sourced in `index.css` `:root`. |
 
-`npm run dev` starts Vite on `5173`. When the dev server runs on `5173`, the SPA automatically targets `ws://localhost:8000/ws/events`; otherwise set `VITE_BACKEND_WS_URL`.
+`npm run dev` starts Vite on `5173`. When the dev server runs on `5173`, the SPA automatically targets `ws://localhost:8000/ws/events`; otherwise set `VITE_BACKEND_WS_URL`. `npm test` runs the Vitest suite (`src/**/*.test.ts(x)`).
 
 ## Canonical event schema
 

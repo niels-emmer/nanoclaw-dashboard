@@ -30,10 +30,13 @@ Set `VITE_BACKEND_WS_URL` when the backend lives somewhere other than `localhost
 
 ## Structure
 
-- `src/hooks/useEventStream.ts` – WebSocket ingestion, reconnection, agent snapshot + edge pulse derivation.
-- `src/components/FlowCanvas.tsx` – SVG-based orbit renderer and directional pulse animations.
+- `src/hooks/useEventStream.ts` – thin WebSocket ingest layer (connect/reconnect) that dispatches events into the reducer.
+- `src/lib/eventReducer.ts` – pure `useReducer` store deriving events, agent snapshots, edge pulses, chat bubbles, and topology.
+- `src/lib/utils.ts`, `src/lib/orbitLayout.ts`, `src/lib/icons.ts` – pure derivation helpers (snapshots, liveness, opacity, orbit layout, icon mapping).
+- `src/components/FlowCanvas.tsx` + `src/components/canvas/` – SVG orbit renderer composition root (`AgentNode`, `EdgeLayer`, `ChatBubbleLayer`, `TooltipLayer`).
 - `src/components/AgentGrid.tsx`, `EventFeed.tsx`, `ConnectionStatus.tsx` – supporting panels + diagnostics.
 - `src/lib/types.ts` – Canonical telemetry types mirrored from the backend.
-- `src/index.css` / `App.css` – typography + color tokens for the 1080p TV layout; keep modifications intentional.
+- `src/index.css` / `App.css` – design tokens (colors + typography) single-sourced in `index.css` `:root`; keep modifications intentional.
+- `src/**/*.test.ts(x)` – Vitest suite (`npm test`).
 
 Frontend changes must stay in sync with backend schema updates and be recorded in `docs/decision-log.md` when they alter contracts.

@@ -10,8 +10,17 @@ from app.telemetry.source import MockTelemetrySource
 async def test_mock_source_generates_question_and_response():
     source = MockTelemetrySource(["seer"], base_interval_ms=10, jitter_ms=0)
     gen = source.stream()
-    event1 = await anext(gen)
-    assert event1.type == EventType.QUESTION
+
+    # Consume until we see a QUESTION. The mock may emit an idle agent_status
+    # before the first question (random idle check), so don't assume event #1.
+    question = None
+    for _ in range(20):
+        evt = await anext(gen)
+        if evt.type == EventType.QUESTION:
+            question = evt
+            break
+    assert question is not None
+    assert question.target == "agent:seer"
 
     # Consume events until we see a RESPONSE (may have activity_update in between)
     for _ in range(20):
