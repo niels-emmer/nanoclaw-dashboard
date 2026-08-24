@@ -75,6 +75,22 @@
   color: var(--muted);
 }
 
+.status-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.status-clock {
+  font-family: var(--display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--foreground);
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+
 .status-conn {
   display: flex;
   align-items: center;

@@ -16,7 +16,7 @@ function App() {
 
   return (
     <div className="app-shell">
-      <StatusStrip connectionState={connectionState} retryCount={retryCount} agents={agents} />
+      <StatusStrip orchestratorId={orchestratorId} connectionState={connectionState} retryCount={retryCount} agents={agents} events={events} />
 
       <main className="main-grid">
         <div className="tree-panel">

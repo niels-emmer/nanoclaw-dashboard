@@ -1,10 +1,13 @@
-import type { AgentSnapshot } from '../lib/types'
+import { useEffect, useState } from 'react'
+import type { AgentSnapshot, TelemetryEvent } from '../lib/types'
 import type { ConnectionState } from '../hooks/useEventStream'
 
 interface Props {
+  orchestratorId: string
   connectionState: ConnectionState
   retryCount: number
   agents: AgentSnapshot[]
+  events: TelemetryEvent[]
 }
 
 const connLabel: Record<ConnectionState, { text: string; cls: string }> = {
@@ -14,23 +17,58 @@ const connLabel: Record<ConnectionState, { text: string; cls: string }> = {
   error: { text: 'Signal lost', cls: 'text-red-400' },
 }
 
-export function StatusStrip({ connectionState, retryCount, agents }: Props) {
+const RATE_WINDOW_MS = 60_000
+
+function formatAgo(ms: number): string {
+  const s = Math.floor(ms / 1000)
+  if (s < 60) return `${s}s ago`
+  const m = Math.floor(s / 60)
+  if (m < 60) return `${m}m ago`
+  return `${Math.floor(m / 60)}h ago`
+}
+
+export function StatusStrip({ orchestratorId, connectionState, retryCount, agents, events }: Props) {
+  const [now, setNow] = useState(() => Date.now())
+
+  // Tick every second so the clock and "last activity" stay fresh.
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(timer)
+  }, [])
+
   const active = agents.filter((a) => a.state === 'running').length
+  const total = agents.length
   const errors = agents.filter((a) => a.state === 'error' || a.errorCount > 0).length
   const stuck = agents.filter((a) => a.state === 'running' && a.liveness === 'stale').length
   const pending = agents.reduce((sum, a) => sum + a.pendingApprovals, 0)
   const conn = connLabel[connectionState]
 
+  const orchestratorLabel = agents.find((a) => a.id === orchestratorId)?.label ?? orchestratorId
+
+  const newest = events[0]
+  const lastActivity = newest ? formatAgo(Math.max(0, now - new Date(newest.timestamp).getTime())) : '—'
+  const messageRate = events.filter((e) => now - new Date(e.timestamp).getTime() < RATE_WINDOW_MS).length
+  const clock = new Date(now).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+
   return (
     <header className="status-strip">
       <div className="status-title">
         <span className="status-orchestrator">NanoClaw Live Dashboard</span>
+        <span className="status-sub">orchestrator · {orchestratorLabel}</span>
       </div>
 
       <div className="status-metrics">
         <div className="status-metric">
-          <span className="status-value text-green-400">{active}</span>
+          <span className="status-value text-green-400">{active}/{total}</span>
           <span className="status-label">active</span>
+        </div>
+        <div className="status-metric">
+          <span className="status-value">{lastActivity}</span>
+          <span className="status-label">last activity</span>
+        </div>
+        <div className="status-metric">
+          <span className="status-value">{messageRate}</span>
+          <span className="status-label">msg/min</span>
         </div>
         {errors > 0 && (
           <div className="status-metric">
@@ -52,12 +90,15 @@ export function StatusStrip({ connectionState, retryCount, agents }: Props) {
         )}
       </div>
 
-      <div className="status-conn">
-        <span className={`status-conn-dot ${conn.cls}`} />
-        <span className={`status-conn-text ${conn.cls}`}>
-          {conn.text}
-          {retryCount > 0 && connectionState !== 'connected' ? ` (${retryCount})` : ''}
-        </span>
+      <div className="status-right">
+        <span className="status-clock">{clock}</span>
+        <div className="status-conn">
+          <span className={`status-conn-dot ${conn.cls}`} />
+          <span className={`status-conn-text ${conn.cls}`}>
+            {conn.text}
+            {retryCount > 0 && connectionState !== 'connected' ? ` (${retryCount})` : ''}
+          </span>
+        </div>
       </div>
     </header>
   )
