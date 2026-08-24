@@ -63,6 +63,33 @@ describe('eventReducer', () => {
     expect(state.snapshots['agent:researcher'].currentTool).toBeNull()
   })
 
+  it('maintains a tool history with the active tool first', () => {
+    let state = createInitialState('orchestrator')
+    const bash = baseEvent({
+      id: '1',
+      type: 'activity_update',
+      source: 'agent:researcher',
+      target: 'orchestrator',
+      payload: { summary: 'Running Bash', status: 'processing', current_tool: 'Bash' },
+    })
+    state = dispatch(state, bash)
+    expect(state.snapshots['agent:researcher'].tools).toEqual([
+      { name: 'Bash', category: 'executing', active: true },
+    ])
+
+    const read = baseEvent({
+      id: '2',
+      type: 'activity_update',
+      source: 'agent:researcher',
+      target: 'orchestrator',
+      payload: { summary: 'Running Read', status: 'processing', current_tool: 'Read' },
+    })
+    state = dispatch(state, read, 2000)
+    const tools = state.snapshots['agent:researcher'].tools
+    expect(tools[0]).toEqual({ name: 'Read', category: 'reading', active: true })
+    expect(tools[1]).toEqual({ name: 'Bash', category: 'executing', active: false })
+  })
+
   it('does not leak provider/model to a secondary agent', () => {
     let state = createInitialState('orchestrator')
     const a2a = baseEvent({
