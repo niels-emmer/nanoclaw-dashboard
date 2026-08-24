@@ -119,7 +119,7 @@ export function computeTreeLayout(
     const agentRadius = radiusFor(humanAgentId)
     humanAgentPos = {
       x: agentPos.x,
-      y: agentPos.y - (agentRadius + HUMAN_RADIUS + 48),
+      y: agentPos.y - (agentRadius + HUMAN_RADIUS + 96),
     }
     positions[HUMAN_NODE_ID] = humanAgentPos
   }
