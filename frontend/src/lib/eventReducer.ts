@@ -1,5 +1,6 @@
 import type { AgentSnapshot, ChatBubble, EdgePulse, TelemetryEvent, TopologyData } from './types'
 import { deriveAgentSnapshot, parseTopologyMeta, readableNodeLabel } from './utils'
+import { channelName, isHumanChannel } from './channels'
 
 /**
  * Pure event reducer — the single source of truth for dashboard state derived
@@ -25,16 +26,12 @@ const EDGE_TTL_MS = 6500
 const MAX_EDGES = 32
 const MAX_BUBBLES = 3
 
-// Real human-facing channels. "agent" and other internal channels are excluded
-// so agent-to-agent traffic never moves the human node.
-const HUMAN_CHANNELS = new Set(['whatsapp', 'matrix', 'telegram', 'signal', 'slack', 'discord', 'email', 'sms'])
-
 /** Return the agent id if this event is a human-channel conversation, else null. */
 function humanAgentFromEvent(event: TelemetryEvent): string | null {
-  const srcChannel = event.source.startsWith('channel:') ? event.source.slice('channel:'.length) : null
-  const tgtChannel = event.target.startsWith('channel:') ? event.target.slice('channel:'.length) : null
-  if (srcChannel && HUMAN_CHANNELS.has(srcChannel) && event.target.startsWith('agent:')) return event.target
-  if (tgtChannel && HUMAN_CHANNELS.has(tgtChannel) && event.source.startsWith('agent:')) return event.source
+  const srcChannel = channelName(event.source)
+  const tgtChannel = channelName(event.target)
+  if (srcChannel && isHumanChannel(event.source) && event.target.startsWith('agent:')) return event.target
+  if (tgtChannel && isHumanChannel(event.target) && event.source.startsWith('agent:')) return event.source
   return null
 }
 

@@ -4,6 +4,7 @@ import { config } from '../../lib/config'
 import type { AgentSnapshot, EdgePulse, TopologyData } from '../../lib/types'
 import { ORCHESTRATOR_COLOR, formatElapsed } from '../../lib/utils'
 import { computeTreeLayout, WIDTH, HEIGHT, HUMAN_NODE_ID, type TreeNode } from '../../lib/treeLayout'
+import { isHumanChannel } from '../../lib/channels'
 import { TreeNodeView } from './TreeNode'
 import { TreeEdge } from './TreeEdge'
 
@@ -35,13 +36,18 @@ export function TreeGraph({ orchestratorId, agents, edges, topology, humanAgentI
   const nodeMap = useMemo(() => Object.fromEntries(nodes.map((node) => [node.id, node])), [nodes])
   const agentMap = useMemo(() => Object.fromEntries(agents.map((a) => [a.id, a])), [agents])
 
-  // Resolve pulses, mapping channel endpoints to the human node.
+  // Resolve pulses. Real human channels map to the human node; the internal
+  // "channel:agent" bus maps to the orchestrator (sub-agent replies go to the
+  // orchestrator, not the human).
+  const resolveEndpoint = (id: string): string => {
+    if (!id.startsWith('channel:')) return id
+    if (isHumanChannel(id)) return HUMAN_NODE_ID
+    return orchestratorId
+  }
   const pulses = edges
     .map((edge) => {
-      const srcId = edge.source.startsWith('channel:') ? HUMAN_NODE_ID : edge.source
-      const tgtId = edge.target.startsWith('channel:') ? HUMAN_NODE_ID : edge.target
-      const start = nodeMap[srcId]
-      const end = nodeMap[tgtId]
+      const start = nodeMap[resolveEndpoint(edge.source)]
+      const end = nodeMap[resolveEndpoint(edge.target)]
       if (!start || !end) return null
       return { ...edge, start, end }
     })
