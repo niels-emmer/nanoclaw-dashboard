@@ -108,10 +108,16 @@ async def events_socket(websocket: WebSocket) -> None:
     host_header = websocket.headers.get("host")
     if not is_allowed_origin(origin, host_header):
         log.warning("websocket_origin_rejected", origin=origin)
+        # Accept first so the 4003 close code is actually delivered to the client.
+        await websocket.accept()
         await websocket.close(code=4003)
         return
 
-    await event_hub.register(websocket)
+    try:
+        await event_hub.register(websocket)
+    except RuntimeError:
+        # Rejected (max clients reached); connection already closed with 4003.
+        return
     try:
         while True:
             await websocket.receive_text()
@@ -119,3 +125,43 @@ async def events_socket(websocket: WebSocket) -> None:
         pass
     finally:
         await event_hub.unregister(websocket)
+
+
+_default_openapi = app.openapi
+
+
+def _openapi_with_websocket() -> dict:
+    """Default FastAPI schema plus the /ws/events WebSocket endpoint.
+
+    FastAPI does not include WebSocket routes in OpenAPI, so the primary
+    telemetry channel is documented here manually. Full protocol details
+    live in API.md.
+    """
+    if app.openapi_schema:
+        return app.openapi_schema
+    schema = _default_openapi()
+    schema.setdefault("paths", {})["/ws/events"] = {
+        "get": {
+            "summary": "WebSocket telemetry stream",
+            "description": (
+                "Streams canonical telemetry events (orchestrator -> agents -> "
+                "sub-agents). On connect the server flushes buffered history, "
+                "then streams live events. Rejected connections (disallowed "
+                "origin or max clients reached) are accepted then closed with "
+                "code 4003. See API.md for the full protocol."
+            ),
+            "responses": {
+                "101": {
+                    "description": (
+                        "Switching Protocols (WebSocket upgrade). Rejected "
+                        "connections are closed with code 4003."
+                    )
+                }
+            },
+            "x-websocket": True,
+        }
+    }
+    return schema
+
+
+app.openapi = _openapi_with_websocket

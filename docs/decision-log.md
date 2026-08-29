@@ -192,3 +192,14 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - The Human node stays anchored above the human-facing agent regardless of agent-to-agent traffic.
   - The activity feed surfaces real signals instead of status noise.
   - All logic is pure and unit-tested (`deriveTreeFromEdges`, `channels`, `buildActivityFeed`).
+
+## 0019 – WebSocket rejection close code + complete OpenAPI spec (2026-08-29)
+- **Status**: Accepted
+- **Context**: The `/ws/events` handler called `websocket.close(code=4003)` before `accept()`, so Starlette refused the handshake with HTTP 403 and the close code was never delivered — dead code. Separately, the auto-generated OpenAPI spec only covered `/health`; FastAPI omits WebSocket routes, so the service's primary endpoint was undocumented in the spec.
+- **Decision**:
+  - Accept the WebSocket first, then close with code `4003` for both rejection cases (disallowed origin, max clients reached), making the close code meaningful and machine-readable for clients.
+  - Inject the `/ws/events` endpoint into the OpenAPI schema via a custom `app.openapi` override (documented as a `get` with a `101` response and `x-websocket: true`; full protocol in `API.md`).
+- **Consequences**:
+  - Clients observe a successful handshake followed by close code `4003` instead of HTTP 403; the frontend's generic `onclose` reconnect logic is unaffected.
+  - `/openapi.json` now documents both endpoints; `API.md` remains the source of truth for WebSocket protocol details.
+  - `schema_version` unchanged (no telemetry schema or transport change).

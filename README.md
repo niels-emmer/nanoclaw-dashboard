@@ -125,6 +125,7 @@ docker compose up --build
 
 - Frontend: **http://localhost:4173**
 - Backend health: **http://localhost:8000/health**
+- Backend API docs: **`API.md`** (endpoints, WebSocket protocol, event schema) — live OpenAPI spec at `http://localhost:8000/openapi.json`
 
 The frontend container serves the production build via nginx and proxies
 WebSocket traffic to the backend automatically. Adjust ports in `.env` (copy from `.env.example`).

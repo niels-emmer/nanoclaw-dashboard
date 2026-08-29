@@ -11,7 +11,7 @@ The dashboard is split into a FastAPI WebSocket service (`/backend`) and a Vite 
 | `app/telemetry/source.py` | Declares `TelemetrySource` interface + `MockTelemetrySource` generator that emits realistic orchestrator/sub-agent traffic: question/response pairs with agent-to-agent conversations, varied agent states (idle/running/error), tool activity updates, delivery signals, approval requests, and topology snapshots. |
 | `app/telemetry/nanoclaw.py` | `NanoclawTelemetrySource` tails the Nanoclaw SQLite databases (central `v2.db` + session `inbound/outbound.db`) and emits live orchestrator/sub-agent events when enabled. |
 | `app/events.py` | `EventHub` tracks connected WebSocket clients, maintains a ring buffer (`deque(maxlen=event_buffer_size)`) to flush historical events on connect, enforces client limits, and broadcasts JSON payloads. |
-| `app/main.py` | FastAPI app factory with `/health` and `/ws/events`. Lifespan task drives the telemetry loop and pushes events into `EventHub`. |
+| `app/main.py` | FastAPI app factory with `/health` and `/ws/events`. Lifespan task drives the telemetry loop and pushes events into `EventHub`. A custom `app.openapi` override injects the WebSocket endpoint into `/openapi.json` (FastAPI omits WebSocket routes by default); the full protocol is documented in `API.md`. |
 | `app/logging.py` | structlog JSON logging config shared across modules. |
 | `app/cli.py` | Convenience entry point for `uvicorn`. |
 
