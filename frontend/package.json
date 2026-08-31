@@ -14,7 +14,7 @@
     "@heroui/react": "3.2.2",
     "@heroui/styles": "3.2.2",
     "@tailwindcss/vite": "4.3.3",
-    "lucide-react": "^1.33.0",
+    "lucide-react": "^1.35.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "tailwindcss": "4.3.3"
