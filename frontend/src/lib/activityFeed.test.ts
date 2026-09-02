@@ -50,4 +50,22 @@ describe('buildActivityFeed', () => {
     ])
     expect(feed).toHaveLength(1)
   })
+
+  it('sorts newest-first by timestamp regardless of input order', () => {
+    const feed = buildActivityFeed([
+      evt({ id: '1', timestamp: '2026-08-24T00:00:00Z', type: 'question', payload: { summary: 'old', status: 'running' } }),
+      evt({ id: '2', timestamp: '2026-08-24T00:00:10Z', type: 'question', payload: { summary: 'new', status: 'running' } }),
+      evt({ id: '3', timestamp: '2026-08-24T00:00:05Z', type: 'question', payload: { summary: 'mid', status: 'running' } }),
+    ])
+    expect(feed.map((f) => f.id)).toEqual(['2', '3', '1'])
+  })
+
+  it('sorts future-timestamped entries to the top and lets newer ones push them down', () => {
+    const feed = buildActivityFeed([
+      evt({ id: '1', timestamp: '2026-08-24T00:00:00Z', type: 'question', payload: { summary: 'old', status: 'running' } }),
+      evt({ id: '2', timestamp: '2026-08-24T00:05:00Z', type: 'question', payload: { summary: 'future', status: 'running' } }),
+      evt({ id: '3', timestamp: '2026-08-24T00:06:00Z', type: 'question', payload: { summary: 'newer', status: 'running' } }),
+    ])
+    expect(feed.map((f) => f.id)).toEqual(['3', '2', '1'])
+  })
 })

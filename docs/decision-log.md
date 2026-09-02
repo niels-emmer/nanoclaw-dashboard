@@ -203,3 +203,15 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - Clients observe a successful handshake followed by close code `4003` instead of HTTP 403; the frontend's generic `onclose` reconnect logic is unaffected.
   - `/openapi.json` now documents both endpoints; `API.md` remains the source of truth for WebSocket protocol details.
   - `schema_version` unchanged (no telemetry schema or transport change).
+
+## 0020 – Live activity feed: timestamp ordering + timezone normalization (2026-09-02)
+- **Status**: Accepted
+- **Context**: On the live nanoclaw host, the "Live activity" feed (right column) showed a few entries pinned at the top that did not scroll down as new messages arrived, and those entries' timestamps were often in the future. Two root causes: (1) the feed was ordered by **arrival order** (backend emits bursts per poll cycle, so display order was inconsistent with the displayed times), and (2) nanoclaw stores timestamps as **naive local time** in several tables (`messages_out`, `delivered_at`, `status_changed`, `created_at`), which the dashboard treated as UTC — shifting them into the future.
+- **Decision**:
+  - Frontend: sort the activity feed by **timestamp descending** (newest first) in `buildActivityFeed`, so every entry lands on top and scrolls down as newer messages arrive, independent of backend emission order.
+  - Backend: add `_normalize_timestamp()` to `NanoclawTelemetrySource` and apply it to all row-sourced timestamps. Naive values are interpreted as host-local time and converted to UTC; already-UTC ISO values (`messages_in`) are preserved.
+- **Consequences**:
+  - The feed is now consistently newest-on-top and scrolls down as new messages arrive.
+  - Future timestamps no longer appear; naive local times are normalized to UTC before display.
+  - `schema_version` unchanged (no telemetry schema or transport change); timestamp semantics are normalized at the source.
+  - Covered by new unit tests: `buildActivityFeed` sorting (frontend) and `_normalize_timestamp` (backend).

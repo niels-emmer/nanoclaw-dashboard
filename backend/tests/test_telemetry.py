@@ -3,6 +3,7 @@ import asyncio
 import pytest
 
 from app.telemetry.models import EventType
+from app.telemetry.nanoclaw import NanoclawTelemetrySource
 from app.telemetry.source import MockTelemetrySource
 
 
@@ -78,3 +79,28 @@ async def test_mock_activity_update_has_tool_fields():
             return
 
     pytest.fail("Never got an ACTIVITY_UPDATE event")
+
+
+def test_normalize_timestamp_converts_naive_local_to_utc():
+    """Naive (no-tz) timestamps are interpreted as local time and converted to UTC."""
+    # A naive local timestamp must come out as UTC ISO-8601 with an offset.
+    normalized = NanoclawTelemetrySource._normalize_timestamp("2026-08-24 15:00:00")
+    assert normalized is not None
+    assert normalized.endswith("+00:00")
+    # Round-trips through datetime to confirm it parses and is timezone-aware.
+    from datetime import datetime
+    parsed = datetime.fromisoformat(normalized)
+    assert parsed.utcoffset() is not None
+
+
+def test_normalize_timestamp_keeps_utc_z_suffix():
+    """Already-UTC ISO timestamps (messages_in) are preserved as UTC."""
+    normalized = NanoclawTelemetrySource._normalize_timestamp("2026-08-24T15:00:00.339Z")
+    assert normalized is not None
+    assert normalized.endswith("+00:00")
+
+
+def test_normalize_timestamp_returns_none_for_invalid():
+    assert NanoclawTelemetrySource._normalize_timestamp(None) is None
+    assert NanoclawTelemetrySource._normalize_timestamp("not-a-date") is None
+    assert NanoclawTelemetrySource._normalize_timestamp("") is None

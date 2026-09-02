@@ -15,15 +15,28 @@ function isSignallingOnly(event: TelemetryEvent): boolean {
   return event.type === 'activity_update' && !event.payload.current_tool
 }
 
+// Parse an ISO-8601 timestamp to epoch ms. Invalid/empty values fall back to 0
+// so they sort to the bottom (oldest) rather than breaking the sort.
+const timestampMs = (ts: string): number => {
+  const ms = Date.parse(ts)
+  return Number.isNaN(ms) ? 0 : ms
+}
+
 /**
  * Build the activity feed: filter to visible types, drop signalling-only cards,
- * and collapse consecutive same-agent/same-tool activity into one card with a count.
+ * sort newest-first by timestamp, and collapse consecutive same-agent/same-tool
+ * activity into one card with a count.
+ *
+ * Sorting by timestamp (not arrival order) guarantees every entry lands on top
+ * and scrolls down as newer messages arrive, regardless of the order the
+ * backend emits them in a single poll batch.
  */
 export function buildActivityFeed(events: TelemetryEvent[]): FeedItem[] {
   const visible = events
     .filter((e) => VISIBLE_TYPES.has(e.type))
     .filter((e) => !(e.type === 'agent_status' && !isError(e))) // drop benign status, keep errors
     .filter((e) => !isSignallingOnly(e)) // drop "Message completed" style signals
+    .sort((a, b) => timestampMs(b.timestamp) - timestampMs(a.timestamp))
     .slice(0, 60)
 
   const collapsed: FeedItem[] = []

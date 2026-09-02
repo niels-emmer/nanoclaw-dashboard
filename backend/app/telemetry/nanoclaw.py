@@ -386,7 +386,7 @@ class NanoclawTelemetrySource(TelemetrySource):
                 label = self._agent_label(agent_id)
                 events.append(TelemetryEvent(
                     id=str(uuid4()),
-                    timestamp=ack.get("status_changed") or self._now(),
+                    timestamp=self._normalize_timestamp(ack.get("status_changed")) or self._now(),
                     type=EventType.ACTIVITY_UPDATE,
                     source=f"agent:{agent_id}",
                     target="orchestrator",
@@ -417,7 +417,7 @@ class NanoclawTelemetrySource(TelemetrySource):
             for row in delivered_rows:
                 events.append(TelemetryEvent(
                     id=str(uuid4()),
-                    timestamp=row.get("delivered_at") or self._now(),
+                    timestamp=self._normalize_timestamp(row.get("delivered_at")) or self._now(),
                     type=EventType.DELIVERY_UPDATE,
                     source=f"agent:{agent_id}",
                     target="orchestrator",
@@ -454,7 +454,7 @@ class NanoclawTelemetrySource(TelemetrySource):
             label = self._agent_label(agent_id)
             events.append(TelemetryEvent(
                 id=str(uuid4()),
-                timestamp=row.get("created_at") or self._now(),
+                timestamp=self._normalize_timestamp(row.get("created_at")) or self._now(),
                 type=EventType.APPROVAL_PENDING,
                 source=f"agent:{agent_id}",
                 target="admin",
@@ -671,7 +671,7 @@ class NanoclawTelemetrySource(TelemetrySource):
         summary = self._summarize(self._row_value(row, "content"))
         event = TelemetryEvent(
             id=str(uuid4()),
-            timestamp=self._row_value(row, "timestamp") or self._now(),
+            timestamp=self._normalize_timestamp(self._row_value(row, "timestamp")) or self._now(),
             type=EventType.QUESTION,
             source=source,
             target=target_agent,
@@ -748,7 +748,7 @@ class NanoclawTelemetrySource(TelemetrySource):
 
         return TelemetryEvent(
             id=str(uuid4()),
-            timestamp=self._row_value(row, "timestamp") or self._now(),
+            timestamp=self._normalize_timestamp(self._row_value(row, "timestamp")) or self._now(),
             type=EventType.RESPONSE,
             source=source,
             target=target,
@@ -852,3 +852,26 @@ class NanoclawTelemetrySource(TelemetrySource):
 
     def _now(self) -> str:
         return datetime.now(timezone.utc).isoformat()
+
+    @staticmethod
+    def _normalize_timestamp(value: Optional[str]) -> Optional[str]:
+        """Normalize a nanoclaw timestamp to UTC ISO-8601.
+
+        Nanoclaw stores timestamps in mixed formats:
+          - messages_in  → ISO 8601 with 'Z' (already UTC)
+          - messages_out → SQLite datetime, naive local time (no tz)
+          - delivered_at / status_changed / created_at → naive local time
+
+        Naive values are interpreted as the host's local time and converted to
+        UTC so the dashboard never renders future timestamps. Unparseable
+        values return None so callers fall back to ``self._now()``.
+        """
+        if not value:
+            return None
+        try:
+            parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        except (ValueError, TypeError):
+            return None
+        # astimezone() on a naive datetime assumes system-local time; on an
+        # aware datetime it converts from its own offset. Both end in UTC.
+        return parsed.astimezone(timezone.utc).isoformat()
