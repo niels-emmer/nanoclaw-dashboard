@@ -21,10 +21,12 @@ class EventHub:
 
     async def register(self, websocket: WebSocket) -> None:
         async with self._lock:
+            await websocket.accept()
             if len(self._clients) >= self._max:
+                self._log.warning("client_rejected_max_clients", max_clients=self._max)
+                # Accept first so the 4003 close code is actually delivered to the client.
                 await websocket.close(code=4003)
                 raise RuntimeError("too many clients connected")
-            await websocket.accept()
             # Flush buffered history to the new client before live events
             for payload in self._buffer:
                 try:

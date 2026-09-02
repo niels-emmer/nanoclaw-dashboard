@@ -1,5 +1,10 @@
-from fastapi.testclient import TestClient
+import asyncio
 
+import pytest
+from fastapi.testclient import TestClient
+from starlette.websockets import WebSocketDisconnect
+
+from app.events import EventHub
 from app.main import app, is_allowed_origin
 
 
@@ -8,6 +13,51 @@ def test_health_endpoint():
     resp = client.get("/health")
     assert resp.status_code == 200
     assert resp.json()["status"] == "ok"
+
+
+def test_openapi_includes_websocket_endpoint():
+    client = TestClient(app)
+    spec = client.get("/openapi.json").json()
+    ws_path = spec["paths"]["/ws/events"]
+    assert "get" in ws_path
+    assert "101" in ws_path["get"]["responses"]
+    assert ws_path["get"].get("x-websocket") is True
+
+
+def test_websocket_rejects_disallowed_origin_with_4003():
+    client = TestClient(app)
+    with pytest.raises(WebSocketDisconnect) as exc_info:
+        with client.websocket_connect("/ws/events", headers={"origin": "http://evil.com"}) as ws:
+            ws.receive_text()
+    assert exc_info.value.code == 4003
+
+
+class _FakeWebSocket:
+    def __init__(self) -> None:
+        self.accepted = False
+        self.closed_code: int | None = None
+
+    async def accept(self) -> None:
+        self.accepted = True
+
+    async def close(self, code: int | None = None) -> None:
+        self.closed_code = code
+
+    async def send_json(self, payload: object) -> None:
+        pass
+
+
+def test_register_rejects_excess_clients_with_4003():
+    hub = EventHub(max_clients=1, buffer_size=0)
+    first = _FakeWebSocket()
+    asyncio.run(hub.register(first))
+    assert first.accepted is True
+
+    second = _FakeWebSocket()
+    with pytest.raises(RuntimeError):
+        asyncio.run(hub.register(second))
+    assert second.accepted is True
+    assert second.closed_code == 4003
 
 
 def test_is_allowed_origin_lan_and_loopback():
