@@ -382,10 +382,11 @@ mirrored in `frontend/src/lib/types.ts`):
 
 `instance_info` and `config_snapshot` are periodic snapshot events that power
 the **Nanoclaw Instance details** screen (click the liveness indicator in the
-top-right of the status bar): instance version/uptime/resources/skills/models/
-agents/tools, the user/group configuration markdown files (browseable in a
-two-pane viewer), and live metrics (messages/errors, token buffer, time to
-reset, host details). Their structured payloads are JSON-encoded in
+top-right of the status bar): a single-line details row (version, uptime, CPU,
+memory/disk usage), a collapsible folder-tree browser over the user/group
+configuration markdown files (agent → projects/sub-divisions, contents loaded
+on demand), and live metrics (messages/errors, token buffer, time to reset,
+host details). Their structured payloads are JSON-encoded in
 `payload.meta` (`meta.instance` and `meta.groups`) — see `API.md` for the full
 shape.
 

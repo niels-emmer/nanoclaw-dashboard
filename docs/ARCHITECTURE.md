@@ -105,10 +105,11 @@ Additional fields on all event types:
 
 `instance_info` and `config_snapshot` are periodic snapshot events (JSON-encoded
 in `payload.meta`, like `topology_snapshot`) that power the **Instance details**
-full-screen overlay: instance version/uptime/resources/skills/models/agents/
-tools, the user/group configuration markdown files (browseable in a two-pane
-viewer), and live metrics (messages/errors, token buffer, time to reset, host).
-The mock source emits them every ~10/40 ticks; the real nanoclaw source every
+full-screen overlay: a single-line details row (version, uptime, CPU,
+memory/disk usage), a collapsible folder-tree browser over the user/group
+configuration markdown files (agent → projects/sub-divisions, contents loaded
+on demand via `GET /api/config/file`), and live metrics (messages/errors, token
+buffer, time to reset, host). The mock source emits them every ~10/40 ticks; the real nanoclaw source every
 ~15/60 ticks plus once on connect. The real source reads config markdown from
 the nanoclaw install root (`groups/<folder>/instructions.prepend.md`,
 `groups/<folder>/memory/`, `container/CLAUDE.md`, `container/skills/`) — all

@@ -2,14 +2,17 @@
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-09-05
+
 ### Added
 
 - **Nanoclaw Instance details screen** — click the liveness indicator in the top-right of the status bar to open a full-screen overlay:
-  - **Instance details row** — version, live uptime, CPU, memory/disk usage bars, skills, models, agents, and tools.
+  - **Instance details row** — single line with version, live uptime, CPU, and memory/disk usage bars.
   - **Browse configuration** — collapsible folder tree (agent → projects/sub-divisions) over the user/group configuration markdown files; folders start collapsed and expand on click. Mock mode shows synthetic files; real mode reads the nanoclaw install root (`groups/<folder>/instructions.prepend.md`, `memory/`, `projects/`, `container/CLAUDE.md`, `container/skills/`) via the existing read-only mount. File contents load on demand via a new `GET /api/config/file` endpoint.
   - **Metrics bar** — messages/errors totals, token buffer (used/limit with progress), live time-to-reset countdown, and host details (hostname, platform, Python version, container).
   - Updates in real time over the existing WebSocket stream; uptime and time-to-reset tick locally every second.
-- **Telemetry schema 0.3.0** — two new periodic snapshot event types: `instance_info` (details + metrics in `payload.meta.instance`) and `config_snapshot` (grouped config files in `payload.meta.groups`), emitted by both the mock (~10/40 ticks) and real nanoclaw (~15/60 ticks, plus once on connect) sources.
+- **Telemetry schema 0.3.0** — two new periodic snapshot event types: `instance_info` (details + metrics in `payload.meta.instance`) and `config_snapshot` (config folder tree with file metadata only in `payload.meta.groups`), emitted by both the mock (~10/40 ticks) and real nanoclaw (~15/60 ticks, plus once on connect) sources.
+- **`GET /api/config/file` endpoint** — serves individual config file contents on demand (origin-validated, path-traversal-safe, `.md`-only, 20 KB cap), proxied through nginx.
 
 ## [1.2.0] — 2026-08-24
 
