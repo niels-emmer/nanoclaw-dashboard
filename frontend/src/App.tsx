@@ -4,6 +4,7 @@ import { ActivityFeed } from './components/ActivityFeed'
 import { ActivityDetail } from './components/ActivityDetail'
 import { AgentRoster } from './components/AgentRoster'
 import { AgentDetail } from './components/AgentDetail'
+import { InstanceDetails } from './components/InstanceDetails'
 import { StatusStrip } from './components/StatusStrip'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { useEventStream } from './hooks/useEventStream'
@@ -11,9 +12,10 @@ import { buildActivityFeed } from './lib/activityFeed'
 import './App.css'
 
 function App() {
-  const { agents, events, edges, connectionState, retryCount, orchestratorId, topology, humanAgentId, humanLastUpdated } = useEventStream()
+  const { agents, events, edges, connectionState, retryCount, orchestratorId, topology, humanAgentId, humanLastUpdated, instanceInfo, configGroups } = useEventStream()
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
+  const [showInstanceDetails, setShowInstanceDetails] = useState(false)
 
   const feed = useMemo(() => buildActivityFeed(events), [events])
   const selectedAgent = selectedAgentId ? agents.find((a) => a.id === selectedAgentId) : null
@@ -21,7 +23,14 @@ function App() {
 
   return (
     <div className="app-shell">
-      <StatusStrip orchestratorId={orchestratorId} connectionState={connectionState} retryCount={retryCount} agents={agents} events={events} />
+      <StatusStrip
+        orchestratorId={orchestratorId}
+        connectionState={connectionState}
+        retryCount={retryCount}
+        agents={agents}
+        events={events}
+        onOpenDetails={() => setShowInstanceDetails(true)}
+      />
 
       <main className="main-grid">
         <div className="tree-panel">
@@ -69,6 +78,14 @@ function App() {
 
       {selectedEvent && (
         <ActivityDetail event={selectedEvent} onClose={() => setSelectedEventId(null)} />
+      )}
+
+      {showInstanceDetails && (
+        <InstanceDetails
+          instanceInfo={instanceInfo}
+          configGroups={configGroups}
+          onClose={() => setShowInstanceDetails(false)}
+        />
       )}
     </div>
   )

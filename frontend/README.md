@@ -34,7 +34,7 @@ Set `VITE_BACKEND_WS_URL` when the backend lives somewhere other than `localhost
 - `src/lib/eventReducer.ts` – pure `useReducer` store deriving events, agent snapshots, edge pulses, topology, and the sticky human-facing agent.
 - `src/lib/utils.ts`, `src/lib/treeLayout.ts`, `src/lib/treePaths.ts`, `src/lib/channels.ts`, `src/lib/activityFeed.ts`, `src/lib/icons.ts` – pure derivation helpers (snapshots, liveness, opacity, tree layout, edge/pulse paths, channel detection, feed filtering, icon mapping).
 - `src/components/tree/` – SVG tree renderer (`TreeGraph`, `TreeNode`, `TreeEdge`).
-- `src/components/ActivityFeed.tsx`, `AgentRoster.tsx`, `AgentDetail.tsx`, `StatusStrip.tsx` – supporting panels + diagnostics.
+- `src/components/ActivityFeed.tsx`, `AgentRoster.tsx`, `AgentDetail.tsx`, `StatusStrip.tsx`, `InstanceDetails.tsx` – supporting panels + diagnostics (the full-screen instance details overlay opens from the status-bar liveness indicator).
 - `src/lib/types.ts` – Canonical telemetry types mirrored from the backend.
 - `src/index.css` / `App.css` – design tokens (colors + typography) single-sourced in `index.css` `:root`; keep modifications intentional.
 - `src/**/*.test.ts(x)` – Vitest suite (`npm test`).

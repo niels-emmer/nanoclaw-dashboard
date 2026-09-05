@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
+import platform
+import shutil
+import socket
 import sqlite3
 import time
 from collections import OrderedDict
@@ -238,6 +242,11 @@ class NanoclawTelemetrySource(TelemetrySource):
         self._cache_size = 5000
         self._orchestrator_id: Optional[str] = None
         self._topology_tick = 0
+        self._instance_tick = 0
+        self._config_tick = 0
+        self._started_at = time.monotonic()
+        self._messages_total = 0
+        self._errors_total = 0
 
         if not self.central_db.exists():
             raise FileNotFoundError(f"Nanoclaw database not found at {self.central_db}")
@@ -268,6 +277,21 @@ class NanoclawTelemetrySource(TelemetrySource):
                 topo = self._emit_topology_snapshot()
                 if topo:
                     events.append(topo)
+
+                # Instance info snapshot (every ~15 ticks) and config snapshot
+                # (every ~60 ticks) keep the instance details screen fresh.
+                self._instance_tick += 1
+                if self._instance_tick >= 15:
+                    self._instance_tick = 0
+                    info = self._build_instance_info()
+                    if info:
+                        events.append(info)
+                self._config_tick += 1
+                if self._config_tick >= 60:
+                    self._config_tick = 0
+                    config = self._build_config_snapshot()
+                    if config:
+                        events.append(config)
             except (sqlite3.DatabaseError, OSError, json.JSONDecodeError) as exc:
                 log.warning("nanoclaw_stream_error", error=str(exc))
             for event in events:
@@ -319,6 +343,7 @@ class NanoclawTelemetrySource(TelemetrySource):
                     continue
                 event = self._build_question_event(watcher, row)
                 if event:
+                    self._messages_total += 1
                     events.append(event)
             outbound_rows = watcher.fetch_outbound()
             for row in outbound_rows:
@@ -326,6 +351,7 @@ class NanoclawTelemetrySource(TelemetrySource):
                 # The noise filter is for inbound CLI/system chatter only.
                 event = self._build_response_event(watcher, row)
                 if event:
+                    self._messages_total += 1
                     events.append(event)
         return events
 
@@ -383,6 +409,8 @@ class NanoclawTelemetrySource(TelemetrySource):
             # Processing acks
             ack_rows = watcher.fetch_processing_acks()
             for ack in ack_rows:
+                if ack.get("status") == "error":
+                    self._errors_total += 1
                 label = self._agent_label(agent_id)
                 events.append(TelemetryEvent(
                     id=str(uuid4()),
@@ -415,6 +443,8 @@ class NanoclawTelemetrySource(TelemetrySource):
             label = self._agent_label(agent_id)
             delivered_rows = watcher.fetch_delivered()
             for row in delivered_rows:
+                if row.get("status") == "failed":
+                    self._errors_total += 1
                 events.append(TelemetryEvent(
                     id=str(uuid4()),
                     timestamp=self._normalize_timestamp(row.get("delivered_at")) or self._now(),
@@ -512,6 +542,14 @@ class NanoclawTelemetrySource(TelemetrySource):
         if topo:
             events.append(topo)
 
+        # Instance + config snapshots so the details screen renders immediately.
+        info = self._build_instance_info()
+        if info:
+            events.append(info)
+        config = self._build_config_snapshot()
+        if config:
+            events.append(config)
+
         return events
 
     def _emit_topology_snapshot(self, force: bool = False) -> Optional[TelemetryEvent]:
@@ -566,6 +604,182 @@ class NanoclawTelemetrySource(TelemetrySource):
                 },
             ),
         )
+
+    # ------------------------------------------------------------------
+    # Instance details (instance_info / config_snapshot)
+    # ------------------------------------------------------------------
+
+    _EXCLUDED_CONFIG_DIRS = frozenset({
+        ".git", "node_modules", "venv", ".venv", "__pycache__", "dist", "build", "data",
+        "agent-runner",  # container source code, not configuration
+    })
+
+    def _build_instance_info(self) -> Optional[TelemetryEvent]:
+        """Emit an instance_info snapshot derived from the nanoclaw host."""
+        uptime_ms = int((time.monotonic() - self._started_at) * 1000)
+
+        skills = sorted({s for cfg in self._agent_configs.values() for s in (cfg.skills or [])})
+        models = sorted({
+            f"{cfg.provider}/{cfg.model}"
+            for cfg in self._agent_configs.values()
+            if cfg.provider and cfg.model
+        })
+        agents = [
+            {
+                "id": f"agent:{ag_id}",
+                "label": self._agent_label(ag_id),
+                "state": "running"
+                if any(s.agent_group_id == ag_id for s in self._session_map.values())
+                else "idle",
+            }
+            for ag_id in self._agent_groups
+        ]
+        active_agents = sum(1 for a in agents if a["state"] == "running")
+
+        instance = {
+            "version": "0.3.0",
+            "uptimeMs": uptime_ms,
+            "host": self._host_info(),
+            "resources": self._resource_info(),
+            "skills": skills,
+            "models": models,
+            "agents": agents,
+            "tools": ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebSearch", "WebFetch"],
+            "metrics": {
+                "messagesTotal": self._messages_total,
+                "errorsTotal": self._errors_total,
+                "activeAgents": active_agents,
+            },
+        }
+        return TelemetryEvent(
+            id=str(uuid4()),
+            timestamp=self._now(),
+            type=EventType.INSTANCE_INFO,
+            source="orchestrator",
+            target="dashboard",
+            payload=EventPayload(
+                summary=f"Instance: {len(agents)} agents, {len(skills)} skills, {len(models)} models",
+                status="completed",
+                meta={"instance": json.dumps(instance, ensure_ascii=False, default=str)},
+            ),
+        )
+
+    def _build_config_snapshot(self) -> Optional[TelemetryEvent]:
+        """Emit a config_snapshot with markdown config files under the nanoclaw root."""
+        groups: Dict[str, dict] = {}
+        for path in self._iter_config_markdown():
+            rel = path.relative_to(self.root)
+            try:
+                content = path.read_text(encoding="utf-8", errors="replace")[:20_000]
+            except OSError:
+                continue  # skip a single unreadable file; never drop the whole tick
+            group_id = str(rel.parent) if str(rel.parent) != "." else "root"
+            group = groups.setdefault(group_id, {
+                "id": group_id,
+                "label": self._config_group_label(group_id),
+                "files": [],
+            })
+            group["files"].append({
+                "id": str(rel),
+                "path": str(rel),
+                "name": path.name,
+                "content": content,
+            })
+
+        if not groups:
+            return None
+        total_files = sum(len(g["files"]) for g in groups.values())
+        return TelemetryEvent(
+            id=str(uuid4()),
+            timestamp=self._now(),
+            type=EventType.CONFIG_SNAPSHOT,
+            source="orchestrator",
+            target="dashboard",
+            payload=EventPayload(
+                summary=f"Config: {len(groups)} groups, {total_files} files",
+                status="completed",
+                meta={"groups": json.dumps(list(groups.values()), ensure_ascii=False, default=str)},
+            ),
+        )
+
+    def _iter_config_markdown(self, max_depth: int = 4, max_files: int = 40) -> List[Path]:
+        """Yield markdown config files under the root, bounded by depth and count.
+
+        Depth 4 covers ``groups/<folder>/memory/*.md`` (the durable memory tree)
+        in addition to ``groups/<folder>/instructions.prepend.md`` and
+        ``container/CLAUDE.md``.
+        """
+        files: List[Path] = []
+        try:
+            for dirpath, dirnames, filenames in os.walk(self.root):
+                dirnames[:] = [d for d in dirnames if d not in self._EXCLUDED_CONFIG_DIRS]
+                depth = Path(dirpath).relative_to(self.root).parts
+                if len(depth) >= max_depth:
+                    dirnames[:] = []
+                for name in sorted(filenames):
+                    if name.endswith(".md"):
+                        files.append(Path(dirpath) / name)
+                        if len(files) >= max_files:
+                            return files
+        except OSError:
+            return files
+        return files
+
+    @staticmethod
+    def _config_group_label(group_id: str) -> str:
+        """Human-friendly label for a config group directory.
+
+        Strips only the ``groups/`` prefix so ``groups/coder`` → ``coder`` and
+        ``groups/coder/memory`` → ``coder/memory`` (distinct groups stay distinct).
+        """
+        if group_id == "root":
+            return "Root"
+        parts = group_id.split("/")
+        if parts[0] == "groups":
+            return "/".join(parts[1:]) or "Root"
+        return group_id
+
+    def _host_info(self) -> dict:
+        info = {
+            "hostname": socket.gethostname(),
+            "platform": platform.system().lower(),
+            "pythonVersion": platform.python_version(),
+        }
+        try:
+            info["container"] = "docker" if Path("/.dockerenv").exists() else "host"
+        except OSError:
+            pass
+        return info
+
+    def _resource_info(self) -> dict:
+        """Best-effort host resource readings; empty dict when unavailable."""
+        resources: dict = {}
+        try:
+            with open("/proc/meminfo", encoding="utf-8") as fh:
+                mem = {}
+                for line in fh:
+                    key, _, value = line.partition(":")
+                    mem[key] = int(value.strip().split()[0])  # kB
+            total_kb = mem.get("MemTotal", 0)
+            avail_kb = mem.get("MemAvailable", 0)
+            if total_kb:
+                resources["memoryUsedMb"] = (total_kb - avail_kb) // 1024
+                resources["memoryTotalMb"] = total_kb // 1024
+        except (OSError, ValueError, KeyError):
+            pass
+        try:
+            load = os.getloadavg()[0]
+            cpus = os.cpu_count() or 1
+            resources["cpuPercent"] = round(min(100.0, load / cpus * 100), 1)
+        except (OSError, AttributeError):
+            pass
+        try:
+            usage = shutil.disk_usage(self.root)
+            resources["diskUsedMb"] = usage.used // (1024 * 1024)
+            resources["diskTotalMb"] = usage.total // (1024 * 1024)
+        except OSError:
+            pass
+        return resources
 
     # ------------------------------------------------------------------
     # Refresh helpers

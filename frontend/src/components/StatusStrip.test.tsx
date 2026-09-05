@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { StatusStrip } from './StatusStrip'
 import type { AgentSnapshot, TelemetryEvent } from '../lib/types'
 
@@ -74,5 +74,21 @@ describe('StatusStrip', () => {
       <StatusStrip orchestratorId="agent:marvin" connectionState="connected" retryCount={0} agents={agents} events={events} />,
     )
     expect(screen.getByText('2')).toBeInTheDocument()
+  })
+
+  it('opens instance details when the liveness indicator is clicked', () => {
+    const onOpenDetails = vi.fn()
+    render(
+      <StatusStrip
+        orchestratorId="agent:marvin"
+        connectionState="connected"
+        retryCount={0}
+        agents={[]}
+        events={[]}
+        onOpenDetails={onOpenDetails}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: /instance details/i }))
+    expect(onOpenDetails).toHaveBeenCalledTimes(1)
   })
 })

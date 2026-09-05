@@ -15,7 +15,7 @@ def test_schema_version_is_current():
         target="agent:coder",
         payload=EventPayload(summary="test"),
     )
-    assert event.schema_version == "0.2.0"
+    assert event.schema_version == "0.3.0"
 
 
 def test_frontend_types_match_backend_schema():

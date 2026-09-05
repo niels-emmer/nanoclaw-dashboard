@@ -235,7 +235,8 @@ nanoclaw-dashboard/
 │   │   │   ├── ActivityFeed.tsx  # Simplified conversation stream
 │   │   │   ├── AgentRoster.tsx   # Compact auto-hiding agent strip
 │   │   │   ├── AgentDetail.tsx   # Click-to-expand drill-down panel
-│   │   │   └── StatusStrip.tsx   # Top status bar
+│   │   │   ├── InstanceDetails.tsx # Full-screen instance details overlay
+│   │   │   └── StatusStrip.tsx   # Top status bar (click liveness → details)
 │   │   ├── hooks/
 │   │   │   └── useEventStream.ts  # Thin WS ingest + dispatch into reducer
 │   │   ├── lib/
@@ -354,7 +355,7 @@ mirrored in `frontend/src/lib/types.ts`):
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "timestamp": "2026-07-26T12:34:56.789Z",
-  "type": "question | response | agent_status | activity_update | delivery_update | approval_pending | topology_snapshot",
+  "type": "question | response | agent_status | activity_update | delivery_update | approval_pending | topology_snapshot | instance_info | config_snapshot",
   "source": "orchestrator | agent:<name> | channel:<type>",
   "target": "agent:<name> | orchestrator | admin | dashboard",
   "payload": {
@@ -375,9 +376,18 @@ mirrored in `frontend/src/lib/types.ts`):
     "approval_title": "string | null"
   },
   "agent_state": "spinning_up | idle | running | error | null",
-  "schema_version": "0.2.0"
+  "schema_version": "0.3.0"
 }
 ```
+
+`instance_info` and `config_snapshot` are periodic snapshot events that power
+the **Nanoclaw Instance details** screen (click the liveness indicator in the
+top-right of the status bar): instance version/uptime/resources/skills/models/
+agents/tools, the user/group configuration markdown files (browseable in a
+two-pane viewer), and live metrics (messages/errors, token buffer, time to
+reset, host details). Their structured payloads are JSON-encoded in
+`payload.meta` (`meta.instance` and `meta.groups`) — see `API.md` for the full
+shape.
 
 ## Contributing
 

@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import platform
 import random
+import socket
+import time
 from uuid import uuid4
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
@@ -206,6 +209,16 @@ class MockTelemetrySource(TelemetrySource):
         self._jitter = jitter_ms
         self._topology_timer = 0.0
         self._idle_agents: set[str] = set()
+        # Instance-level state for instance_info / config_snapshot events
+        self._started_at = time.monotonic()
+        self._messages_total = 0
+        self._errors_total = 0
+        self._instance_timer = 0
+        self._config_timer = 0
+        self._cpu_pct = 32.0
+        self._mem_used_mb = 4096.0
+        self._token_used = 45_000
+        self._time_to_reset_ms = random.randint(15, 90) * 60_000
 
     async def stream(self) -> AsyncIterator[TelemetryEvent]:
         agents_cycle = itertools_cycle(self._agents)
@@ -245,6 +258,7 @@ class MockTelemetrySource(TelemetrySource):
                 summary=question_text,
                 agent_state=AgentState.RUNNING,
             )
+            self._messages_total += 1
             yield question
             await asyncio.sleep(self._sleep_seconds())
 
@@ -266,6 +280,7 @@ class MockTelemetrySource(TelemetrySource):
             )
             response.payload.duration_ms = random.randint(500, 5000)
             response.payload.status = "completed"
+            self._messages_total += 1
             yield response
             await asyncio.sleep(self._sleep_seconds())
 
@@ -279,6 +294,7 @@ class MockTelemetrySource(TelemetrySource):
 
             # --- Occasional error ---
             if random.random() < 0.04:
+                self._errors_total += 1
                 yield self._build_error_event(agent)
 
             # --- Topology snapshot (every ~12 ticks) ---
@@ -286,6 +302,18 @@ class MockTelemetrySource(TelemetrySource):
             if self._topology_timer >= 12:
                 self._topology_timer = 0
                 yield self._build_topology_event()
+
+            # --- Instance info snapshot (every ~10 ticks) ---
+            self._instance_timer += 1
+            if self._instance_timer >= 10:
+                self._instance_timer = 0
+                yield self._build_instance_info()
+
+            # --- Config snapshot (every ~40 ticks) ---
+            self._config_timer += 1
+            if self._config_timer >= 40:
+                self._config_timer = 0
+                yield self._build_config_snapshot()
 
     def _emit_a2a_conversation(self, src: str, tgt: str, question_text: str, response_text: str) -> list[TelemetryEvent]:
         """Emit a question/response pair between two agents."""
@@ -298,6 +326,7 @@ class MockTelemetrySource(TelemetrySource):
             summary=question_text,
             agent_state=AgentState.RUNNING,
         )
+        self._messages_total += 1
         events.append(q)
 
         r = self._build_event(
@@ -309,6 +338,7 @@ class MockTelemetrySource(TelemetrySource):
         )
         r.payload.duration_ms = random.randint(1000, 4000)
         r.payload.status = "completed"
+        self._messages_total += 1
         events.append(r)
 
         return events
@@ -483,6 +513,181 @@ class MockTelemetrySource(TelemetrySource):
                 },
             ),
         )
+
+    def _build_instance_info(self) -> TelemetryEvent:
+        """Emit an instance_info snapshot with instance details + metrics."""
+        uptime_ms = int((time.monotonic() - self._started_at) * 1000)
+
+        # Random-walk resources so the numbers drift realistically between snapshots.
+        self._cpu_pct = min(95.0, max(5.0, self._cpu_pct + random.uniform(-8, 8)))
+        self._mem_used_mb = min(14_000.0, max(2_000.0, self._mem_used_mb + random.uniform(-300, 300)))
+        self._token_used = min(190_000, max(10_000, self._token_used + random.randint(-8_000, 12_000)))
+        # Monotonic countdown so the "time to reset" metric ticks down, not jumps.
+        self._time_to_reset_ms = max(0, self._time_to_reset_ms - 10_000)
+        if self._time_to_reset_ms <= 0:
+            self._time_to_reset_ms = random.randint(15, 90) * 60_000
+
+        skills = sorted({s for group in _AGENT_SKILLS.values() for s in group})
+        models = sorted({f"{provider}/{model}" for provider, model in _AGENT_MODELS.values()})
+        agents = [
+            {
+                "id": f"agent:{name}",
+                "label": name,
+                "state": "running" if name not in self._idle_agents else "idle",
+            }
+            for name in self._agents
+        ]
+        active_agents = sum(1 for a in agents if a["state"] == "running")
+
+        instance = {
+            "version": "0.3.0",
+            "uptimeMs": uptime_ms,
+            "host": {
+                "hostname": socket.gethostname(),
+                "platform": platform.system().lower(),
+                "pythonVersion": platform.python_version(),
+                "container": "docker",
+            },
+            "resources": {
+                "cpuPercent": round(self._cpu_pct, 1),
+                "memoryUsedMb": round(self._mem_used_mb),
+                "memoryTotalMb": 16_384,
+                "diskUsedMb": 102_400,
+                "diskTotalMb": 512_000,
+            },
+            "skills": skills,
+            "models": models,
+            "agents": agents,
+            "tools": _TOOLS,
+            "metrics": {
+                "messagesTotal": self._messages_total,
+                "errorsTotal": self._errors_total,
+                "tokenBufferUsed": self._token_used,
+                "tokenBufferLimit": 200_000,
+                "timeToResetMs": self._time_to_reset_ms,
+                "activeAgents": active_agents,
+            },
+        }
+        return TelemetryEvent(
+            id=str(uuid4()),
+            timestamp=_timestamp(),
+            type=EventType.INSTANCE_INFO,
+            source="orchestrator",
+            target="dashboard",
+            payload=EventPayload(
+                summary=f"Instance: {len(agents)} agents, {len(skills)} skills, {len(models)} models",
+                status="completed",
+                meta={"instance": _json_dumps(instance)},
+            ),
+        )
+
+    def _build_config_snapshot(self) -> TelemetryEvent:
+        """Emit a config_snapshot with the user/group configuration files."""
+        groups = self._build_mock_config_groups()
+        total_files = sum(len(g["files"]) for g in groups)
+        return TelemetryEvent(
+            id=str(uuid4()),
+            timestamp=_timestamp(),
+            type=EventType.CONFIG_SNAPSHOT,
+            source="orchestrator",
+            target="dashboard",
+            payload=EventPayload(
+                summary=f"Config: {len(groups)} groups, {total_files} files",
+                status="completed",
+                meta={"groups": _json_dumps(groups)},
+            ),
+        )
+
+    def _build_mock_config_groups(self) -> list[dict]:
+        """Synthetic user/group configuration files (markdown) grouped logically."""
+        groups: list[dict] = []
+
+        # Agents — one file per agent describing role, model, and skills.
+        agent_files = []
+        for name in self._agents:
+            skills = ", ".join(_AGENT_SKILLS.get(name, [])) or "none"
+            provider, model = _AGENT_MODELS.get(name, ("claude", "sonnet"))
+            agent_files.append({
+                "id": f"agents/{name}",
+                "path": f"agents/{name}.md",
+                "name": f"{name}.md",
+                "content": (
+                    f"# {name.title()}\n\n"
+                    f"Role: {name.replace('-', ' ')} specialist\n"
+                    f"Model: {provider}/{model}\n"
+                    f"Skills: {skills}\n\n"
+                    "## Instructions\n"
+                    f"- Handle tasks routed to the {name} agent.\n"
+                    "- Report progress via activity updates.\n"
+                    "- Escalate to the orchestrator on failure.\n"
+                ),
+            })
+        groups.append({"id": "agents", "label": "Agents", "files": agent_files})
+
+        # Skills
+        skill_files = [
+            {
+                "id": "skills/code-review",
+                "path": "skills/code-review.md",
+                "name": "code-review.md",
+                "content": "# Code Review\n\n- Check for correctness, security, and style.\n- Verify tests cover the change.\n- Flag secrets and hardcoded credentials.\n",
+            },
+            {
+                "id": "skills/web-search",
+                "path": "skills/web-search.md",
+                "name": "web-search.md",
+                "content": "# Web Search\n\n- Prefer primary sources.\n- Cite URLs in responses.\n- Note the publication date of sources.\n",
+            },
+            {
+                "id": "skills/unit-test",
+                "path": "skills/unit-test.md",
+                "name": "unit-test.md",
+                "content": "# Unit Tests\n\n- One behavior per test.\n- Mock external services.\n- Cover edge cases and error paths.\n",
+            },
+        ]
+        groups.append({"id": "skills", "label": "Skills", "files": skill_files})
+
+        # Workflow & governance
+        workflow_files = [
+            {
+                "id": "workflow/agents",
+                "path": "workflow/AGENTS.md",
+                "name": "AGENTS.md",
+                "content": "# Agent Instructions\n\nThis file defines how agents behave in this workspace.\n\n- Run /start at session begin.\n- Plan before non-trivial edits.\n- Verify before completion.\n",
+            },
+            {
+                "id": "workflow/playbook",
+                "path": "workflow/OPENCODE_WORKFLOW.md",
+                "name": "OPENCODE_WORKFLOW.md",
+                "content": "# Workflow Playbook\n\n- Run /start at session begin.\n- Plan before non-trivial edits.\n- Delegate intentionally.\n- Verify before completion.\n- Document the session.\n",
+            },
+            {
+                "id": "workflow/governance",
+                "path": "workflow/governance.md",
+                "name": "governance.md",
+                "content": "# Governance\n\n- Classify data before cloud model use.\n- No secrets in prompts or code.\n- Audit AI-driven changes.\n- Pin dependencies with compatible licenses.\n",
+            },
+        ]
+        groups.append({"id": "workflow", "label": "Workflow & Governance", "files": workflow_files})
+
+        # Global / user
+        global_files = [
+            {
+                "id": "global/global-agents",
+                "path": "~/.config/opencode/AGENTS.md",
+                "name": "AGENTS.md",
+                "content": "# Global Rules\n\n- Think before coding.\n- Simplicity first.\n- Surgical changes only.\n- Verify before done.\n",
+            },
+            {
+                "id": "global/opencode-json",
+                "path": "~/.config/opencode/opencode.json",
+                "name": "opencode.json",
+                "content": "{\n  \"model\": \"opencode/deepseek-v4-flash\",\n  \"permissions\": {}\n}\n",
+            },
+        ]
+        groups.append({"id": "global", "label": "Global / User", "files": global_files})
+
+        return groups
 
     def _build_event(
         self,

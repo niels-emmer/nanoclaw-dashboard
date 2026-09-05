@@ -85,5 +85,7 @@ export const useEventStream = () => {
     topology: state.topology,
     humanAgentId: state.humanAgentId,
     humanLastUpdated: state.humanLastUpdated,
+    instanceInfo: state.instanceInfo,
+    configGroups: state.configGroups,
   }
 }

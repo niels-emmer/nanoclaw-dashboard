@@ -1,4 +1,4 @@
-export type EventType = 'question' | 'response' | 'agent_status' | 'activity_update' | 'delivery_update' | 'approval_pending' | 'topology_snapshot'
+export type EventType = 'question' | 'response' | 'agent_status' | 'activity_update' | 'delivery_update' | 'approval_pending' | 'topology_snapshot' | 'instance_info' | 'config_snapshot'
 export type AgentState = 'spinning_up' | 'idle' | 'running' | 'error'
 export type ToolCategory = 'thinking' | 'reading' | 'writing' | 'executing' | 'network' | 'waiting'
 export type Liveness = 'alive' | 'stale' | 'dead' | 'unknown'
@@ -92,4 +92,63 @@ export interface TopologyData {
   channels: Array<{ id: string; type: string; agents: string[] }>
   a2aEdges: Array<{ source: string; target: string }>
   tree?: { root: string; children: Record<string, string[]> }
+}
+
+// ---- Instance details (instance_info / config_snapshot events) ----
+
+export interface InstanceHost {
+  hostname?: string
+  platform?: string
+  pythonVersion?: string
+  container?: string
+}
+
+export interface InstanceResources {
+  cpuPercent?: number
+  memoryUsedMb?: number
+  memoryTotalMb?: number
+  diskUsedMb?: number
+  diskTotalMb?: number
+}
+
+export interface InstanceAgent {
+  id: string
+  label: string
+  state: string
+}
+
+export interface InstanceMetrics {
+  messagesTotal?: number
+  errorsTotal?: number
+  tokenBufferUsed?: number
+  tokenBufferLimit?: number
+  timeToResetMs?: number
+  activeAgents?: number
+}
+
+export interface InstanceInfo {
+  version?: string
+  uptimeMs?: number
+  host?: InstanceHost
+  resources?: InstanceResources
+  skills?: string[]
+  models?: string[]
+  agents?: InstanceAgent[]
+  tools?: string[]
+  metrics?: InstanceMetrics
+  /** Local timestamp (ms) when this snapshot was received — for live ticking. */
+  receivedAt?: number
+}
+
+export interface ConfigFile {
+  id: string
+  path: string
+  name: string
+  content: string
+}
+
+export interface ConfigGroup {
+  id: string
+  label: string
+  files: ConfigFile[]
 }

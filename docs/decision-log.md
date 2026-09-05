@@ -215,3 +215,17 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - Future timestamps no longer appear; naive local times are normalized to UTC before display.
   - `schema_version` unchanged (no telemetry schema or transport change); timestamp semantics are normalized at the source.
   - Covered by new unit tests: `buildActivityFeed` sorting (frontend) and `_normalize_timestamp` (backend).
+
+## 0021 – Instance details screen: instance_info + config_snapshot events (2026-09-05)
+- **Status**: Accepted
+- **Context**: The wallboard shows live orchestration but nothing about the instance itself. The user asked for a deep-dive screen opened from the top-bar liveness indicator: instance details (version, uptime, resources, skills, models, agents, tools), a browseable view of the user/group configuration markdown files, and a live metrics bar (messages/errors, token buffer, time to reset, host). Nanoclaw has no HTTP API (admin surface is the `ncl` CLI over a Unix socket), so config must be read from the filesystem.
+- **Decision**:
+  - Add two periodic snapshot event types to the telemetry schema: `instance_info` (details + metrics, JSON-encoded in `payload.meta.instance`) and `config_snapshot` (grouped config files, JSON-encoded in `payload.meta.groups`) — following the existing `topology_snapshot` meta convention. Bump `schema_version` to `0.3.0`.
+  - Mock source emits both periodically (~10/40 ticks) with realistic random-walk resources and synthetic markdown config groups (Agents, Skills, Workflow & Governance, Global/User).
+  - Real nanoclaw source derives instance info from agent configs/sessions + host readings (`/proc/meminfo`, loadavg, `shutil.disk_usage`, best-effort) and globs `*.md` under the nanoclaw install root (depth ≤ 4, ≤ 40 files, ≤ 20 KB each, excluding `data/`, `.git`, `node_modules`, `venv`, `agent-runner`), grouped by directory with the `groups/` prefix stripped from labels. The existing read-only bind mount (`NANOCLAW_HOST_DATA` → `/nanoclaw:ro`) already covers `groups/<folder>/instructions.prepend.md`, `groups/<folder>/memory/`, `container/CLAUDE.md`, and `container/skills/` — no new mount required.
+  - Frontend: `instance_info`/`config_snapshot` are handled in the pure reducer (excluded from activity history, like `delivery_update`); the liveness indicator in `StatusStrip` becomes a button that opens a full-screen `InstanceDetails` overlay (header with back-to-dashboard, details row, two-pane config browser, metrics bar). Uptime and time-to-reset tick locally every second; missing fields render as "—".
+- **Consequences**:
+  - The instance details screen updates in real time via the existing WebSocket stream; no new transport.
+  - Config browsing works in mock mode (synthetic files) and real mode (actual nanoclaw config markdown); if the real source finds no markdown, the browser shows an empty state rather than breaking.
+  - `schema_version` bumped to `0.3.0`; `frontend/src/lib/types.ts` mirrored; `API.md`, `README.md`, and `ARCHITECTURE.md` updated.
+  - Covered by new tests: backend mock `instance_info`/`config_snapshot` structure, frontend reducer handling, StatusStrip click, and `InstanceDetails` rendering.

@@ -8,6 +8,7 @@ interface Props {
   retryCount: number
   agents: AgentSnapshot[]
   events: TelemetryEvent[]
+  onOpenDetails?: () => void
 }
 
 const connLabel: Record<ConnectionState, { text: string; cls: string }> = {
@@ -27,7 +28,7 @@ function formatAgo(ms: number): string {
   return `${Math.floor(m / 60)}h ago`
 }
 
-export function StatusStrip({ orchestratorId, connectionState, retryCount, agents, events }: Props) {
+export function StatusStrip({ orchestratorId, connectionState, retryCount, agents, events, onOpenDetails }: Props) {
   const [now, setNow] = useState(() => Date.now())
 
   // Tick every second so the clock and "last activity" stay fresh.
@@ -92,13 +93,19 @@ export function StatusStrip({ orchestratorId, connectionState, retryCount, agent
 
       <div className="status-right">
         <span className="status-clock">{clock}</span>
-        <div className="status-conn">
+        <button
+          type="button"
+          className="status-conn"
+          onClick={onOpenDetails}
+          title="Nanoclaw instance details"
+          aria-label="Open nanoclaw instance details"
+        >
           <span className={`status-conn-dot ${conn.cls}`} />
           <span className={`status-conn-text ${conn.cls}`}>
             {conn.text}
             {retryCount > 0 && connectionState !== 'connected' ? ` (${retryCount})` : ''}
           </span>
-        </div>
+        </button>
       </div>
     </header>
   )

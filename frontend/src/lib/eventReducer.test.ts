@@ -211,4 +211,84 @@ describe('eventReducer', () => {
     const next = dispatch(state, topo)
     expect(next.orchestratorId).toBe('agent:boss')
   })
+
+  it('stores instance_info and excludes it from event history', () => {
+    const state = createInitialState('orchestrator')
+    const info = baseEvent({
+      id: '1',
+      type: 'instance_info',
+      source: 'orchestrator',
+      target: 'dashboard',
+      payload: {
+        summary: 'instance',
+        status: 'completed',
+        meta: {
+          instance: JSON.stringify({
+            version: '0.3.0',
+            uptimeMs: 5000,
+            skills: ['web-search'],
+            metrics: { messagesTotal: 42, errorsTotal: 1 },
+          }),
+        },
+      },
+    })
+    const next = dispatch(state, info, 1234)
+    expect(next.instanceInfo).not.toBeNull()
+    expect(next.instanceInfo?.version).toBe('0.3.0')
+    expect(next.instanceInfo?.uptimeMs).toBe(5000)
+    expect(next.instanceInfo?.metrics?.messagesTotal).toBe(42)
+    expect(next.instanceInfo?.receivedAt).toBe(1234)
+    expect(next.events).toHaveLength(0)
+    expect(next.snapshots).toEqual({})
+  })
+
+  it('stores config_snapshot groups and excludes them from event history', () => {
+    const state = createInitialState('orchestrator')
+    const config = baseEvent({
+      id: '1',
+      type: 'config_snapshot',
+      source: 'orchestrator',
+      target: 'dashboard',
+      payload: {
+        summary: 'config',
+        status: 'completed',
+        meta: {
+          groups: JSON.stringify([
+            {
+              id: 'agents',
+              label: 'Agents',
+              files: [{ id: 'agents/coder', path: 'agents/coder.md', name: 'coder.md', content: '# Coder' }],
+            },
+          ]),
+        },
+      },
+    })
+    const next = dispatch(state, config)
+    expect(next.configGroups).toHaveLength(1)
+    expect(next.configGroups?.[0].label).toBe('Agents')
+    expect(next.configGroups?.[0].files[0].content).toBe('# Coder')
+    expect(next.events).toHaveLength(0)
+  })
+
+  it('keeps the previous instance info when a new snapshot fails to parse', () => {
+    let state = createInitialState('orchestrator')
+    const good = baseEvent({
+      id: '1',
+      type: 'instance_info',
+      source: 'orchestrator',
+      target: 'dashboard',
+      payload: { summary: 'instance', status: 'completed', meta: { instance: JSON.stringify({ version: '0.3.0' }) } },
+    })
+    state = dispatch(state, good, 1000)
+    const bad = baseEvent({
+      id: '2',
+      type: 'instance_info',
+      source: 'orchestrator',
+      target: 'dashboard',
+      payload: { summary: 'instance', status: 'completed', meta: { instance: 'not-json' } },
+    })
+    const next = dispatch(state, bad, 2000)
+    expect(next.instanceInfo?.version).toBe('0.3.0')
+    expect(next.instanceInfo?.receivedAt).toBe(1000)
+  })
 })

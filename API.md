@@ -54,7 +54,7 @@ WebSocket stream of canonical telemetry events (orchestrator → agents → sub-
   "target": "orchestrator",
   "payload": { "summary": "...", "status": "running", "current_tool": "Bash" },
   "agent_state": "running",
-  "schema_version": "0.2.0"
+  "schema_version": "0.3.0"
 }
 ```
 
@@ -80,6 +80,15 @@ WebSocket stream of canonical telemetry events (orchestrator → agents → sub-
 | `delivery_update` | Message delivery outcome |
 | `approval_pending` | Approval request awaiting human action |
 | `topology_snapshot` | Full agent hierarchy snapshot |
+| `instance_info` | Instance details + metrics snapshot (periodic) |
+| `config_snapshot` | User/group configuration files (periodic) |
+
+**Snapshot payloads** (`instance_info` / `config_snapshot`) carry their structured data as JSON-encoded strings in `payload.meta`, mirroring the `topology_snapshot` convention:
+
+- `instance_info` → `meta.instance` — JSON object with `version`, `uptimeMs`, `host` (`hostname`, `platform`, `pythonVersion`, `container`), `resources` (`cpuPercent`, `memoryUsedMb`, `memoryTotalMb`, `diskUsedMb`, `diskTotalMb`), `skills[]`, `models[]` (`provider/model`), `agents[]` (`id`, `label`, `state`), `tools[]`, and `metrics` (`messagesTotal`, `errorsTotal`, `tokenBufferUsed`, `tokenBufferLimit`, `timeToResetMs`, `activeAgents`). Fields may be absent when the source cannot provide them (e.g. token metrics on the real nanoclaw source).
+- `config_snapshot` → `meta.groups` — JSON array of groups (`id`, `label`, `files[]`), each file with `id`, `path`, `name`, and `content` (markdown, capped at 20 KB per file, 40 files per snapshot). The real source globs `*.md` under the nanoclaw root (depth ≤ 4, excluding `data/`, `.git`, `node_modules`, `venv`, `agent-runner`), grouped by directory with the `groups/` prefix stripped from labels.
+
+Both snapshot types are emitted periodically by the mock source (~10/40 ticks) and the real nanoclaw source (~15/60 ticks, plus once on connect) and are excluded from the frontend activity history.
 
 **Channel routing convention**: `source`/`target` ids of the form `channel:<name>` (e.g. `human:whatsapp`, `human:matrix`) are real human channels and route to the Human node; `channel:agent` is internal and routes to the orchestrator.
 

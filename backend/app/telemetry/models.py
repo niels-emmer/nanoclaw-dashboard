@@ -16,6 +16,8 @@ class EventType(str, Enum):
     DELIVERY_UPDATE = "delivery_update"
     APPROVAL_PENDING = "approval_pending"
     TOPOLOGY_SNAPSHOT = "topology_snapshot"
+    INSTANCE_INFO = "instance_info"
+    CONFIG_SNAPSHOT = "config_snapshot"
 
 
 class AgentState(str, Enum):
@@ -106,4 +108,4 @@ class TelemetryEvent(BaseModel):
     target: str
     payload: EventPayload
     agent_state: Optional[AgentState] = None
-    schema_version: str = Field(default="0.2.0")
+    schema_version: str = Field(default="0.3.0")

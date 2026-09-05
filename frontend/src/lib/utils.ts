@@ -1,4 +1,4 @@
-import type { AgentSnapshot, Liveness, TelemetryEvent, ToolCategory, TopologyData } from './types'
+import type { AgentSnapshot, ConfigGroup, InstanceInfo, Liveness, TelemetryEvent, ToolCategory, TopologyData } from './types'
 
 export const formatTime = (maybeMs: number) => {
   const safeMs = Number.isNaN(maybeMs) ? Date.now() : maybeMs
@@ -150,6 +150,25 @@ export const parseTopologyMeta = (meta: Record<string, string> | null | undefine
     const a2aEdges = meta.a2aEdges ? JSON.parse(meta.a2aEdges) : []
     const tree = meta.tree ? JSON.parse(meta.tree) : undefined
     return { channels, a2aEdges, tree }
+  } catch {
+    return null
+  }
+}
+
+// Instance details parsing
+export const parseInstanceInfoMeta = (meta: Record<string, string> | null | undefined): InstanceInfo | null => {
+  if (!meta?.instance) return null
+  try {
+    return JSON.parse(meta.instance) as InstanceInfo
+  } catch {
+    return null
+  }
+}
+
+export const parseConfigGroupsMeta = (meta: Record<string, string> | null | undefined): ConfigGroup[] | null => {
+  if (!meta?.groups) return null
+  try {
+    return JSON.parse(meta.groups) as ConfigGroup[]
   } catch {
     return null
   }

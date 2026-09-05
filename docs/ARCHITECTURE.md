@@ -59,7 +59,7 @@ Additional fields on all event types:
 | Event ingestion | `src/hooks/useEventStream.ts`, `src/lib/eventReducer.ts`, `src/lib/config.ts`, `src/lib/types.ts` | `useEventStream` is a thin ingest layer: it owns the WebSocket connection + auto-reconnect and dispatches each event into a pure `useReducer` store (`eventReducer`). The reducer derives events, agent snapshots, edge pulses, tool history, orchestrator id, and topology — all time-injected and unit-testable. |
 | Derivation helpers | `src/lib/utils.ts`, `src/lib/treeLayout.ts`, `src/lib/icons.ts` | Pure, config-free helpers: agent snapshot/liveness/opacity/tool-history derivation, left-to-right tree layout (`computeTreeLayout`), and the agent icon keyword map. |
 | Visualization | `src/components/tree/TreeGraph.tsx` + `src/components/tree/` | `TreeGraph` is a thin composition root. Rendering is split into `TreeNode` (agent blob + color-coded tool indicators) and `TreeEdge` (parent-child edges + live pulses). Left-to-right hierarchical tree with the orchestrator at root and sub-agents nested (from topology `tree`). Active agents glow; tool history shows active tool first, ghosted to the right. |
-| Details panes | `ActivityFeed.tsx`, `ActivityDetail.tsx`, `AgentRoster.tsx`, `AgentDetail.tsx`, `StatusStrip.tsx` | Simplified conversation stream (click a card to open `ActivityDetail`, a slideout with full message text + metadata), compact auto-hiding agent roster, click-to-expand agent drill-down, and a top status bar with error/stuck/pending alerts. |
+| Details panes | `ActivityFeed.tsx`, `ActivityDetail.tsx`, `AgentRoster.tsx`, `AgentDetail.tsx`, `StatusStrip.tsx`, `InstanceDetails.tsx` | Simplified conversation stream (click a card to open `ActivityDetail`, a slideout with full message text + metadata), compact auto-hiding agent roster, click-to-expand agent drill-down, a top status bar with error/stuck/pending alerts (click the liveness indicator to open the full-screen `InstanceDetails` overlay: instance details, config browser, metrics bar), and the instance details overlay itself. |
 | Shell | `App.tsx`, `App.css`, `index.css` | Four-zone layout: status strip (top), tree graph (left ~60%), live activity feed (right ~40%), compact roster (bottom, auto-hides). Colorful ambient background, color-coded pulses, glowing active nodes. Design tokens (colors + typography) single-sourced in `index.css` `:root`. |
 
 `npm run dev` starts Vite on `5173`. When the dev server runs on `5173`, the SPA automatically targets `ws://localhost:8000/ws/events`; otherwise set `VITE_BACKEND_WS_URL`. `npm test` runs the Vitest suite (`src/**/*.test.ts(x)`).
@@ -72,7 +72,7 @@ Additional fields on all event types:
 {
   "id": "UUID",
   "timestamp": "ISO-8601",
-  "type": "question | response | agent_status | activity_update | delivery_update | approval_pending | topology_snapshot",
+  "type": "question | response | agent_status | activity_update | delivery_update | approval_pending | topology_snapshot | instance_info | config_snapshot",
   "source": "orchestrator | agent:<name> | channel:<type>",
   "target": "agent:<name> | orchestrator | admin | dashboard",
   "payload": {
@@ -99,9 +99,20 @@ Additional fields on all event types:
     "approval_title": "string | null"
   },
   "agent_state": "spinning_up | idle | running | error | null",
-  "schema_version": "0.2.0"
+  "schema_version": "0.3.0"
 }
 ```
+
+`instance_info` and `config_snapshot` are periodic snapshot events (JSON-encoded
+in `payload.meta`, like `topology_snapshot`) that power the **Instance details**
+full-screen overlay: instance version/uptime/resources/skills/models/agents/
+tools, the user/group configuration markdown files (browseable in a two-pane
+viewer), and live metrics (messages/errors, token buffer, time to reset, host).
+The mock source emits them every ~10/40 ticks; the real nanoclaw source every
+~15/60 ticks plus once on connect. The real source reads config markdown from
+the nanoclaw install root (`groups/<folder>/instructions.prepend.md`,
+`groups/<folder>/memory/`, `container/CLAUDE.md`, `container/skills/`) — all
+covered by the existing read-only bind mount; no extra mount is required.
 
 When new telemetry attributes are required, bump `schema_version`, update both the backend model and frontend types, and add an ADR entry.
 

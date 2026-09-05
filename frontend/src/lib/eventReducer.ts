@@ -1,5 +1,5 @@
-import type { AgentSnapshot, EdgePulse, TelemetryEvent, TopologyData } from './types'
-import { deriveAgentSnapshot, parseTopologyMeta } from './utils'
+import type { AgentSnapshot, ConfigGroup, EdgePulse, InstanceInfo, TelemetryEvent, TopologyData } from './types'
+import { deriveAgentSnapshot, parseConfigGroupsMeta, parseInstanceInfoMeta, parseTopologyMeta } from './utils'
 import { channelName, isHumanChannel } from './channels'
 
 /**
@@ -16,6 +16,8 @@ export interface EventState {
   topology: TopologyData | null
   humanAgentId: string | null
   humanLastUpdated: number | null
+  instanceInfo: InstanceInfo | null
+  configGroups: ConfigGroup[] | null
 }
 
 export type EventAction = { type: 'event'; event: TelemetryEvent; now: number; maxEventHistory: number }
@@ -41,6 +43,8 @@ export function createInitialState(orchestratorId: string): EventState {
     topology: null,
     humanAgentId: null,
     humanLastUpdated: null,
+    instanceInfo: null,
+    configGroups: null,
   }
 }
 
@@ -76,6 +80,23 @@ export function eventReducer(state: EventState, action: EventAction): EventState
           ...state,
           orchestratorId,
           topology: topo ?? state.topology,
+        }
+      }
+
+      // Instance details snapshots update the details screen state and are
+      // excluded from the activity history (they are not user-facing events).
+      if (event.type === 'instance_info') {
+        const info = parseInstanceInfoMeta(event.payload.meta)
+        return {
+          ...state,
+          instanceInfo: info ? { ...info, receivedAt: now } : state.instanceInfo,
+        }
+      }
+      if (event.type === 'config_snapshot') {
+        const groups = parseConfigGroupsMeta(event.payload.meta)
+        return {
+          ...state,
+          configGroups: groups ?? state.configGroups,
         }
       }
 
