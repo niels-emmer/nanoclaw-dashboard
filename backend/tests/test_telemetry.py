@@ -208,13 +208,18 @@ def test_real_config_snapshot_groups_and_strips_groups_prefix(tmp_path):
 
 
 def test_real_config_snapshot_excludes_data_and_agent_runner(tmp_path):
-    """Real source excludes data/ and agent-runner/ from the config browser."""
+    """Real source excludes data/, agent-runner/, and product source/docs."""
     (tmp_path / "data").mkdir(parents=True)
     (tmp_path / "data" / "secret.md").write_text("should not appear")
     (tmp_path / "container" / "agent-runner").mkdir(parents=True)
     (tmp_path / "container" / "agent-runner" / "README.md").write_text("source docs, not config")
+    (tmp_path / "src" / "modules").mkdir(parents=True)
+    (tmp_path / "src" / "modules" / "agent.md").write_text("product source, not config")
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "architecture.md").write_text("product docs, not config")
     (tmp_path / "groups" / "coder").mkdir(parents=True)
     (tmp_path / "groups" / "coder" / "instructions.prepend.md").write_text("# Coder\n")
+    (tmp_path / "AGENTS.md").write_text("# Root agent instructions\n")
 
     source = _make_nanoclaw_source(tmp_path)
     event = source._build_config_snapshot()
@@ -223,7 +228,10 @@ def test_real_config_snapshot_excludes_data_and_agent_runner(tmp_path):
     all_paths = [f["path"] for g in groups for f in g["files"]]
     assert "data/secret.md" not in all_paths
     assert "container/agent-runner/README.md" not in all_paths
+    assert "src/modules/agent.md" not in all_paths
+    assert "docs/architecture.md" not in all_paths
     assert "groups/coder/instructions.prepend.md" in all_paths
+    assert "AGENTS.md" in all_paths  # root-level markdown is config-relevant
 
 
 def test_real_config_snapshot_caps_file_count_and_content_length(tmp_path):

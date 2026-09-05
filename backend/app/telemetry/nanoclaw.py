@@ -703,24 +703,43 @@ class NanoclawTelemetrySource(TelemetrySource):
         )
 
     def _iter_config_markdown(self, max_depth: int = 4, max_files: int = 40) -> List[Path]:
-        """Yield markdown config files under the root, bounded by depth and count.
+        """Yield markdown config files, bounded by depth and count.
 
-        Depth 4 covers ``groups/<folder>/memory/*.md`` (the durable memory tree)
-        in addition to ``groups/<folder>/instructions.prepend.md`` and
-        ``container/CLAUDE.md``.
+        Only config-relevant locations are included so the 40-file cap is not
+        consumed by the product's own source/docs: the ``groups/`` subtree
+        (agent instructions, memory, projects), the ``container/`` subtree
+        (shared CLAUDE.md, skills — excluding the ``agent-runner`` source),
+        and root-level ``*.md`` files (AGENTS.md, CLAUDE.md).
         """
         files: List[Path] = []
+
+        def collect(dirpath: str, dirnames: List[str], filenames: List[str]) -> bool:
+            dirnames[:] = [d for d in dirnames if d not in self._EXCLUDED_CONFIG_DIRS]
+            depth = Path(dirpath).relative_to(self.root).parts
+            if len(depth) >= max_depth:
+                dirnames[:] = []
+            for name in sorted(filenames):
+                if name.endswith(".md"):
+                    files.append(Path(dirpath) / name)
+                    if len(files) >= max_files:
+                        return True
+            return False
+
         try:
-            for dirpath, dirnames, filenames in os.walk(self.root):
-                dirnames[:] = [d for d in dirnames if d not in self._EXCLUDED_CONFIG_DIRS]
-                depth = Path(dirpath).relative_to(self.root).parts
-                if len(depth) >= max_depth:
-                    dirnames[:] = []
-                for name in sorted(filenames):
-                    if name.endswith(".md"):
-                        files.append(Path(dirpath) / name)
-                        if len(files) >= max_files:
+            # Priority 1: agent group + shared container config.
+            for priority_dir in ("groups", "container"):
+                base = self.root / priority_dir
+                if base.is_dir():
+                    for dirpath, dirnames, filenames in os.walk(base):
+                        if collect(dirpath, dirnames, filenames):
                             return files
+            # Priority 2: root-level markdown (AGENTS.md, CLAUDE.md, ...).
+            for name in sorted(os.listdir(self.root)):
+                path = self.root / name
+                if path.is_file() and name.endswith(".md"):
+                    files.append(path)
+                    if len(files) >= max_files:
+                        return files
         except OSError:
             return files
         return files
