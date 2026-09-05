@@ -582,8 +582,16 @@ class MockTelemetrySource(TelemetrySource):
         )
 
     def _build_config_snapshot(self) -> TelemetryEvent:
-        """Emit a config_snapshot with the user/group configuration files."""
+        """Emit a config_snapshot with the config folder tree (metadata only).
+
+        File contents are served on demand via ``GET /api/config/file``.
+        """
         groups = self._build_mock_config_groups()
+        for group in groups:
+            group["files"] = [
+                {"id": f["id"], "path": f["path"], "name": f["name"]}
+                for f in group["files"]
+            ]
         total_files = sum(len(g["files"]) for g in groups)
         return TelemetryEvent(
             id=str(uuid4()),

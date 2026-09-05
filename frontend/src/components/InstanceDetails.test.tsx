@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { InstanceDetails } from './InstanceDetails'
 import type { ConfigGroup, InstanceInfo } from '../lib/types'
 
@@ -9,13 +9,10 @@ const instanceInfo: InstanceInfo = {
   receivedAt: Date.now(),
   host: { hostname: 'nanoclaw-host', platform: 'linux', pythonVersion: '3.11.9', container: 'docker' },
   resources: { cpuPercent: 42.5, memoryUsedMb: 4096, memoryTotalMb: 16384, diskUsedMb: 102400, diskTotalMb: 512000 },
-  skills: ['web-search', 'code-review'],
-  models: ['claude/sonnet', 'claude/opus'],
-  agents: [
-    { id: 'agent:coder', label: 'coder', state: 'running' },
-    { id: 'agent:researcher', label: 'researcher', state: 'idle' },
-  ],
-  tools: ['Bash', 'Read', 'Write'],
+  skills: ['web-search'],
+  models: ['claude/sonnet'],
+  agents: [{ id: 'agent:coder', label: 'coder', state: 'running' }],
+  tools: ['Bash'],
   metrics: {
     messagesTotal: 1234,
     errorsTotal: 3,
@@ -28,33 +25,49 @@ const instanceInfo: InstanceInfo = {
 
 const configGroups: ConfigGroup[] = [
   {
-    id: 'agents',
-    label: 'Agents',
-    files: [
-      { id: 'agents/coder', path: 'agents/coder.md', name: 'coder.md', content: '# Coder\n\nRole: implementation specialist.' },
-      { id: 'agents/researcher', path: 'agents/researcher.md', name: 'researcher.md', content: '# Researcher\n\nRole: research specialist.' },
-    ],
+    id: 'coder',
+    label: 'coder',
+    files: [{ id: 'coder/instructions', path: 'coder/instructions.prepend.md', name: 'instructions.prepend.md' }],
   },
   {
-    id: 'skills',
-    label: 'Skills',
-    files: [{ id: 'skills/web-search', path: 'skills/web-search.md', name: 'web-search.md', content: '# Web Search\n\nPrefer primary sources.' }],
+    id: 'coder/projects',
+    label: 'coder/projects',
+    files: [{ id: 'coder/projects/flow', path: 'coder/projects/flow.md', name: 'flow.md' }],
+  },
+  {
+    id: 'researcher',
+    label: 'researcher',
+    files: [{ id: 'researcher/instructions', path: 'researcher/instructions.prepend.md', name: 'instructions.prepend.md' }],
   },
 ]
 
 describe('InstanceDetails', () => {
-  it('renders the title, close button, and instance details', () => {
+  beforeEach(() => {
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ content: '# Coder instructions\n\nBe precise.' }),
+    })
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('renders the title, close button, and single-line instance details', () => {
     render(<InstanceDetails instanceInfo={instanceInfo} configGroups={configGroups} onClose={() => {}} />)
 
     expect(screen.getByText('Nanoclaw Instance details')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /back to dashboard/i })).toBeInTheDocument()
-    expect(screen.getByText('0.3.0')).toBeInTheDocument()
-    expect(screen.getByText('1h 0m 0s')).toBeInTheDocument() // uptime
+    expect(screen.getByText('0.3.0')).toBeInTheDocument() // version
+    expect(screen.getByText(/^1h 0m/)).toBeInTheDocument() // uptime
     expect(screen.getByText('42.5%')).toBeInTheDocument() // cpu
-    expect(screen.getByText('web-search')).toBeInTheDocument() // skill chip
-    expect(screen.getByText('coder')).toBeInTheDocument() // agent mini
     expect(screen.getByText('1,234')).toBeInTheDocument() // messages
     expect(screen.getByText('nanoclaw-host · linux · py 3.11.9 · docker')).toBeInTheDocument() // host
+
+    // models/agents/skills/tools are no longer in the top row
+    expect(screen.queryByText('web-search')).not.toBeInTheDocument()
+    expect(screen.queryByText('claude/sonnet')).not.toBeInTheDocument()
+    expect(screen.queryByText('Bash')).not.toBeInTheDocument()
   })
 
   it('shows placeholders when no instance data is available', () => {
@@ -63,16 +76,26 @@ describe('InstanceDetails', () => {
     expect(screen.getAllByText('—').length).toBeGreaterThan(0)
   })
 
-  it('lists config groups and shows the selected file content in the viewer', () => {
+  it('shows folders collapsed and expands to reveal files', () => {
     render(<InstanceDetails instanceInfo={instanceInfo} configGroups={configGroups} onClose={() => {}} />)
 
-    // First file of the first group is selected by default.
-    expect(screen.getByText(/Role: implementation specialist\./)).toBeInTheDocument()
+    // Folders visible, files hidden until expanded.
+    expect(screen.getByRole('button', { name: /coder/ })).toBeInTheDocument()
+    expect(screen.queryByText('instructions.prepend.md')).not.toBeInTheDocument()
 
-    // Clicking another file swaps the viewer content.
-    fireEvent.click(screen.getByRole('button', { name: 'researcher.md' }))
-    expect(screen.getByText(/Role: research specialist\./)).toBeInTheDocument()
-    expect(screen.getByText('agents/researcher.md')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /coder/ }))
+    expect(screen.getByText('instructions.prepend.md')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /projects/ })).toBeInTheDocument()
+  })
+
+  it('fetches and shows file content when a file is selected', async () => {
+    render(<InstanceDetails instanceInfo={instanceInfo} configGroups={configGroups} onClose={() => {}} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /coder/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'instructions.prepend.md' }))
+
+    await waitFor(() => expect(screen.getByText(/Be precise\./)).toBeInTheDocument())
+    expect(globalThis.fetch).toHaveBeenCalledWith(expect.stringContaining('coder%2Finstructions.prepend.md'))
   })
 
   it('calls onClose when the back-to-dashboard button is clicked', () => {

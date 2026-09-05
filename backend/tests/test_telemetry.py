@@ -137,7 +137,7 @@ async def test_mock_instance_info_has_details_and_metrics():
 
 @pytest.mark.asyncio
 async def test_mock_config_snapshot_has_grouped_files_with_content():
-    """config_snapshot events carry logically grouped markdown files."""
+    """config_snapshot events carry logically grouped markdown file metadata."""
     source = MockTelemetrySource(["coder"], base_interval_ms=1, jitter_ms=0)
     gen = source.stream()
 
@@ -151,7 +151,8 @@ async def test_mock_config_snapshot_has_grouped_files_with_content():
             assert "Skills" in labels
             all_files = [f for g in groups for f in g["files"]]
             assert all_files
-            assert all(f["content"] for f in all_files)
+            assert all(f["path"] and f["name"] for f in all_files)
+            assert all("content" not in f for f in all_files)  # metadata only
             assert any(f["name"].endswith(".md") for f in all_files)
             return
 
@@ -198,7 +199,8 @@ def test_real_config_snapshot_groups_and_strips_groups_prefix(tmp_path):
     coder = next(g for g in groups if g["label"] == "coder")
     names = {f["name"] for f in coder["files"]}
     assert "instructions.prepend.md" in names
-    assert all(f["content"] for f in coder["files"])
+    assert all(f["path"] and f["name"] for f in coder["files"])
+    assert all("content" not in f for f in coder["files"])  # metadata only
 
     # memory/ files are browseable — they land in their own group (coder/memory).
     all_names = {f["name"] for g in groups for f in g["files"]}
@@ -208,7 +210,7 @@ def test_real_config_snapshot_groups_and_strips_groups_prefix(tmp_path):
 
 
 def test_real_config_snapshot_excludes_data_and_agent_runner(tmp_path):
-    """Real source excludes data/, agent-runner/, and product source/docs."""
+    """Real source excludes data/, agent-runner/, conversations/, and product source/docs."""
     (tmp_path / "data").mkdir(parents=True)
     (tmp_path / "data" / "secret.md").write_text("should not appear")
     (tmp_path / "container" / "agent-runner").mkdir(parents=True)
@@ -219,6 +221,8 @@ def test_real_config_snapshot_excludes_data_and_agent_runner(tmp_path):
     (tmp_path / "docs" / "architecture.md").write_text("product docs, not config")
     (tmp_path / "groups" / "coder").mkdir(parents=True)
     (tmp_path / "groups" / "coder" / "instructions.prepend.md").write_text("# Coder\n")
+    (tmp_path / "groups" / "coder" / "conversations").mkdir()
+    (tmp_path / "groups" / "coder" / "conversations" / "2026-09-01-log.md").write_text("conversation log, not config")
     (tmp_path / "AGENTS.md").write_text("# Root agent instructions\n")
 
     source = _make_nanoclaw_source(tmp_path)
@@ -230,25 +234,24 @@ def test_real_config_snapshot_excludes_data_and_agent_runner(tmp_path):
     assert "container/agent-runner/README.md" not in all_paths
     assert "src/modules/agent.md" not in all_paths
     assert "docs/architecture.md" not in all_paths
+    assert "groups/coder/conversations/2026-09-01-log.md" not in all_paths
     assert "groups/coder/instructions.prepend.md" in all_paths
     assert "AGENTS.md" in all_paths  # root-level markdown is config-relevant
 
 
 def test_real_config_snapshot_caps_file_count_and_content_length(tmp_path):
-    """Real source caps the number of files and truncates oversized content."""
+    """Real source caps the number of files in the metadata-only snapshot."""
     (tmp_path / "groups" / "coder").mkdir(parents=True)
     for i in range(50):
         (tmp_path / "groups" / "coder" / f"file{i}.md").write_text(f"# File {i}\n")
-    big = tmp_path / "groups" / "coder" / "big.md"
-    big.write_text("x" * 50_000)
 
     source = _make_nanoclaw_source(tmp_path)
     event = source._build_config_snapshot()
     assert event is not None
     groups = json.loads(event.payload.meta["groups"])
     all_files = [f for g in groups for f in g["files"]]
-    assert len(all_files) <= 40
-    assert all(len(f["content"]) <= 20_000 for f in all_files)
+    assert len(all_files) <= 500
+    assert all("content" not in f for f in all_files)
 
 
 def test_real_instance_info_has_agents_and_metrics(tmp_path):

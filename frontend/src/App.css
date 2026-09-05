@@ -649,10 +649,6 @@
   flex-shrink: 0;
 }
 
-.detail-cell-wide {
-  grid-column: span 2;
-}
-
 .resource-bar {
   height: 4px;
   border-radius: 999px;
@@ -666,53 +662,6 @@
   background: linear-gradient(90deg, var(--accent), #22d3ee);
   transition: width 0.6s ease;
 }
-
-.chip-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
-
-.chip {
-  font-size: 0.7rem;
-  padding: 0.15rem 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.85);
-  white-space: nowrap;
-}
-
-.agent-mini-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
-
-.agent-mini {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.75rem;
-  padding: 0.15rem 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.85);
-  white-space: nowrap;
-}
-
-.agent-mini-dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  background: #6b7280;
-}
-
-.agent-mini-dot.running { background: #22c55e; }
-.agent-mini-dot.idle { background: #6b7280; }
-.agent-mini-dot.error { background: #ef4444; }
-.agent-mini-dot.spinning_up { background: #eab308; }
 
 /* ---- Middle row: browse configuration ---- */
 
@@ -774,6 +723,53 @@
   letter-spacing: 0.12em;
   color: var(--muted);
   padding: 0.25rem 0.4rem;
+}
+
+.config-folder-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.3rem 0.5rem;
+  margin-bottom: 0.15rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  color: rgba(255, 255, 255, 0.85);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.config-folder-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.config-folder-chevron {
+  font-size: 0.65rem;
+  color: var(--muted);
+  width: 0.8rem;
+  flex-shrink: 0;
+}
+
+.config-folder-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.config-folder-count {
+  margin-left: auto;
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  padding: 0.05rem 0.45rem;
+  flex-shrink: 0;
 }
 
 .config-file-item {

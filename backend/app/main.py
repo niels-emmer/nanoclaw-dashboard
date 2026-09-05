@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager, suppress
 from typing import AsyncIterator, Optional
 from urllib.parse import urlparse
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 
 from .config import settings
 from .events import EventHub
@@ -100,6 +100,44 @@ def is_allowed_origin(origin: str | None, host_header: str | None = None) -> boo
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/api/config/file")
+async def config_file(path: str, request: Request) -> dict:
+    """Serve a single config file's content for the instance-details browser.
+
+    The ``config_snapshot`` event carries the folder tree with metadata only;
+    the frontend fetches file contents here on demand. Path traversal is
+    rejected, only ``.md`` files under the nanoclaw root are served, and the
+    origin is validated like the WebSocket endpoint.
+    """
+    if not is_allowed_origin(request.headers.get("origin"), request.headers.get("host")):
+        raise HTTPException(status_code=403, detail="origin not allowed")
+    if not path or path.startswith("/") or ".." in path.split("/"):
+        raise HTTPException(status_code=404, detail="not found")
+
+    if settings.enabled:
+        root = settings.root_path.resolve()
+        candidate = (root / path).resolve()
+        if (
+            not candidate.is_relative_to(root)
+            or not candidate.is_file()
+            or candidate.suffix != ".md"
+        ):
+            raise HTTPException(status_code=404, detail="not found")
+        try:
+            content = candidate.read_text(encoding="utf-8", errors="replace")[:20_000]
+        except OSError:
+            raise HTTPException(status_code=404, detail="not found")
+        return {"path": path, "name": candidate.name, "content": content}
+
+    # Mock mode: serve from the generated mock config groups.
+    if isinstance(telemetry_source, MockTelemetrySource):
+        for group in telemetry_source._build_mock_config_groups():
+            for file in group["files"]:
+                if file["path"] == path:
+                    return file
+    raise HTTPException(status_code=404, detail="not found")
 
 
 @app.websocket("/ws/events")

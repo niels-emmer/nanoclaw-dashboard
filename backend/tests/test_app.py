@@ -74,3 +74,36 @@ def test_is_allowed_origin_rejects_external():
     assert is_allowed_origin("http://evil.com") is False
     assert is_allowed_origin("http://malicious-domain.net:8000") is False
 
+
+def test_config_file_endpoint_serves_mock_file():
+    """The config file endpoint serves mock config content in mock mode."""
+    client = TestClient(app)
+    resp = client.get("/api/config/file", params={"path": "agents/coder.md"})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["path"] == "agents/coder.md"
+    assert body["name"] == "coder.md"
+    assert "Coder" in body["content"]
+
+
+def test_config_file_endpoint_rejects_path_traversal():
+    client = TestClient(app)
+    assert client.get("/api/config/file", params={"path": "../../etc/passwd"}).status_code == 404
+    assert client.get("/api/config/file", params={"path": "agents/../secret.md"}).status_code == 404
+
+
+def test_config_file_endpoint_rejects_absolute_and_missing():
+    client = TestClient(app)
+    assert client.get("/api/config/file", params={"path": "/etc/passwd"}).status_code == 404
+    assert client.get("/api/config/file", params={"path": "does-not-exist.md"}).status_code == 404
+
+
+def test_config_file_endpoint_rejects_disallowed_origin():
+    client = TestClient(app)
+    resp = client.get(
+        "/api/config/file",
+        params={"path": "agents/coder.md"},
+        headers={"origin": "http://evil.com"},
+    )
+    assert resp.status_code == 403
+

@@ -612,6 +612,7 @@ class NanoclawTelemetrySource(TelemetrySource):
     _EXCLUDED_CONFIG_DIRS = frozenset({
         ".git", "node_modules", "venv", ".venv", "__pycache__", "dist", "build", "data",
         "agent-runner",  # container source code, not configuration
+        "conversations",  # conversation logs, not configuration
     })
 
     def _build_instance_info(self) -> Optional[TelemetryEvent]:
@@ -665,14 +666,15 @@ class NanoclawTelemetrySource(TelemetrySource):
         )
 
     def _build_config_snapshot(self) -> Optional[TelemetryEvent]:
-        """Emit a config_snapshot with markdown config files under the nanoclaw root."""
+        """Emit a config_snapshot with the config folder tree (metadata only).
+
+        File contents are intentionally excluded — the tree can be large (all
+        agent groups) and is sent periodically. The frontend fetches individual
+        file contents on demand via ``GET /api/config/file``.
+        """
         groups: Dict[str, dict] = {}
         for path in self._iter_config_markdown():
             rel = path.relative_to(self.root)
-            try:
-                content = path.read_text(encoding="utf-8", errors="replace")[:20_000]
-            except OSError:
-                continue  # skip a single unreadable file; never drop the whole tick
             group_id = str(rel.parent) if str(rel.parent) != "." else "root"
             group = groups.setdefault(group_id, {
                 "id": group_id,
@@ -683,7 +685,6 @@ class NanoclawTelemetrySource(TelemetrySource):
                 "id": str(rel),
                 "path": str(rel),
                 "name": path.name,
-                "content": content,
             })
 
         if not groups:
@@ -702,14 +703,15 @@ class NanoclawTelemetrySource(TelemetrySource):
             ),
         )
 
-    def _iter_config_markdown(self, max_depth: int = 4, max_files: int = 40) -> List[Path]:
+    def _iter_config_markdown(self, max_depth: int = 4, max_files: int = 500) -> List[Path]:
         """Yield markdown config files, bounded by depth and count.
 
-        Only config-relevant locations are included so the 40-file cap is not
-        consumed by the product's own source/docs: the ``groups/`` subtree
-        (agent instructions, memory, projects), the ``container/`` subtree
-        (shared CLAUDE.md, skills — excluding the ``agent-runner`` source),
-        and root-level ``*.md`` files (AGENTS.md, CLAUDE.md).
+        Only config-relevant locations are included so the cap is not consumed
+        by the product's own source/docs: the ``groups/`` subtree (agent
+        instructions, memory, projects), the ``container/`` subtree (shared
+        CLAUDE.md, skills — excluding the ``agent-runner`` source), and
+        root-level ``*.md`` files (AGENTS.md, CLAUDE.md). Conversation logs are
+        excluded. Metadata-only snapshots make the higher cap cheap.
         """
         files: List[Path] = []
 

@@ -28,6 +28,8 @@ const inferWsUrl = () => {
 
 export const config = {
   wsUrl: inferWsUrl(),
+  /** HTTP base for the backend (derived from the WS URL) — used for on-demand config file fetches. */
+  apiBaseUrl: inferWsUrl().replace(/^ws/, 'http').replace(/\/ws\/events$/, ''),
   maxEventHistory: Number(import.meta.env.VITE_EVENT_HISTORY ?? 200),
   orchestratorId: import.meta.env.VITE_ORCHESTRATOR_ID ?? 'orchestrator',
   agentSolidMinutes: Number(import.meta.env.VITE_AGENT_SOLID_MINUTES ?? 15),

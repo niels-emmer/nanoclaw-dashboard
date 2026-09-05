@@ -86,9 +86,17 @@ WebSocket stream of canonical telemetry events (orchestrator → agents → sub-
 **Snapshot payloads** (`instance_info` / `config_snapshot`) carry their structured data as JSON-encoded strings in `payload.meta`, mirroring the `topology_snapshot` convention:
 
 - `instance_info` → `meta.instance` — JSON object with `version`, `uptimeMs`, `host` (`hostname`, `platform`, `pythonVersion`, `container`), `resources` (`cpuPercent`, `memoryUsedMb`, `memoryTotalMb`, `diskUsedMb`, `diskTotalMb`), `skills[]`, `models[]` (`provider/model`), `agents[]` (`id`, `label`, `state`), `tools[]`, and `metrics` (`messagesTotal`, `errorsTotal`, `tokenBufferUsed`, `tokenBufferLimit`, `timeToResetMs`, `activeAgents`). Fields may be absent when the source cannot provide them (e.g. token metrics on the real nanoclaw source).
-- `config_snapshot` → `meta.groups` — JSON array of groups (`id`, `label`, `files[]`), each file with `id`, `path`, `name`, and `content` (markdown, capped at 20 KB per file, 40 files per snapshot). The real source collects config-relevant markdown only — the `groups/` subtree (agent instructions, memory, projects), the `container/` subtree (shared CLAUDE.md, skills, excluding `agent-runner` source), and root-level `*.md` (AGENTS.md, CLAUDE.md) — grouped by directory with the `groups/` prefix stripped from labels.
+- `config_snapshot` → `meta.groups` — JSON array of groups (`id`, `label`, `files[]`), each file with `id`, `path`, and `name` (**metadata only — no content**). The real source collects config-relevant markdown only — the `groups/` subtree (agent instructions, memory, projects), the `container/` subtree (shared CLAUDE.md, skills, excluding `agent-runner` source), and root-level `*.md` (AGENTS.md, CLAUDE.md) — grouped by directory with the `groups/` prefix stripped from labels. Conversation logs are excluded. File contents are fetched on demand via `GET /api/config/file`.
 
 Both snapshot types are emitted periodically by the mock source (~10/40 ticks) and the real nanoclaw source (~15/60 ticks, plus once on connect) and are excluded from the frontend activity history.
+
+### GET /api/config/file
+
+Serves a single config file's content for the instance-details browser (the `config_snapshot` event carries metadata only).
+
+- Query param: `path` — the file's relative path under the nanoclaw root (e.g. `groups/builder/instructions.prepend.md`).
+- Response: `{ "path": "...", "name": "...", "content": "..." }` (content capped at 20 KB).
+- Security: origin validated like the WebSocket endpoint (403 on disallowed origin); path traversal and non-`.md` files rejected (404); only files under the nanoclaw root are served. In mock mode it serves the generated mock config files.
 
 **Channel routing convention**: `source`/`target` ids of the form `channel:<name>` (e.g. `human:whatsapp`, `human:matrix`) are real human channels and route to the Human node; `channel:agent` is internal and routes to the orchestrator.
 

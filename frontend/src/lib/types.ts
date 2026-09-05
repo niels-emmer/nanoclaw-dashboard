@@ -144,7 +144,8 @@ export interface ConfigFile {
   id: string
   path: string
   name: string
-  content: string
+  /** File content — not included in config_snapshot (metadata only); fetched on demand. */
+  content?: string
 }
 
 export interface ConfigGroup {

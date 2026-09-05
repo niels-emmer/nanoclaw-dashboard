@@ -6,7 +6,7 @@
 
 - **Nanoclaw Instance details screen** — click the liveness indicator in the top-right of the status bar to open a full-screen overlay:
   - **Instance details row** — version, live uptime, CPU, memory/disk usage bars, skills, models, agents, and tools.
-  - **Browse configuration** — two-pane viewer over the user/group configuration markdown files (grouped list on the left, content viewer on the right). Mock mode shows synthetic files; real mode reads the nanoclaw install root (`groups/<folder>/instructions.prepend.md`, `memory/`, `container/CLAUDE.md`, `container/skills/`) via the existing read-only mount.
+  - **Browse configuration** — collapsible folder tree (agent → projects/sub-divisions) over the user/group configuration markdown files; folders start collapsed and expand on click. Mock mode shows synthetic files; real mode reads the nanoclaw install root (`groups/<folder>/instructions.prepend.md`, `memory/`, `projects/`, `container/CLAUDE.md`, `container/skills/`) via the existing read-only mount. File contents load on demand via a new `GET /api/config/file` endpoint.
   - **Metrics bar** — messages/errors totals, token buffer (used/limit with progress), live time-to-reset countdown, and host details (hostname, platform, Python version, container).
   - Updates in real time over the existing WebSocket stream; uptime and time-to-reset tick locally every second.
 - **Telemetry schema 0.3.0** — two new periodic snapshot event types: `instance_info` (details + metrics in `payload.meta.instance`) and `config_snapshot` (grouped config files in `payload.meta.groups`), emitted by both the mock (~10/40 ticks) and real nanoclaw (~15/60 ticks, plus once on connect) sources.
