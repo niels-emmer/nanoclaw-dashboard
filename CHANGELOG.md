@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Config-browser file context** — the instance-details file browser now shows a role badge + description for the selected file (derived from its path: standing instructions, memory map/doctrine, composed CLAUDE.md, skills, projects, etc.) and parses OKF YAML frontmatter (`title`/`type`/`description`/`tags`) from memory concept files.
+
 ## [1.3.0] — 2026-09-05
 
 ### Added
