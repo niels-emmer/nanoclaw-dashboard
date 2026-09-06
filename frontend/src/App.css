@@ -810,6 +810,10 @@
 }
 
 .config-viewer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
@@ -819,6 +823,42 @@
   font-family: var(--mono);
   font-size: 0.75rem;
   color: var(--accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.config-viewer-role {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--foreground);
+  background: rgba(120, 96, 216, 0.18);
+  border: 1px solid rgba(120, 96, 216, 0.4);
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+}
+
+.config-viewer-desc {
+  padding: 0.5rem 0.75rem 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.config-viewer-desc-fm {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.config-viewer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  padding: 0.4rem 0.75rem 0;
+  flex-shrink: 0;
 }
 
 .config-viewer-pre {

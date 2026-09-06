@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { config } from '../lib/config'
+import { describeConfigFile, parseFrontmatter } from '../lib/configFileContext'
 import type { ConfigFile, ConfigGroup, InstanceInfo } from '../lib/types'
 
 interface Props {
@@ -201,6 +202,11 @@ export function InstanceDetails({ instanceInfo, configGroups, onClose }: Props) 
       })()
     : null
 
+  // Context for the selected file: role/description derived from its path,
+  // plus its own YAML frontmatter (OKF format) when present.
+  const fileContext = selectedFile ? describeConfigFile(selectedFile.path) : null
+  const frontmatter = fileContent ? parseFrontmatter(fileContent) : null
+
   return (
     <div className="instance-overlay">
       <header className="instance-header">
@@ -261,7 +267,21 @@ export function InstanceDetails({ instanceInfo, configGroups, onClose }: Props) 
               <>
                 <div className="config-viewer-header">
                   <span className="config-viewer-path">{selectedFile.path}</span>
+                  {fileContext && <span className="config-viewer-role">{fileContext.role}</span>}
                 </div>
+                {fileContext && <p className="config-viewer-desc">{fileContext.description}</p>}
+                {frontmatter?.description && (
+                  <p className="config-viewer-desc config-viewer-desc-fm">{frontmatter.description}</p>
+                )}
+                {frontmatter && (frontmatter.title || frontmatter.type || frontmatter.tags?.length) && (
+                  <div className="config-viewer-meta">
+                    {frontmatter.title && <span className="chip">{frontmatter.title}</span>}
+                    {frontmatter.type && <span className="chip">{frontmatter.type}</span>}
+                    {frontmatter.tags?.map((tag) => (
+                      <span key={tag} className="chip">{tag}</span>
+                    ))}
+                  </div>
+                )}
                 {loading && <p className="config-empty">Loading…</p>}
                 {loadError && <p className="config-empty">{loadError}</p>}
                 {!loading && !loadError && fileContent != null && (

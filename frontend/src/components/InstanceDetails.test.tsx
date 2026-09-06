@@ -45,7 +45,9 @@ describe('InstanceDetails', () => {
   beforeEach(() => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ content: '# Coder instructions\n\nBe precise.' }),
+      json: async () => ({
+        content: '---\ntype: person\ntitle: "Dana"\ndescription: Leads the Atlas project.\n---\n\n# Dana\n\nBe precise.',
+      }),
     })
   })
 
@@ -96,6 +98,24 @@ describe('InstanceDetails', () => {
 
     await waitFor(() => expect(screen.getByText(/Be precise\./)).toBeInTheDocument())
     expect(globalThis.fetch).toHaveBeenCalledWith(expect.stringContaining('coder%2Finstructions.prepend.md'))
+  })
+
+  it('shows role, description, and frontmatter context for the selected file', async () => {
+    render(<InstanceDetails instanceInfo={instanceInfo} configGroups={configGroups} onClose={() => {}} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /coder/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'instructions.prepend.md' }))
+
+    // Wait for the fetched content (and its frontmatter) to render.
+    await waitFor(() => expect(screen.getByText('Dana')).toBeInTheDocument())
+
+    // Role + description derived from the path.
+    expect(screen.getByText('Standing instructions')).toBeInTheDocument()
+    expect(screen.getByText(/Role, persona, tone/)).toBeInTheDocument()
+
+    // Frontmatter context from the file content.
+    expect(screen.getByText('person')).toBeInTheDocument()
+    expect(screen.getByText('Leads the Atlas project.')).toBeInTheDocument()
   })
 
   it('calls onClose when the back-to-dashboard button is clicked', () => {
