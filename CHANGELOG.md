@@ -4,7 +4,8 @@
 
 ### Added
 
-- **Config-browser file context** — the instance-details file browser now shows a role badge + description for the selected file (derived from its path: standing instructions, memory map/doctrine, composed CLAUDE.md, skills, projects, etc.) and parses OKF YAML frontmatter (`title`/`type`/`description`/`tags`) from memory concept files. Top-level folders are labeled with their canonical concepts — `groups` → **Agents**, `container` → **Shared runtime**, `root` → **Install root** — with a description subtitle.
+- **Config-browser file context** — the instance-details file browser now shows a role badge + description for the selected file (derived from its path: standing instructions, memory map/doctrine, composed CLAUDE.md, skills, projects, etc.) and parses OKF YAML frontmatter (`title`/`type`/`description`/`tags`) from memory concept files. Top-level folders are labeled with their canonical concepts — `groups` → **Agents**, `container` → **Shared runtime**, `root` → **Install root** — with a wrapping description subtitle.
+- **Main agent group surfaced** — the human-facing agent (e.g. Marvin) is identified via the sticky `humanAgentId` and mapped to its config folder (`agent_groups.folder`, now included per agent in `instance_info`). The Agents folder expands by default and the main agent's folder is sorted to the top with a **Main** badge.
 
 ## [1.3.0] — 2026-09-05
 
