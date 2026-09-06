@@ -1,5 +1,5 @@
-import type { AgentSnapshot, ConfigGroup, EdgePulse, InstanceInfo, TelemetryEvent, TopologyData } from './types'
-import { deriveAgentSnapshot, parseConfigGroupsMeta, parseInstanceInfoMeta, parseTopologyMeta } from './utils'
+import type { AgentSnapshot, ConfigGroup, EdgePulse, InstanceInfo, ResourceSample, TelemetryEvent, TopologyData } from './types'
+import { deriveAgentSnapshot, parseConfigGroupsMeta, parseInstanceInfoMeta, parseTopologyMeta, toResourceSample } from './utils'
 import { channelName, isHumanChannel } from './channels'
 
 /**
@@ -18,12 +18,14 @@ export interface EventState {
   humanLastUpdated: number | null
   instanceInfo: InstanceInfo | null
   configGroups: ConfigGroup[] | null
+  resourceHistory: ResourceSample[]
 }
 
 export type EventAction = { type: 'event'; event: TelemetryEvent; now: number; maxEventHistory: number }
 
 const EDGE_TTL_MS = 6500
 const MAX_EDGES = 32
+const MAX_RESOURCE_SAMPLES = 120
 
 /** Return the agent id if this event is a human-channel conversation, else null. */
 function humanAgentFromEvent(event: TelemetryEvent): string | null {
@@ -45,6 +47,7 @@ export function createInitialState(orchestratorId: string): EventState {
     humanLastUpdated: null,
     instanceInfo: null,
     configGroups: null,
+    resourceHistory: [],
   }
 }
 
@@ -87,9 +90,15 @@ export function eventReducer(state: EventState, action: EventAction): EventState
       // excluded from the activity history (they are not user-facing events).
       if (event.type === 'instance_info') {
         const info = parseInstanceInfoMeta(event.payload.meta)
+        if (!info) return { ...state, instanceInfo: state.instanceInfo }
+        const sample = toResourceSample(info, now)
+        const resourceHistory = sample
+          ? [...state.resourceHistory, sample].slice(-MAX_RESOURCE_SAMPLES)
+          : state.resourceHistory
         return {
           ...state,
-          instanceInfo: info ? { ...info, receivedAt: now } : state.instanceInfo,
+          instanceInfo: { ...info, receivedAt: now },
+          resourceHistory,
         }
       }
       if (event.type === 'config_snapshot') {

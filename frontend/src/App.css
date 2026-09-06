@@ -911,9 +911,9 @@
   text-align: center;
 }
 
-/* ---- Bottom bar: metrics ---- */
+/* ---- Bottom strip: resource sparklines ---- */
 
-.metrics-bar {
+.sparkline-strip {
   display: flex;
   align-items: center;
   gap: 1.5rem;
@@ -925,31 +925,39 @@
   flex-shrink: 0;
 }
 
-.metrics-cell {
+.sparkline-cell {
   display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+  align-items: center;
+  gap: 0.6rem;
   min-width: 0;
 }
 
-.metrics-cell-grow {
-  flex: 1;
+.sparkline-svg {
+  display: block;
+  flex-shrink: 0;
 }
 
-.metrics-value {
+.sparkline-value {
   font-family: var(--display);
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 600;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.token-buffer {
+.sparkline-host {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  min-width: 220px;
+  gap: 0.15rem;
+  margin-left: auto;
+  min-width: 0;
+  text-align: right;
+}
+
+.sparkline-host .sparkline-value {
+  font-size: 0.85rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @media (prefers-reduced-motion: reduce) {

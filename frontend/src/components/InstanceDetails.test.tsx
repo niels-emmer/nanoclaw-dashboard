@@ -56,15 +56,14 @@ describe('InstanceDetails', () => {
   })
 
   it('renders the title, close button, and single-line instance details', () => {
-    render(<InstanceDetails instanceInfo={instanceInfo} configGroups={configGroups} onClose={() => {}} />)
+    render(<InstanceDetails instanceInfo={instanceInfo} configGroups={configGroups} resourceHistory={[]} onClose={() => {}} />)
 
     expect(screen.getByText('Nanoclaw Instance details')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /back to dashboard/i })).toBeInTheDocument()
     expect(screen.getByText('0.3.0')).toBeInTheDocument() // version
     expect(screen.getByText(/^1h 0m/)).toBeInTheDocument() // uptime
     expect(screen.getByText('42.5%')).toBeInTheDocument() // cpu
-    expect(screen.getByText('1,234')).toBeInTheDocument() // messages
-    expect(screen.getByText('nanoclaw-host · linux · py 3.11.9 · docker')).toBeInTheDocument() // host
+    expect(screen.getByText('nanoclaw-host · linux · py 3.11.9')).toBeInTheDocument() // host
 
     // models/agents/skills/tools are no longer in the top row
     expect(screen.queryByText('web-search')).not.toBeInTheDocument()
@@ -73,13 +72,32 @@ describe('InstanceDetails', () => {
   })
 
   it('shows placeholders when no instance data is available', () => {
-    render(<InstanceDetails instanceInfo={null} configGroups={null} onClose={() => {}} />)
+    render(<InstanceDetails instanceInfo={null} configGroups={null} resourceHistory={[]} onClose={() => {}} />)
     expect(screen.getByText('Waiting for configuration…')).toBeInTheDocument()
     expect(screen.getAllByText('—').length).toBeGreaterThan(0)
   })
 
+  it('renders resource sparklines from the history', () => {
+    const history = [
+      { t: 1000, cpu: 10, memPct: 20, diskPct: 30 },
+      { t: 2000, cpu: 40, memPct: 25, diskPct: 32 },
+      { t: 3000, cpu: 60, memPct: 30, diskPct: 35 },
+    ]
+    render(<InstanceDetails instanceInfo={instanceInfo} configGroups={configGroups} resourceHistory={history} onClose={() => {}} />)
+
+    expect(screen.getAllByText('CPU').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Memory').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Disk').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('60%')).toBeInTheDocument() // latest CPU
+    expect(screen.getByText('30%')).toBeInTheDocument() // latest memory
+    expect(screen.getByText('35%')).toBeInTheDocument() // latest disk
+    // The old metrics bar is gone.
+    expect(screen.queryByText('Messages')).not.toBeInTheDocument()
+    expect(screen.queryByText('Token buffer')).not.toBeInTheDocument()
+  })
+
   it('shows folders collapsed and expands to reveal files', () => {
-    render(<InstanceDetails instanceInfo={instanceInfo} configGroups={configGroups} onClose={() => {}} />)
+    render(<InstanceDetails instanceInfo={instanceInfo} configGroups={configGroups} resourceHistory={[]} onClose={() => {}} />)
 
     // Folders visible, files hidden until expanded.
     expect(screen.getByRole('button', { name: /coder/ })).toBeInTheDocument()
@@ -108,7 +126,7 @@ describe('InstanceDetails', () => {
         files: [{ id: 'root/AGENTS', path: 'AGENTS.md', name: 'AGENTS.md' }],
       },
     ]
-    render(<InstanceDetails instanceInfo={instanceInfo} configGroups={realGroups} onClose={() => {}} />)
+    render(<InstanceDetails instanceInfo={instanceInfo} configGroups={realGroups} resourceHistory={[]} onClose={() => {}} />)
 
     expect(screen.getByRole('button', { name: /Agents/ })).toBeInTheDocument()
     expect(screen.getByText(/one workspace per agent/)).toBeInTheDocument()
@@ -137,7 +155,7 @@ describe('InstanceDetails', () => {
       ],
     }
     render(
-      <InstanceDetails instanceInfo={info} configGroups={realGroups} humanAgentId="agent:ag-1783159075688-mvnncz" onClose={() => {}} />,
+      <InstanceDetails instanceInfo={info} configGroups={realGroups} resourceHistory={[]} humanAgentId="agent:ag-1783159075688-mvnncz" onClose={() => {}} />,
     )
 
     // The Agents folder is expanded by default; the main folder is first with a badge.
@@ -153,7 +171,7 @@ describe('InstanceDetails', () => {
   })
 
   it('fetches and shows file content when a file is selected', async () => {
-    render(<InstanceDetails instanceInfo={instanceInfo} configGroups={configGroups} onClose={() => {}} />)
+    render(<InstanceDetails instanceInfo={instanceInfo} configGroups={configGroups} resourceHistory={[]} onClose={() => {}} />)
 
     fireEvent.click(screen.getByRole('button', { name: /coder/ }))
     fireEvent.click(screen.getByRole('button', { name: 'instructions.prepend.md' }))
@@ -163,7 +181,7 @@ describe('InstanceDetails', () => {
   })
 
   it('shows role, description, and frontmatter context for the selected file', async () => {
-    render(<InstanceDetails instanceInfo={instanceInfo} configGroups={configGroups} onClose={() => {}} />)
+    render(<InstanceDetails instanceInfo={instanceInfo} configGroups={configGroups} resourceHistory={[]} onClose={() => {}} />)
 
     fireEvent.click(screen.getByRole('button', { name: /coder/ }))
     fireEvent.click(screen.getByRole('button', { name: 'instructions.prepend.md' }))
@@ -182,7 +200,7 @@ describe('InstanceDetails', () => {
 
   it('calls onClose when the back-to-dashboard button is clicked', () => {
     const onClose = vi.fn()
-    render(<InstanceDetails instanceInfo={instanceInfo} configGroups={configGroups} onClose={onClose} />)
+    render(<InstanceDetails instanceInfo={instanceInfo} configGroups={configGroups} resourceHistory={[]} onClose={onClose} />)
     fireEvent.click(screen.getByRole('button', { name: /back to dashboard/i }))
     expect(onClose).toHaveBeenCalledTimes(1)
   })

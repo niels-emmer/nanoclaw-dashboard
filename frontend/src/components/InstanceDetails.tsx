@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { config } from '../lib/config'
 import { describeConfigFile, describeConfigFolder, parseFrontmatter } from '../lib/configFileContext'
-import type { ConfigFile, ConfigGroup, InstanceInfo } from '../lib/types'
+import type { ConfigFile, ConfigGroup, InstanceInfo, ResourceSample } from '../lib/types'
 
 interface Props {
   instanceInfo: InstanceInfo | null
   configGroups: ConfigGroup[] | null
+  resourceHistory: ResourceSample[]
   humanAgentId?: string | null
   onClose: () => void
 }
@@ -19,16 +20,6 @@ const formatUptime = (ms: number): string => {
   if (h > 0) return `${h}h ${m}m ${s % 60}s`
   if (m > 0) return `${m}m ${s % 60}s`
   return `${s}s`
-}
-
-const formatCountdown = (ms: number): string => {
-  const s = Math.max(0, Math.floor(ms / 1000))
-  const h = Math.floor(s / 3600)
-  const m = Math.floor((s % 3600) / 60)
-  const sec = s % 60
-  if (h > 0) return `${h}h ${m}m ${sec}s`
-  if (m > 0) return `${m}m ${sec}s`
-  return `${sec}s`
 }
 
 function ResourceBar({ label, used, total, unit }: { label: string; used?: number; total?: number; unit: string }) {
@@ -50,6 +41,29 @@ function ResourceBar({ label, used, total, unit }: { label: string; used?: numbe
       <div className="resource-bar">
         <div className="resource-bar-fill" style={{ width: `${pct}%` }} />
       </div>
+    </div>
+  )
+}
+
+const SPARK_WIDTH = 180
+const SPARK_HEIGHT = 34
+
+function Sparkline({ label, values, color }: { label: string; values: number[]; color: string }) {
+  const current = values.length ? values[values.length - 1] : null
+  const points = values
+    .map((v, i) => {
+      const x = values.length > 1 ? (i / (values.length - 1)) * SPARK_WIDTH : SPARK_WIDTH / 2
+      const y = SPARK_HEIGHT - Math.min(100, Math.max(0, v)) / 100 * SPARK_HEIGHT
+      return `${x.toFixed(1)},${y.toFixed(1)}`
+    })
+    .join(' ')
+  return (
+    <div className="sparkline-cell">
+      <span className="detail-label">{label}</span>
+      <svg width={SPARK_WIDTH} height={SPARK_HEIGHT} className="sparkline-svg" aria-hidden>
+        <polyline points={points} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+      </svg>
+      <span className="sparkline-value">{current != null ? `${Math.round(current)}%` : '—'}</span>
     </div>
   )
 }
@@ -155,7 +169,7 @@ function ConfigFolder({ node, depth, expanded, onToggle, selectedFileId, onSelec
   )
 }
 
-export function InstanceDetails({ instanceInfo, configGroups, humanAgentId, onClose }: Props) {
+export function InstanceDetails({ instanceInfo, configGroups, resourceHistory, humanAgentId, onClose }: Props) {
   const [now, setNow] = useState(() => Date.now())
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(['groups']))
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
@@ -223,12 +237,10 @@ export function InstanceDetails({ instanceInfo, configGroups, humanAgentId, onCl
   const info = instanceInfo
   const uptimeMs =
     info?.uptimeMs != null && info.receivedAt != null ? info.uptimeMs + (now - info.receivedAt) : null
-  const timeToResetMs =
-    info?.metrics?.timeToResetMs != null ? Math.max(0, info.metrics.timeToResetMs - (now - (info.receivedAt ?? now))) : null
-  const tokenPct =
-    info?.metrics?.tokenBufferUsed != null && info.metrics.tokenBufferLimit
-      ? Math.min(100, Math.round((info.metrics.tokenBufferUsed / info.metrics.tokenBufferLimit) * 100))
-      : null
+
+  const cpuSeries = resourceHistory.map((s) => s.cpu)
+  const memSeries = resourceHistory.map((s) => s.memPct)
+  const diskSeries = resourceHistory.map((s) => s.diskPct)
 
   const selectedFile = tree.length
     ? (() => {
@@ -331,42 +343,17 @@ export function InstanceDetails({ instanceInfo, configGroups, humanAgentId, onCl
         </div>
       </section>
 
-      {/* ---- Bottom bar: metrics ---- */}
-      <footer className="metrics-bar" aria-label="Metrics">
-        <div className="metrics-cell">
-          <span className="detail-label">Messages</span>
-          <span className="metrics-value">{info?.metrics?.messagesTotal?.toLocaleString() ?? '—'}</span>
-        </div>
-        <div className="metrics-cell">
-          <span className="detail-label">Errors</span>
-          <span className="metrics-value">{info?.metrics?.errorsTotal?.toLocaleString() ?? '—'}</span>
-        </div>
-        <div className="metrics-cell metrics-cell-grow">
-          <span className="detail-label">Token buffer</span>
-          {tokenPct != null ? (
-            <div className="token-buffer">
-              <div className="resource-bar">
-                <div className="resource-bar-fill" style={{ width: `${tokenPct}%` }} />
-              </div>
-              <span className="metrics-value">
-                {info?.metrics?.tokenBufferUsed?.toLocaleString()} / {info?.metrics?.tokenBufferLimit?.toLocaleString()}
-              </span>
-            </div>
-          ) : (
-            <span className="metrics-value">—</span>
-          )}
-        </div>
-        <div className="metrics-cell">
-          <span className="detail-label">Time to reset</span>
-          <span className="metrics-value">{timeToResetMs != null ? formatCountdown(timeToResetMs) : '—'}</span>
-        </div>
-        <div className="metrics-cell metrics-cell-grow">
+      {/* ---- Bottom strip: resource sparklines ---- */}
+      <footer className="sparkline-strip" aria-label="Resource trends">
+        <Sparkline label="CPU" values={cpuSeries} color="#38bdf8" />
+        <Sparkline label="Memory" values={memSeries} color="#a855f7" />
+        <Sparkline label="Disk" values={diskSeries} color="#22d3ee" />
+        <div className="sparkline-host">
           <span className="detail-label">Host</span>
-          <span className="metrics-value">
+          <span className="sparkline-value">
             {info?.host?.hostname ?? '—'}
             {info?.host?.platform ? ` · ${info.host.platform}` : ''}
             {info?.host?.pythonVersion ? ` · py ${info.host.pythonVersion}` : ''}
-            {info?.host?.container ? ` · ${info.host.container}` : ''}
           </span>
         </div>
       </footer>

@@ -87,5 +87,6 @@ export const useEventStream = () => {
     humanLastUpdated: state.humanLastUpdated,
     instanceInfo: state.instanceInfo,
     configGroups: state.configGroups,
+    resourceHistory: state.resourceHistory,
   }
 }

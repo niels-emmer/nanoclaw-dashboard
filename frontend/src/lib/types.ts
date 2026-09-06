@@ -142,6 +142,14 @@ export interface InstanceInfo {
   receivedAt?: number
 }
 
+/** One resource sample for the sparkline strip, derived from instance_info. */
+export interface ResourceSample {
+  t: number
+  cpu: number
+  memPct: number
+  diskPct: number
+}
+
 export interface ConfigFile {
   id: string
   path: string

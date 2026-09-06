@@ -12,7 +12,7 @@ import { buildActivityFeed } from './lib/activityFeed'
 import './App.css'
 
 function App() {
-  const { agents, events, edges, connectionState, retryCount, orchestratorId, topology, humanAgentId, humanLastUpdated, instanceInfo, configGroups } = useEventStream()
+  const { agents, events, edges, connectionState, retryCount, orchestratorId, topology, humanAgentId, humanLastUpdated, instanceInfo, configGroups, resourceHistory } = useEventStream()
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
   const [showInstanceDetails, setShowInstanceDetails] = useState(false)
@@ -84,6 +84,7 @@ function App() {
         <InstanceDetails
           instanceInfo={instanceInfo}
           configGroups={configGroups}
+          resourceHistory={resourceHistory}
           humanAgentId={humanAgentId}
           onClose={() => setShowInstanceDetails(false)}
         />

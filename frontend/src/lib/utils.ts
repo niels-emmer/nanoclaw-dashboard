@@ -1,4 +1,4 @@
-import type { AgentSnapshot, ConfigGroup, InstanceInfo, Liveness, TelemetryEvent, ToolCategory, TopologyData } from './types'
+import type { AgentSnapshot, ConfigGroup, InstanceInfo, Liveness, ResourceSample, TelemetryEvent, ToolCategory, TopologyData } from './types'
 
 export const formatTime = (maybeMs: number) => {
   const safeMs = Number.isNaN(maybeMs) ? Date.now() : maybeMs
@@ -172,6 +172,16 @@ export const parseConfigGroupsMeta = (meta: Record<string, string> | null | unde
   } catch {
     return null
   }
+}
+
+/** Derive a resource sample (percentages) from an instance_info snapshot. */
+export const toResourceSample = (info: InstanceInfo, t: number): ResourceSample | null => {
+  const r = info.resources
+  if (!r || r.cpuPercent == null) return null
+  const memPct = r.memoryTotalMb ? (r.memoryUsedMb ?? 0) / r.memoryTotalMb * 100 : NaN
+  const diskPct = r.diskTotalMb ? (r.diskUsedMb ?? 0) / r.diskTotalMb * 100 : NaN
+  if (Number.isNaN(memPct) || Number.isNaN(diskPct)) return null
+  return { t, cpu: r.cpuPercent, memPct, diskPct }
 }
 
 export const deriveAgentSnapshot = (

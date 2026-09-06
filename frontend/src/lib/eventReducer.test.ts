@@ -291,4 +291,50 @@ describe('eventReducer', () => {
     expect(next.instanceInfo?.version).toBe('0.3.0')
     expect(next.instanceInfo?.receivedAt).toBe(1000)
   })
+
+  it('accumulates resource samples from instance_info and caps the history', () => {
+    let state = createInitialState('orchestrator')
+    const makeInfo = (cpu: number) =>
+      baseEvent({
+        id: String(cpu),
+        type: 'instance_info',
+        source: 'orchestrator',
+        target: 'dashboard',
+        payload: {
+          summary: 'instance',
+          status: 'completed',
+          meta: {
+            instance: JSON.stringify({
+              version: '0.3.0',
+              resources: { cpuPercent: cpu, memoryUsedMb: 4096, memoryTotalMb: 16384, diskUsedMb: 102400, diskTotalMb: 512000 },
+            }),
+          },
+        },
+      })
+    state = dispatch(state, makeInfo(10), 1000)
+    state = dispatch(state, makeInfo(20), 2000)
+    expect(state.resourceHistory).toHaveLength(2)
+    expect(state.resourceHistory[0]).toEqual({ t: 1000, cpu: 10, memPct: 25, diskPct: 20 })
+    expect(state.resourceHistory[1].cpu).toBe(20)
+
+    // Cap at 120 samples.
+    for (let i = 0; i < 130; i += 1) {
+      state = dispatch(state, makeInfo(i), 3000 + i)
+    }
+    expect(state.resourceHistory).toHaveLength(120)
+    expect(state.resourceHistory[119].cpu).toBe(129)
+  })
+
+  it('does not append a resource sample when resources are missing', () => {
+    const state = createInitialState('orchestrator')
+    const info = baseEvent({
+      id: '1',
+      type: 'instance_info',
+      source: 'orchestrator',
+      target: 'dashboard',
+      payload: { summary: 'instance', status: 'completed', meta: { instance: JSON.stringify({ version: '0.3.0' }) } },
+    })
+    const next = dispatch(state, info, 1000)
+    expect(next.resourceHistory).toHaveLength(0)
+  })
 })
