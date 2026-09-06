@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { describeConfigFile, parseFrontmatter } from './configFileContext'
+import { describeConfigFile, describeConfigFolder, parseFrontmatter } from './configFileContext'
 
 describe('describeConfigFile', () => {
   it('identifies standing instructions', () => {
@@ -33,6 +33,27 @@ describe('describeConfigFile', () => {
   it('falls back to a generic description for unknown paths', () => {
     const ctx = describeConfigFile('groups/builder/random-file.md')
     expect(ctx.role).toBe('Configuration file')
+  })
+})
+
+describe('describeConfigFolder', () => {
+  it('maps groups to Agents with a description', () => {
+    const ctx = describeConfigFolder('groups')
+    expect(ctx?.label).toBe('Agents')
+    expect(ctx?.description).toContain('one workspace per agent')
+  })
+
+  it('maps container to Shared runtime', () => {
+    expect(describeConfigFolder('container')?.label).toBe('Shared runtime')
+  })
+
+  it('maps root to Install root', () => {
+    expect(describeConfigFolder('root')?.label).toBe('Install root')
+  })
+
+  it('returns null for unknown or nested folder names', () => {
+    expect(describeConfigFolder('builder')).toBeNull()
+    expect(describeConfigFolder('projects')).toBeNull()
   })
 })
 

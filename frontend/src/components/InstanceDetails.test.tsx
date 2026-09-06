@@ -90,6 +90,32 @@ describe('InstanceDetails', () => {
     expect(screen.getByRole('button', { name: /projects/ })).toBeInTheDocument()
   })
 
+  it('maps top-level groups/container/root folders to their canonical labels', () => {
+    const realGroups: ConfigGroup[] = [
+      {
+        id: 'groups/builder',
+        label: 'builder',
+        files: [{ id: 'groups/builder/instructions', path: 'groups/builder/instructions.prepend.md', name: 'instructions.prepend.md' }],
+      },
+      {
+        id: 'container/skills/whatsapp-formatting',
+        label: 'container/skills/whatsapp-formatting',
+        files: [{ id: 'container/skills/whatsapp-formatting/SKILL', path: 'container/skills/whatsapp-formatting/SKILL.md', name: 'SKILL.md' }],
+      },
+      {
+        id: 'root',
+        label: 'Root',
+        files: [{ id: 'root/AGENTS', path: 'AGENTS.md', name: 'AGENTS.md' }],
+      },
+    ]
+    render(<InstanceDetails instanceInfo={instanceInfo} configGroups={realGroups} onClose={() => {}} />)
+
+    expect(screen.getByRole('button', { name: /Agents/ })).toBeInTheDocument()
+    expect(screen.getByText(/one workspace per agent/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Shared runtime/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Install root/ })).toBeInTheDocument()
+  })
+
   it('fetches and shows file content when a file is selected', async () => {
     render(<InstanceDetails instanceInfo={instanceInfo} configGroups={configGroups} onClose={() => {}} />)
 

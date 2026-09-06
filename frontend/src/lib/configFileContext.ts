@@ -103,6 +103,32 @@ export const describeConfigFile = (path: string): ConfigFileContext => {
   return FALLBACK_CONTEXT
 }
 
+export interface ConfigFolderContext {
+  label: string
+  description: string
+}
+
+// Top-level folder names in the config tree, mapped to the canonical concepts
+// from the nanoclaw docs (installation / entity-model / container-lifecycle).
+const FOLDER_CONTEXTS: Record<string, ConfigFolderContext> = {
+  groups: {
+    label: 'Agents',
+    description: 'Agent groups — one workspace per agent (standing instructions, memory, projects).',
+  },
+  container: {
+    label: 'Shared runtime',
+    description: 'Shared container image: base instructions, agent-runner source, and skills mounted into every agent.',
+  },
+  root: {
+    label: 'Install root',
+    description: 'Top-level files of the nanoclaw install.',
+  },
+}
+
+/** Better label + description for a top-level config-tree folder, if known. */
+export const describeConfigFolder = (name: string): ConfigFolderContext | null =>
+  FOLDER_CONTEXTS[name] ?? null
+
 export interface FileFrontmatter {
   title?: string
   description?: string

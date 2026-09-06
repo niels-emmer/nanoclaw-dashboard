@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { config } from '../lib/config'
-import { describeConfigFile, parseFrontmatter } from '../lib/configFileContext'
+import { describeConfigFile, describeConfigFolder, parseFrontmatter } from '../lib/configFileContext'
 import type { ConfigFile, ConfigGroup, InstanceInfo } from '../lib/types'
 
 interface Props {
@@ -95,6 +95,8 @@ interface FolderProps {
 
 function ConfigFolder({ node, depth, expanded, onToggle, selectedFileId, onSelectFile }: FolderProps) {
   const isExpanded = expanded.has(node.path)
+  const folderCtx = depth === 0 ? describeConfigFolder(node.name) : null
+  const displayName = folderCtx?.label ?? node.name
   const childCount = Object.values(node.children).reduce(
     (sum, child) => sum + child.files.length + Object.keys(child.children).length,
     0,
@@ -110,7 +112,10 @@ function ConfigFolder({ node, depth, expanded, onToggle, selectedFileId, onSelec
         aria-expanded={isExpanded}
       >
         <span className="config-folder-chevron" aria-hidden>{isExpanded ? '▾' : '▸'}</span>
-        <span className="config-folder-name">{node.name}</span>
+        <span className="config-folder-text">
+          <span className="config-folder-name">{displayName}</span>
+          {folderCtx && <span className="config-folder-sub">{folderCtx.description}</span>}
+        </span>
         <span className="config-folder-count">{total}</span>
       </button>
       {isExpanded && (
