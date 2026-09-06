@@ -110,6 +110,23 @@ def test_normalize_timestamp_returns_none_for_invalid():
     assert NanoclawTelemetrySource._normalize_timestamp("") is None
 
 
+def test_cpu_percent_from_times():
+    """CPU utilization is computed from /proc/stat jiffie deltas, not loadavg."""
+    # prev: idle=800, total=1000. now: idle=810, total=1100 (10 idle of 100 new → 90% busy).
+    pct = NanoclawTelemetrySource._cpu_percent_from_times((800, 1000), (810, 1100))
+    assert pct == 90.0
+
+    # Fully busy: no idle delta.
+    assert NanoclawTelemetrySource._cpu_percent_from_times((800, 1000), (800, 1100)) == 100.0
+
+    # Fully idle: all new jiffies idle.
+    assert NanoclawTelemetrySource._cpu_percent_from_times((800, 1000), (900, 1100)) == 0.0
+
+    # Degenerate samples return None (no crash).
+    assert NanoclawTelemetrySource._cpu_percent_from_times((800, 1000), (800, 1000)) is None
+    assert NanoclawTelemetrySource._cpu_percent_from_times((810, 1100), (800, 1000)) is None
+
+
 @pytest.mark.asyncio
 async def test_mock_instance_info_has_details_and_metrics():
     """instance_info events carry version, uptime, resources, and metrics."""

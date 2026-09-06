@@ -248,6 +248,7 @@ class NanoclawTelemetrySource(TelemetrySource):
         self._started_at = time.monotonic()
         self._messages_total = 0
         self._errors_total = 0
+        self._last_cpu_times: Optional[tuple[int, int]] = None
 
         if not self.central_db.exists():
             raise FileNotFoundError(f"Nanoclaw database not found at {self.central_db}")
@@ -790,12 +791,15 @@ class NanoclawTelemetrySource(TelemetrySource):
                 resources["memoryTotalMb"] = total_kb // 1024
         except (OSError, ValueError, KeyError):
             pass
-        try:
-            load = os.getloadavg()[0]
-            cpus = os.cpu_count() or 1
-            resources["cpuPercent"] = round(min(100.0, load / cpus * 100), 1)
-        except (OSError, AttributeError):
-            pass
+        # Real CPU utilization from /proc/stat deltas (the `top` method).
+        # os.getloadavg() is a host-global run-queue length, not utilization —
+        # on a busy host it pegs at 100% regardless of actual CPU use.
+        now = self._read_cpu_times()
+        if now and self._last_cpu_times:
+            pct = self._cpu_percent_from_times(self._last_cpu_times, now)
+            if pct is not None:
+                resources["cpuPercent"] = pct
+        self._last_cpu_times = now
         try:
             usage = shutil.disk_usage(self.root)
             resources["diskUsedMb"] = usage.used // (1024 * 1024)
@@ -803,6 +807,32 @@ class NanoclawTelemetrySource(TelemetrySource):
         except OSError:
             pass
         return resources
+
+    @staticmethod
+    def _read_cpu_times() -> Optional[tuple[int, int]]:
+        """Read (idle, total) CPU jiffies from /proc/stat, or None."""
+        try:
+            with open("/proc/stat", encoding="utf-8") as fh:
+                line = fh.readline()
+            parts = line.split()
+            if not parts or parts[0] != "cpu":
+                return None
+            nums = [int(x) for x in parts[1:]]
+            if len(nums) < 5:
+                return None
+            idle = nums[3] + nums[4]  # idle + iowait
+            return idle, sum(nums)
+        except (OSError, ValueError, IndexError):
+            return None
+
+    @staticmethod
+    def _cpu_percent_from_times(prev: tuple[int, int], now: tuple[int, int]) -> Optional[float]:
+        """CPU utilization percent between two (idle, total) jiffie samples."""
+        idle_delta = now[0] - prev[0]
+        total_delta = now[1] - prev[1]
+        if total_delta <= 0 or idle_delta < 0:
+            return None
+        return round(min(100.0, (1 - idle_delta / total_delta) * 100), 1)
 
     # ------------------------------------------------------------------
     # Refresh helpers
