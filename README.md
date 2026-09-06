@@ -362,6 +362,7 @@ mirrored in `frontend/src/lib/types.ts`):
     "summary": "Delegating research task to seer",
     "duration_ms": 1200,
     "status": "running | completed | error | pending | processing | delivered | failed",
+    "meta": "{ instance, groups } | null",
     "current_tool": "string | null",
     "tool_elapsed_ms": "int | null",
     "tool_timeout_ms": "int | null",
@@ -385,8 +386,8 @@ the **Nanoclaw Instance details** screen (click the liveness indicator in the
 top-right of the status bar): a single-line details row (version, uptime, CPU,
 memory/disk usage), a collapsible folder-tree browser over the user/group
 configuration markdown files (agent → projects/sub-divisions, contents loaded
-on demand), and live metrics (messages/errors, token buffer, time to reset,
-host details). Their structured payloads are JSON-encoded in
+on demand), and a resource sparkline strip (CPU/memory/disk trends + host
+details). Their structured payloads are JSON-encoded in
 `payload.meta` (`meta.instance` and `meta.groups`) — see `API.md` for the full
 shape.
 
