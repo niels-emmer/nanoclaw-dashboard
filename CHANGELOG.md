@@ -4,7 +4,7 @@
 
 ### Added
 
-- **Config-browser file context** — the instance-details file browser now shows a role badge + description for the selected file (derived from its path: standing instructions, memory map/doctrine, composed CLAUDE.md, skills, projects, etc.) and parses OKF YAML frontmatter (`title`/`type`/`description`/`tags`) from memory concept files.
+- **Config-browser file context** — the instance-details file browser now shows a role badge + description for the selected file (derived from its path: standing instructions, memory map/doctrine, composed CLAUDE.md, skills, projects, etc.) and parses OKF YAML frontmatter (`title`/`type`/`description`/`tags`) from memory concept files. Top-level folders are labeled with their canonical concepts — `groups` → **Agents**, `container` → **Shared runtime**, `root` → **Install root** — with a description subtitle.
 
 ## [1.3.0] — 2026-09-05
 
