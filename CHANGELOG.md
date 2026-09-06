@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.3.1] — 2026-09-05
+
 ### Added
 
 - **Config-browser file context** — the instance-details file browser now shows a role badge + description for the selected file (derived from its path: standing instructions, memory map/doctrine, composed CLAUDE.md, skills, projects, etc.) and parses OKF YAML frontmatter (`title`/`type`/`description`/`tags`) from memory concept files. Top-level folders are labeled with their canonical concepts — `groups` → **Agents**, `container` → **Shared runtime**, `root` → **Install root** — with a wrapping description subtitle.
@@ -11,6 +13,10 @@
 ### Fixed
 
 - **CPU indicator pegged at 100%** — the real source computed CPU from `os.getloadavg()` (a host-global run-queue length, not utilization), which maxed out on the busy host. Now computed from `/proc/stat` jiffie deltas between polls (the `top` method).
+
+### Changed
+
+- **Docs audit cleanup** — README/ARCHITECTURE updated for the sparkline strip and `meta` schema field; API.md documents the `folder` field on `instance_info` agents; ADR 0021 amended for the post-feedback changes.
 
 ## [1.3.0] — 2026-09-05
 
