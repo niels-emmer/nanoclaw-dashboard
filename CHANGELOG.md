@@ -8,6 +8,10 @@
 - **Main agent group surfaced** — the human-facing agent (e.g. Marvin) is identified via the sticky `humanAgentId` and mapped to its config folder (`agent_groups.folder`, now included per agent in `instance_info`). The Agents folder expands by default and the main agent's folder is sorted to the top with a **Main** badge.
 - **Resource sparkline strip** — the bottom metrics bar (messages/errors already on the main dashboard, dead token-buffer/time-to-reset placeholders) is replaced with a slim strip of CPU/memory/disk sparklines fed by the periodic `instance_info` events (accumulated in the reducer, ~30 min window), plus host details. Frees vertical space for the config browser.
 
+### Fixed
+
+- **CPU indicator pegged at 100%** — the real source computed CPU from `os.getloadavg()` (a host-global run-queue length, not utilization), which maxed out on the busy host. Now computed from `/proc/stat` jiffie deltas between polls (the `top` method).
+
 ## [1.3.0] — 2026-09-05
 
 ### Added
