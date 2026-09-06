@@ -6,6 +6,7 @@ import type { ConfigFile, ConfigGroup, InstanceInfo } from '../lib/types'
 interface Props {
   instanceInfo: InstanceInfo | null
   configGroups: ConfigGroup[] | null
+  humanAgentId?: string | null
   onClose: () => void
 }
 
@@ -91,12 +92,14 @@ interface FolderProps {
   onToggle: (path: string) => void
   selectedFileId: string | null
   onSelectFile: (file: ConfigFile) => void
+  mainFolder?: string | null
 }
 
-function ConfigFolder({ node, depth, expanded, onToggle, selectedFileId, onSelectFile }: FolderProps) {
+function ConfigFolder({ node, depth, expanded, onToggle, selectedFileId, onSelectFile, mainFolder }: FolderProps) {
   const isExpanded = expanded.has(node.path)
   const folderCtx = depth === 0 ? describeConfigFolder(node.name) : null
   const displayName = folderCtx?.label ?? node.name
+  const isMain = mainFolder != null && node.name === mainFolder && depth > 0
   const childCount = Object.values(node.children).reduce(
     (sum, child) => sum + child.files.length + Object.keys(child.children).length,
     0,
@@ -113,7 +116,10 @@ function ConfigFolder({ node, depth, expanded, onToggle, selectedFileId, onSelec
       >
         <span className="config-folder-chevron" aria-hidden>{isExpanded ? '▾' : '▸'}</span>
         <span className="config-folder-text">
-          <span className="config-folder-name">{displayName}</span>
+          <span className="config-folder-name">
+            {displayName}
+            {isMain && <span className="config-folder-main">Main</span>}
+          </span>
           {folderCtx && <span className="config-folder-sub">{folderCtx.description}</span>}
         </span>
         <span className="config-folder-count">{total}</span>
@@ -140,6 +146,7 @@ function ConfigFolder({ node, depth, expanded, onToggle, selectedFileId, onSelec
               onToggle={onToggle}
               selectedFileId={selectedFileId}
               onSelectFile={onSelectFile}
+              mainFolder={mainFolder}
             />
           ))}
         </div>
@@ -148,9 +155,9 @@ function ConfigFolder({ node, depth, expanded, onToggle, selectedFileId, onSelec
   )
 }
 
-export function InstanceDetails({ instanceInfo, configGroups, onClose }: Props) {
+export function InstanceDetails({ instanceInfo, configGroups, humanAgentId, onClose }: Props) {
   const [now, setNow] = useState(() => Date.now())
-  const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(['groups']))
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
   const [fileContent, setFileContent] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -162,7 +169,30 @@ export function InstanceDetails({ instanceInfo, configGroups, onClose }: Props) 
     return () => clearInterval(timer)
   }, [])
 
-  const tree = useMemo(() => (configGroups ? buildConfigTree(configGroups) : []), [configGroups])
+  // The main agent group is the human-facing agent (sticky, from real human
+  // channels). Map its agent id to the config folder via instance_info.
+  const mainFolder = useMemo(() => {
+    if (!humanAgentId || !instanceInfo?.agents) return null
+    return instanceInfo.agents.find((a) => a.id === humanAgentId)?.folder ?? null
+  }, [humanAgentId, instanceInfo])
+
+  const tree = useMemo(() => {
+    const roots = configGroups ? buildConfigTree(configGroups) : []
+    if (!mainFolder) return roots
+    // Move the main agent's folder to the top of its parent's children.
+    const moveMainFirst = (node: ConfigTreeNode): void => {
+      const entries = Object.entries(node.children)
+      const mainIdx = entries.findIndex(([name]) => name === mainFolder)
+      if (mainIdx > 0) {
+        const [main] = entries.splice(mainIdx, 1)
+        entries.unshift(main)
+        node.children = Object.fromEntries(entries)
+      }
+      for (const child of Object.values(node.children)) moveMainFirst(child)
+    }
+    roots.forEach(moveMainFirst)
+    return roots
+  }, [configGroups, mainFolder])
 
   const toggleFolder = (path: string) => {
     setExpanded((prev) => {
@@ -264,6 +294,7 @@ export function InstanceDetails({ instanceInfo, configGroups, onClose }: Props) 
                 onToggle={toggleFolder}
                 selectedFileId={selectedFileId}
                 onSelectFile={selectFile}
+                mainFolder={mainFolder}
               />
             ))}
           </nav>

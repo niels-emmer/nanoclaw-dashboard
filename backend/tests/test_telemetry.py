@@ -167,7 +167,7 @@ def _make_nanoclaw_source(tmp_path: Path) -> NanoclawTelemetrySource:
 
     (tmp_path / "data").mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(tmp_path / "data" / "v2.db")
-    conn.execute("CREATE TABLE agent_groups (id TEXT PRIMARY KEY, name TEXT)")
+    conn.execute("CREATE TABLE agent_groups (id TEXT PRIMARY KEY, name TEXT, folder TEXT)")
     conn.execute("CREATE TABLE container_configs (agent_group_id TEXT, provider TEXT, model TEXT, effort TEXT, skills TEXT, assistant_name TEXT)")
     conn.execute("CREATE TABLE sessions (id TEXT PRIMARY KEY, agent_group_id TEXT, container_status TEXT, last_active TEXT)")
     conn.commit()
@@ -255,7 +255,7 @@ def test_real_config_snapshot_caps_file_count_and_content_length(tmp_path):
 
 
 def test_real_instance_info_has_agents_and_metrics(tmp_path):
-    """Real source instance_info carries agents, skills, and message/error totals."""
+    """Real source instance_info carries agents (with folder), skills, and totals."""
     (tmp_path / "groups" / "coder").mkdir(parents=True)
     (tmp_path / "groups" / "coder" / "instructions.prepend.md").write_text("# Coder\n")
 
@@ -272,3 +272,5 @@ def test_real_instance_info_has_agents_and_metrics(tmp_path):
     assert isinstance(instance["agents"], list)
     assert isinstance(instance["skills"], list)
     assert isinstance(instance["models"], list)
+    # Every agent carries its config folder name (agent_group_id -> groups/<folder>).
+    assert all("folder" in a for a in instance["agents"])

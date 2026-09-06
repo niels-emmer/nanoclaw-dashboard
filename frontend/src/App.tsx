@@ -84,6 +84,7 @@ function App() {
         <InstanceDetails
           instanceInfo={instanceInfo}
           configGroups={configGroups}
+          humanAgentId={humanAgentId}
           onClose={() => setShowInstanceDetails(false)}
         />
       )}

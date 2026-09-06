@@ -116,6 +116,42 @@ describe('InstanceDetails', () => {
     expect(screen.getByRole('button', { name: /Install root/ })).toBeInTheDocument()
   })
 
+  it('sorts the main agent folder to the top with a Main badge', () => {
+    const realGroups: ConfigGroup[] = [
+      {
+        id: 'groups/builder',
+        label: 'builder',
+        files: [{ id: 'groups/builder/instructions', path: 'groups/builder/instructions.prepend.md', name: 'instructions.prepend.md' }],
+      },
+      {
+        id: 'groups/dm-with-niels',
+        label: 'dm-with-niels',
+        files: [{ id: 'groups/dm-with-niels/instructions', path: 'groups/dm-with-niels/instructions.prepend.md', name: 'instructions.prepend.md' }],
+      },
+    ]
+    const info: InstanceInfo = {
+      ...instanceInfo,
+      agents: [
+        { id: 'agent:ag-1783159075688-mvnncz', label: 'Marvin', state: 'running', folder: 'dm-with-niels' },
+        { id: 'agent:ag-other', label: 'Builder', state: 'idle', folder: 'builder' },
+      ],
+    }
+    render(
+      <InstanceDetails instanceInfo={info} configGroups={realGroups} humanAgentId="agent:ag-1783159075688-mvnncz" onClose={() => {}} />,
+    )
+
+    // The Agents folder is expanded by default; the main folder is first with a badge.
+    const agentsButton = screen.getByRole('button', { name: /Agents/ })
+    expect(agentsButton).toHaveAttribute('aria-expanded', 'true')
+    const mainButton = screen.getByRole('button', { name: /dm-with-niels/ })
+    expect(mainButton).toBeInTheDocument()
+    expect(screen.getByText('Main')).toBeInTheDocument()
+    // dm-with-niels renders before builder in the tree.
+    const dmButton = screen.getByRole('button', { name: /dm-with-niels/ })
+    const builderButton = screen.getByRole('button', { name: /builder/ })
+    expect(dmButton.compareDocumentPosition(builderButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
   it('fetches and shows file content when a file is selected', async () => {
     render(<InstanceDetails instanceInfo={instanceInfo} configGroups={configGroups} onClose={() => {}} />)
 

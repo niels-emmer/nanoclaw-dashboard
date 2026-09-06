@@ -115,6 +115,8 @@ export interface InstanceAgent {
   id: string
   label: string
   state: string
+  /** Config folder name (e.g. "dm-with-niels") — links the agent to its groups/<folder> tree. */
+  folder?: string
 }
 
 export interface InstanceMetrics {

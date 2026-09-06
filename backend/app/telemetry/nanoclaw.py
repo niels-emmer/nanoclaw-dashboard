@@ -30,6 +30,7 @@ log = get_logger(__name__)
 class AgentGroup:
     id: str
     name: str
+    folder: Optional[str] = None
 
 
 @dataclass
@@ -629,11 +630,12 @@ class NanoclawTelemetrySource(TelemetrySource):
             {
                 "id": f"agent:{ag_id}",
                 "label": self._agent_label(ag_id),
+                "folder": group.folder,
                 "state": "running"
                 if any(s.agent_group_id == ag_id for s in self._session_map.values())
                 else "idle",
             }
-            for ag_id in self._agent_groups
+            for ag_id, group in self._agent_groups.items()
         ]
         active_agents = sum(1 for a in agents if a["state"] == "running")
 
@@ -807,8 +809,15 @@ class NanoclawTelemetrySource(TelemetrySource):
     # ------------------------------------------------------------------
 
     def _refresh_agent_groups(self) -> None:
-        rows = self._query(self.central_db, "SELECT id, name FROM agent_groups")
-        groups = {row["id"]: AgentGroup(id=row["id"], name=row["name"] or row["id"]) for row in rows}
+        rows = self._query(self.central_db, "SELECT id, name, folder FROM agent_groups")
+        groups = {
+            row["id"]: AgentGroup(
+                id=row["id"],
+                name=row["name"] or row["id"],
+                folder=row.get("folder") or None,
+            )
+            for row in rows
+        }
         if groups:
             self._agent_groups = groups
             self._orchestrator_id = self._determine_orchestrator()
