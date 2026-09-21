@@ -115,8 +115,9 @@ nanoclaw-dashboard/
 
 - Governance is normative: threat modeling, dependency pinning, SBOMs, ADRs,
   and documentation are mandatory.
-- Keep all doc files current before merging: `README.md`, `docs/ARCHITECTURE.md`,
-  `SECURITY.md`, `THIRD_PARTY.md`, `docs/decision-log.md`.
+- Keep all doc files current before merging: `README.md`, `API.md`,
+  `docs/ARCHITECTURE.md`, `SECURITY.md`, `THIRD_PARTY.md`, `CHANGELOG.md`,
+  `docs/decision-log.md`.
 - Threat model every new network interface or data store; link from
   `docs/decision-log.md`. Current model: `docs/threat-models/2026-07-25.md`.
 - When altering telemetry schema or transport: bump `schema_version`, update

@@ -222,9 +222,9 @@ _RESTORE_TEMPLATE = r"""#!/usr/bin/env bash
 # next to this script in backups/.
 #
 # Usage:
-#   bash backups/__ARCHIVE_NAME__ plan   [--passphrase ...]
-#   bash backups/__ARCHIVE_NAME__ restore [--yes] [--overwrite] [--passphrase ...]
-#   bash backups/__ARCHIVE_NAME__ import  [--yes] [--overwrite] [--passphrase ...]
+#   bash backups/__BACKUP_ID__.sh plan   [--passphrase ...]
+#   bash backups/__BACKUP_ID__.sh restore [--yes] [--overwrite] [--passphrase ...]
+#   bash backups/__BACKUP_ID__.sh import  [--yes] [--overwrite] [--passphrase ...]
 #
 #   plan     — dry-run: show what would be created / skipped / overwritten.
 #   restore  — full restore: stops the service, replaces state, restarts.

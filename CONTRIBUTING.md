@@ -54,7 +54,7 @@ See the [README](./README.md#quick-start) for one-shot setup via
 ### Prerequisites
 
 - Python **3.11+**
-- Node.js **20.19.0** (vendored automatically by the install script)
+- Node.js **22.23.2** (vendored automatically by the install script)
 - A POSIX shell (macOS / Linux)
 
 ### Quick Start (Manual)

@@ -167,9 +167,10 @@ is encrypted (openssl AES-256-CBC); it is never stored in plaintext. Archives
 can be downloaded for off-host storage.
 
 Agent backups are **configuration-only**: working data (`work`/`repos`/
-`projects`/`conversations`), transient dirs (`.pnpm-store`, `.claude-fragments`),
-build caches (`.next`, `dist`, `build`, `.cache`), and files over 10 MiB are
-excluded — skipped files are listed in the backup's manifest notes.
+`projects`/`conversations`), transient dirs (`.pnpm-store`, `.claude-fragments`,
+`.claude-shared`), build caches (`.next`, `dist`, `build`, `.cache`), symlinks,
+and files over 10 MiB are excluded — skipped files are listed in the backup's
+manifest notes.
 
 **Restore** — select a backup, view the conflict plan (create/skip/overwrite/
 replace per item), then run the generated script **on the nanoclaw host**:

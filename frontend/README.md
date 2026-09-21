@@ -5,7 +5,7 @@ This package houses the Vite + React + TypeScript SPA that renders the live nano
 ## Commands
 
 ```bash
-# Install deps (Node 20.19.0 – vendored under .tools/node)
+# Install deps (Node 22.23.2 – vendored under .tools/node)
 PATH="$REPO/.tools/node/bin:$PATH" npm install
 
 # Dev server (connects to backend ws://localhost:8000/ws/events by default)
@@ -27,6 +27,7 @@ Set `VITE_BACKEND_WS_URL` when the backend lives somewhere other than `localhost
 | `VITE_AGENT_SOLID_MINUTES` | `15` | Minutes an active agent stays 100% solid before fading |
 | `VITE_AGENT_FADE_MINUTES` | `90` | Linear fade-out duration before an agent is auto-removed from the tree graph |
 | `VITE_ORCHESTRATOR_ID` | `orchestrator` | Root orchestrator node identifier |
+| `VITE_BACKUP_TOKEN` | unset | Optional shared secret for the backup surface (mirrors `NANOCLAW_BACKUP_TOKEN`; sent as `X-Backup-Token`) |
 
 ## Structure
 

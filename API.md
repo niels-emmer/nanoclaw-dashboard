@@ -126,7 +126,7 @@ All endpoints are origin-validated like `/api/config/file` (403 on disallowed or
 
 **`GET /api/backup/download/{backup_id}`** — streams the archive (`application/gzip`). 404 for unknown/invalid ids.
 
-**`POST /api/backup/plan`** — body `{ "backup_id": str }`. Computes a conflict plan against the current target: per-item `action` ∈ `create | skip | overwrite | replace` with a reason, plus a summary (`full_restore`, counts, `schema_version`). 404 for unknown backup; 400 for a missing `backup_id`.
+**`POST /api/backup/plan`** — body `{ "backup_id": str }`. Computes a conflict plan against the current target: per-item `action` ∈ `create | skip | overwrite | replace` with a reason, plus a summary (`full_restore`, counts, `schema_version`). 404 for unknown backup; 422 for a missing/invalid `backup_id`; 400 for an unsafe archive.
 
 **`POST /api/backup/restore-script`** — body `{ "backup_id": str }`. Returns `{ "backup_id", "script_path", "script" }` — the host-side restore script (already written next to the archive at creation). Run it on the nanoclaw host: `bash backups/<id>.sh plan|restore|import [--yes] [--overwrite] [--passphrase …]`. `restore` requires a full-system backup (contains `data/v2.db`); use `import` for partial category backups.
 

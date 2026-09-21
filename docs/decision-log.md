@@ -260,7 +260,7 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - @heroui/react 3.2.2→3.2.6 (#64) failed CI with an upstream peer conflict: `@heroui/react@3.2.6` requires peer `react-aria@^3.52.1`, but the old lockfile pinned `@adobe/react-spectrum@3.47.2` → `react-aria@3.50.0`. Fixed by regenerating the lockfile with a fresh resolution — `@adobe/react-spectrum@3.47.5` (latest in the `^3.47.0` range) pulls `react-aria@3.52.1`, satisfying the peer requirement. Verified locally before merge.
 - **Consequences**:
   - All nine dependabot PRs merged; `main` is green (backend pytest + frontend lint/build/test all pass in CI).
-  - `THIRD_PARTY.md` updated to the new versions (react/react-dom 19.3.0, vite 8.3.0, vitest 5.0.0, oxlint 1.82.0, lucide-react 1.45.0, @types/node 26.5.1, @types/react 19.3.0, @types/react-dom 19.3.0, @heroui/react 3.2.6, @heroui/styles 3.2.5).
+  - `THIRD_PARTY.md` updated to the new versions (react/react-dom 19.3.0, vite 8.3.0, vitest 5.0.1, oxlint 1.83.0, lucide-react 1.47.0, @types/node 26.6.2, @types/react 19.3.0, @types/react-dom 19.3.0, @heroui/react 3.2.6, @heroui/styles 3.2.6).
   - No telemetry schema or transport change; no `schema_version` bump.
   - Note: the Heroui react-aria peer conflict is upstream (Heroui pins `@react-types/color@3.2.0` while requiring `react-aria@^3.52.1`); the fresh lockfile resolution works today but may recur on future Heroui bumps.
 
