@@ -15,6 +15,18 @@
   refusal). New `/api/backup/*` endpoints (origin-validated, optional
   `NANOCLAW_BACKUP_TOKEN` shared secret). See `API.md` and ADR 0024.
 
+### Fixed
+
+- **Backup collection on live hosts** — agent group folders are dominated by
+  working data (repos/projects up to 6.8 GB per group), transient dirs
+  (`.pnpm-store` ~930 MB), and build caches; backups are now configuration-only
+  (working data, transient dirs, symlinks, and files over 10 MiB excluded).
+  Broken container-internal symlinks no longer abort backups.
+- **Restore script on the live host** — the backend container now runs as the
+  host user (`NANOCLAW_UID`/`NANOCLAW_GID`) so `backups/` is operator-owned;
+  the script probes for a node that can load the checkout's `better-sqlite3`
+  (nvm-managed Node vs system Node ABI mismatch).
+
 ### Changed
 
 - **Frontend dependency batch** — react/react-dom 19.3.0, vite 8.3.0, vitest 5.0.1, oxlint 1.83.0, lucide-react 1.47.0, @types/node 26.6.2, @types/react 19.3.0, @types/react-dom 19.3.0, @heroui/react 3.2.6, @heroui/styles 3.2.6 (all nine dependabot PRs merged; react/react-dom bumped together to keep versions matched).

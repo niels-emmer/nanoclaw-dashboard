@@ -109,7 +109,7 @@ All endpoints are origin-validated like `/api/config/file` (403 on disallowed or
 | Category | Contents |
 |----------|----------|
 | `full` | Everything below + raw `data/v2.db` + `container/CLAUDE.md` |
-| `agents` | `agent_groups`, `container_configs`, `agent_destinations`, `agent_message_policies`, scoped `user_roles`/`agent_group_members`, and `groups/<folder>/` files (excludes generated `CLAUDE.md`/`container.json`). With `agent_ids` → only those groups |
+| `agents` | `agent_groups`, `container_configs`, `agent_destinations`, `agent_message_policies`, scoped `user_roles`/`agent_group_members`, and `groups/<folder>/` files (excludes generated `CLAUDE.md`/`container.json`). With `agent_ids` → only those groups. **Configuration only**: working data (`work`/`repos`/`projects`/`conversations`), transient dirs (`.pnpm-store`, `.claude-fragments`, `.claude-shared`), build caches (`.next`, `dist`, `build`, `.cache`), and files over 10 MiB are excluded (skipped files are listed in the manifest `notes`). |
 | `orchestrator` | `agent_destinations`, `agent_message_policies`, `messaging_groups`, `messaging_group_agents`, `user_dms`, plus the orchestrator group's folder |
 | `channels` | `messaging_groups`, `messaging_group_agents`, `user_dms` |
 | `users` | `users`, `user_roles`, `agent_group_members` |

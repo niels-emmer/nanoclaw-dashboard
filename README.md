@@ -166,6 +166,11 @@ Conversation history) and create. The `.env` category requires a passphrase and
 is encrypted (openssl AES-256-CBC); it is never stored in plaintext. Archives
 can be downloaded for off-host storage.
 
+Agent backups are **configuration-only**: working data (`work`/`repos`/
+`projects`/`conversations`), transient dirs (`.pnpm-store`, `.claude-fragments`),
+build caches (`.next`, `dist`, `build`, `.cache`), and files over 10 MiB are
+excluded — skipped files are listed in the backup's manifest notes.
+
 **Restore** — select a backup, view the conflict plan (create/skip/overwrite/
 replace per item), then run the generated script **on the nanoclaw host**:
 
@@ -186,6 +191,10 @@ Notes:
 - `~/.config/nanoclaw` allowlists (`mount-allowlist.json`,
   `sender-allowlist.json`) live outside the mount — copy them manually if needed.
 - `backups/` is gitignored (archives may contain encrypted secrets).
+- The backend container runs as the host user (`NANOCLAW_UID`/`NANOCLAW_GID` in
+  `.env`) so the archives + restore scripts in `backups/` are owned by you, not
+  root. Set `NANOCLAW_BACKUP_TOKEN` (mirrored by `VITE_BACKUP_TOKEN`) to require
+  a shared secret on the backup API.
 
 ## Deploy to a Live Host
 
