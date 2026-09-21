@@ -69,8 +69,15 @@ TABLE_CATEGORIES: Dict[str, set] = {
 # backed up or restored (they are projections of DB state / composed docs).
 GENERATED_GROUP_FILES = frozenset({"CLAUDE.md", "container.json"})
 
-# Directories never included when copying group folders.
-EXCLUDED_GROUP_DIRS = frozenset({".git", "__pycache__", "node_modules"})
+# Directories never included when copying group folders. Transient/container
+# state (package stores, Claude fragments, shared mounts) is not configuration
+# and can be huge — e.g. .pnpm-store alone can exceed 900 MB on a live host.
+EXCLUDED_GROUP_DIRS = frozenset({
+    ".git", "__pycache__", "node_modules",
+    ".pnpm-store",       # package store — not config, can be hundreds of MB
+    ".claude-fragments", # transient Claude state
+    ".claude-shared",    # container-internal shared dir
+})
 
 
 # ---------------------------------------------------------------------------

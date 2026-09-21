@@ -179,6 +179,21 @@ def test_collect_skips_broken_symlinks(nanoclaw_root: Path, tmp_path: Path):
     assert (staging / "groups" / "main" / "instructions.prepend.md").is_file()
 
 
+def test_collect_excludes_transient_dirs(nanoclaw_root: Path, tmp_path: Path):
+    """Transient dirs (.pnpm-store, .claude-fragments) are not config and must
+    be excluded from group folder copies."""
+    (nanoclaw_root / "groups" / "main" / ".pnpm-store" / "v10").mkdir(parents=True)
+    (nanoclaw_root / "groups" / "main" / ".pnpm-store" / "v10" / "blob").write_text("x" * 100)
+    (nanoclaw_root / "groups" / "main" / ".claude-fragments").mkdir()
+    (nanoclaw_root / "groups" / "main" / ".claude-fragments" / "frag.md").write_text("frag")
+    staging = tmp_path / "staging"
+    staging.mkdir()
+    collect_backup(nanoclaw_root, staging, ["agents"])
+    assert not (staging / "groups" / "main" / ".pnpm-store").exists()
+    assert not (staging / "groups" / "main" / ".claude-fragments").exists()
+    assert (staging / "groups" / "main" / "instructions.prepend.md").is_file()
+
+
 def test_collect_unknown_agent_ids_raise(nanoclaw_root: Path, tmp_path: Path):
     staging = tmp_path / "staging"
     staging.mkdir()
