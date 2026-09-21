@@ -72,11 +72,17 @@ GENERATED_GROUP_FILES = frozenset({"CLAUDE.md", "container.json"})
 # Directories never included when copying group folders. Transient/container
 # state (package stores, Claude fragments, shared mounts) is not configuration
 # and can be huge — e.g. .pnpm-store alone can exceed 900 MB on a live host.
+# Agent working data (work/repos/projects/conversations) is also excluded: it
+# is the agent's project workspace (often git clones of remotes), not nanoclaw
+# config, and can reach multiple GB per group. The backup covers the agent's
+# configuration: instructions, memory, notes, and small config files.
 EXCLUDED_GROUP_DIRS = frozenset({
     ".git", "__pycache__", "node_modules",
     ".pnpm-store",       # package store — not config, can be hundreds of MB
     ".claude-fragments", # transient Claude state
     ".claude-shared",    # container-internal shared dir
+    # Agent working data — not nanoclaw config (GBs of repos/projects)
+    "work", "repos", "projects", "conversations",
 })
 
 

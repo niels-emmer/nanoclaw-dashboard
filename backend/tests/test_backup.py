@@ -194,6 +194,20 @@ def test_collect_excludes_transient_dirs(nanoclaw_root: Path, tmp_path: Path):
     assert (staging / "groups" / "main" / "instructions.prepend.md").is_file()
 
 
+def test_collect_excludes_working_data(nanoclaw_root: Path, tmp_path: Path):
+    """Agent working data (work/repos/projects/conversations) is not nanoclaw
+    config and must be excluded from group folder copies."""
+    for name in ("work", "repos", "projects", "conversations"):
+        (nanoclaw_root / "groups" / "main" / name).mkdir()
+        (nanoclaw_root / "groups" / "main" / name / "big.bin").write_text("x" * 1000)
+    staging = tmp_path / "staging"
+    staging.mkdir()
+    collect_backup(nanoclaw_root, staging, ["agents"])
+    for name in ("work", "repos", "projects", "conversations"):
+        assert not (staging / "groups" / "main" / name).exists()
+    assert (staging / "groups" / "main" / "instructions.prepend.md").is_file()
+
+
 def test_collect_unknown_agent_ids_raise(nanoclaw_root: Path, tmp_path: Path):
     staging = tmp_path / "staging"
     staging.mkdir()
