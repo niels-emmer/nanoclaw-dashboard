@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python)](backend/pyproject.toml)
-[![Node 20.19.0](https://img.shields.io/badge/Node-20.19.0-blue?logo=node.js)](frontend/package.json)
+[![Node 22.23.2](https://img.shields.io/badge/Node-22.23.2-blue?logo=node.js)](frontend/package.json)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 Live, single-screen telemetry dashboard for **nanoclaw**, an AI agent
@@ -62,7 +62,7 @@ The fastest way to get running:
 This single script:
 1. Creates a Python virtual environment (`.venv`)
 2. Installs backend dependencies
-3. Downloads Node **20.19.0** into `.tools/node`
+3. Downloads Node **22.23.2** into `.tools/node`
 4. Installs frontend dependencies
 5. Runs backend tests, frontend lint, and frontend build
 
@@ -95,7 +95,7 @@ source .venv/bin/activate
 pip install -r backend/requirements.txt
 cd backend && pytest && uvicorn app.main:app --reload --port 8000
 
-# Frontend (separate terminal, requires Node 20.19.0)
+# Frontend (separate terminal, requires Node 22.23.2)
 npm --prefix frontend install
 npm --prefix frontend run dev
 ```
@@ -105,14 +105,14 @@ npm --prefix frontend run dev
 | Requirement | Version | Notes |
 |-------------|---------|-------|
 | Python | 3.11+ | Uses newer typing + Pydantic v2 |
-| Node.js | 20.19.0 | Vite 8 + rolldown require this exact version |
+| Node.js | 22.23.2 | Vite 8 + rolldown require this exact version |
 | OS | macOS / Linux | Tested on macOS Ventura+ and Ubuntu 24.04 |
 
-> **Node version**: If you don't have Node 20.19.0, the install script
+> **Node version**: If you don't have Node 22.23.2, the install script
 > downloads it automatically to `.tools/node`. You can also use
 > [nvm](https://github.com/nvm-sh/nvm):
 > ```bash
-> nvm install 20.19.0 && nvm use 20.19.0
+> nvm install 22.23.2 && nvm use 22.23.2
 > ```
 
 ## Docker

@@ -16,17 +16,17 @@ Record every external dependency here with license info and notes on local modif
 | React / React DOM | 19.3.0 | MIT | Frontend UI library | None |
 | Vite | 8.3.0 | MIT | Frontend dev server / build tool | None |
 | Tailwind CSS | 4.3.3 | MIT | Utility-first CSS framework for styling | None |
-| @heroui/react | 3.2.6 | Apache-2.0 | UI component library | None |
-| @heroui/styles | 3.2.5 | Apache-2.0 | HeroUI pre-built component styles | None |
+| @heroui/react | 3.2.6 | MIT | UI component library | None |
+| @heroui/styles | 3.2.6 | MIT | HeroUI pre-built component styles | None |
 | @tailwindcss/vite | 4.3.3 | MIT | Tailwind Vite integration plugin | None |
-| lucide-react | 1.45.0 | MIT | SVG icon library for agent graph node icons | None |
-| oxlint | 1.82.0 | MIT | JavaScript / TypeScript linter | None |
+| lucide-react | 1.47.0 | ISC | SVG icon library for agent graph node icons | None |
+| oxlint | 1.83.0 | MIT | JavaScript / TypeScript linter | None |
 | TypeScript | 7.0.2 | Apache-2.0 | Static type checker | None |
-| @types/node | 26.5.1 | MIT | Node.js type definitions for TypeScript | None |
+| @types/node | 26.6.2 | MIT | Node.js type definitions for TypeScript | None |
 | @types/react | 19.3.0 | MIT | React type definitions for TypeScript | None |
 | @types/react-dom | 19.3.0 | MIT | React DOM type definitions for TypeScript | None |
 | @vitejs/plugin-react | 6.1.1 | MIT | Vite React plugin for Fast Refresh | None |
-| vitest | 5.0.0 | MIT | Frontend test runner | None |
+| vitest | 5.0.1 | MIT | Frontend test runner | None |
 | jsdom | 29.1.1 | MIT | DOM environment for component tests | Pinned at 29.x: jsdom 30 pulls undici 8.x, which requires Node >= 22.5 (`markAsUncloneable`); project pins Node 20.19.0. Revisit on a Node 22+ upgrade. |
 | @testing-library/react | 16.3.3 | MIT | React component testing utilities | None |
 | @testing-library/jest-dom | 7.0.1 | MIT | DOM matchers for Vitest | None |

@@ -1,4 +1,4 @@
-FROM node:20.19.0 AS builder
+FROM node:22.23.2 AS builder
 WORKDIR /app
 
 COPY frontend/package*.json ./

@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **Frontend dependency batch** — react/react-dom 19.3.0, vite 8.3.0, vitest 5.0.1, oxlint 1.83.0, lucide-react 1.47.0, @types/node 26.6.2, @types/react 19.3.0, @types/react-dom 19.3.0, @heroui/react 3.2.6, @heroui/styles 3.2.6 (all nine dependabot PRs merged; react/react-dom bumped together to keep versions matched).
+- **Node 22.23.2** — the frontend toolchain now requires Node 22.23.2 (vitest 5 requires Node ≥ 22.12). Updated CI, security workflow, Dockerfile, install script, and docs.
+- **GitHub discoverability** — rewritten repo description (keyword-rich, current product), audience-bearing topics (observability, monitoring, real-time, websocket-server, dashboard, visualization), and a custom 1280×640 social preview banner (`docs/social-preview.png`).
+
 ## [1.3.1] — 2026-09-05
 
 ### Added

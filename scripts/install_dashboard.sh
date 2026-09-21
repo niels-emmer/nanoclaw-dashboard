@@ -4,7 +4,7 @@ set -euo pipefail
 
 ROOT_DIR=$(cd -- "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 PYTHON_BIN=${PYTHON_BIN:-python3}
-NODE_VERSION="20.19.0"
+NODE_VERSION="22.23.2"
 TOOLS_DIR="$ROOT_DIR/.tools"
 NODE_DEST="$TOOLS_DIR/node"
 VENV_DIR="$ROOT_DIR/.venv"

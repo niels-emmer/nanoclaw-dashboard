@@ -120,7 +120,7 @@ nanoclaw-dashboard/
   `docs/decision-log.md`. Current model: `docs/threat-models/2026-07-25.md`.
 - When altering telemetry schema or transport: bump `schema_version`, update
   `frontend/src/lib/types.ts`, add ADR entry.
-- **Prerequisites**: Node 20.19.0, Python 3.11+.
+- **Prerequisites**: Node 22.23.2, Python 3.11+.
 - **Before pushing**: `cd backend && pytest && cd ../frontend && npm run lint && npm run build && npm test`.
 - **Lockfile discipline**: global `~/.npmrc` has `package-lock=false`. Always use
   `npm install --package-lock` (or `npm ci`) when updating frontend dependencies,
