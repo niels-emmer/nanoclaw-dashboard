@@ -208,6 +208,21 @@ def test_collect_excludes_working_data(nanoclaw_root: Path, tmp_path: Path):
     assert (staging / "groups" / "main" / "instructions.prepend.md").is_file()
 
 
+def test_collect_skips_oversized_files(nanoclaw_root: Path, tmp_path: Path):
+    """Files over the size cap (working data like PDFs) are skipped and noted
+    in the manifest."""
+    from app.backup.collect import MAX_GROUP_FILE_BYTES
+
+    big = nanoclaw_root / "groups" / "main" / "sources"
+    big.mkdir()
+    (big / "manual.pdf").write_text("x" * (MAX_GROUP_FILE_BYTES + 1))
+    staging = tmp_path / "staging"
+    staging.mkdir()
+    manifest = collect_backup(nanoclaw_root, staging, ["agents"])
+    assert not (staging / "groups" / "main" / "sources" / "manual.pdf").exists()
+    assert any("Skipped 1 file(s)" in n for n in manifest.notes)
+
+
 def test_collect_unknown_agent_ids_raise(nanoclaw_root: Path, tmp_path: Path):
     staging = tmp_path / "staging"
     staging.mkdir()

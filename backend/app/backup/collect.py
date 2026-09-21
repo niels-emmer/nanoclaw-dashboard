@@ -81,9 +81,16 @@ EXCLUDED_GROUP_DIRS = frozenset({
     ".pnpm-store",       # package store — not config, can be hundreds of MB
     ".claude-fragments", # transient Claude state
     ".claude-shared",    # container-internal shared dir
+    # Build artifacts / caches
+    ".next", "dist", "build", ".cache",
     # Agent working data — not nanoclaw config (GBs of repos/projects)
     "work", "repos", "projects", "conversations",
 })
+
+# Individual files larger than this are skipped during group folder copies
+# (config files are small; multi-MB files are working data like PDFs or build
+# caches). Skipped files are recorded in the manifest notes.
+MAX_GROUP_FILE_BYTES = 10 * 1024 * 1024  # 10 MiB
 
 
 # ---------------------------------------------------------------------------
@@ -199,12 +206,13 @@ def _nanoclaw_version(root: Path) -> Optional[str]:
 # File collection
 # ---------------------------------------------------------------------------
 
-def _copy_tree(src: Path, dst: Path, exclude_dirs: Iterable[str] = ()) -> int:
+def _copy_tree(src: Path, dst: Path, exclude_dirs: Iterable[str] = (), skipped: Optional[list] = None) -> int:
     """Copy a directory tree, returning the number of files copied.
 
     Symlinks are skipped (nanoclaw group folders contain container-internal
     symlinks like ``.claude-shared.md -> /app/CLAUDE.md`` that are noise on
-    the host), and individual copy failures are logged and skipped so a file
+    the host), files over ``MAX_GROUP_FILE_BYTES`` are skipped and recorded in
+    ``skipped``, and individual copy failures are logged and skipped so a file
     rotated mid-walk by the live host never aborts the backup.
     """
     count = 0
@@ -218,6 +226,10 @@ def _copy_tree(src: Path, dst: Path, exclude_dirs: Iterable[str] = ()) -> int:
             if src_file.is_symlink():
                 continue
             try:
+                if src_file.stat().st_size > MAX_GROUP_FILE_BYTES:
+                    if skipped is not None:
+                        skipped.append(str(src_file.relative_to(src.parent.parent)))
+                    continue
                 shutil.copy2(src_file, target / name)
                 count += 1
             except OSError as exc:
@@ -225,8 +237,9 @@ def _copy_tree(src: Path, dst: Path, exclude_dirs: Iterable[str] = ()) -> int:
     return count
 
 
-def _collect_group_folder(root: Path, staging: Path, folder: str) -> int:
-    """Copy one agent group's folder (excluding generated files and symlinks)."""
+def _collect_group_folder(root: Path, staging: Path, folder: str, skipped: Optional[list] = None) -> int:
+    """Copy one agent group's folder (excluding generated files, symlinks,
+    working-data dirs, and files over ``MAX_GROUP_FILE_BYTES``)."""
     src = root / "groups" / folder
     if not src.is_dir():
         return 0
@@ -245,6 +258,10 @@ def _collect_group_folder(root: Path, staging: Path, folder: str) -> int:
             if src_file.is_symlink():
                 continue
             try:
+                if src_file.stat().st_size > MAX_GROUP_FILE_BYTES:
+                    if skipped is not None:
+                        skipped.append(str(src_file.relative_to(root)))
+                    continue
                 shutil.copy2(src_file, target / name)
                 count += 1
             except OSError as exc:
@@ -377,6 +394,9 @@ def collect_backup(
                 f"Unknown agent ids: {', '.join(sorted(unknown))}"
             )
 
+    # Files skipped during group folder copies (oversized working data).
+    skipped_files: List[str] = []
+
     # Central-DB table dumps.
     for table, table_cats in TABLE_CATEGORIES.items():
         if cats & table_cats:
@@ -396,11 +416,11 @@ def collect_backup(
                 rows = _query(central_db, "SELECT id, folder FROM agent_groups")
                 folders = {r["folder"] for r in rows if r["id"] in scoped_ids and r.get("folder")}
                 for folder in sorted(folders):
-                    _collect_group_folder(root, staging, folder)
+                    _collect_group_folder(root, staging, folder, skipped_files)
             else:
                 for folder in sorted(os.listdir(groups_dir)):
                     if (groups_dir / folder).is_dir():
-                        _collect_group_folder(root, staging, folder)
+                        _collect_group_folder(root, staging, folder, skipped_files)
 
     # Orchestrator group folder (its own instructions/memory).
     if "orchestrator" in cats:
@@ -409,7 +429,7 @@ def collect_backup(
         if orch_id:
             folder = next((r.get("folder") for r in rows if r["id"] == orch_id), None)
             if folder:
-                _collect_group_folder(root, staging, folder)
+                _collect_group_folder(root, staging, folder, skipped_files)
 
     # Shared base instructions.
     if "full" in cats:
@@ -442,6 +462,13 @@ def collect_backup(
         encrypted = _encrypt_env(root, staging, passphrase)
 
     # Build the manifest.
+    notes: List[str] = []
+    if skipped_files:
+        notes.append(
+            f"Skipped {len(skipped_files)} file(s) over {MAX_GROUP_FILE_BYTES // (1024 * 1024)} MiB "
+            f"(working data, not config): {', '.join(sorted(skipped_files)[:10])}"
+            + (" …" if len(skipped_files) > 10 else "")
+        )
     manifest = Manifest(
         format_version=1,
         backup_id="",  # assigned by the caller
@@ -453,7 +480,7 @@ def collect_backup(
         source_root=str(root),
         agent_ids=list(scoped_ids) if scoped_ids else [],
         encrypted=encrypted,
-        notes=[],
+        notes=notes,
     )
     return manifest
 
