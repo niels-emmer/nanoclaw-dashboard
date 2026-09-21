@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-09-21
+
 ### Added
 
 - **Backup / restore for nanoclaw config** — a Backup & restore panel on the
