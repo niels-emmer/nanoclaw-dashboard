@@ -187,7 +187,13 @@ def _nanoclaw_version(root: Path) -> Optional[str]:
 # ---------------------------------------------------------------------------
 
 def _copy_tree(src: Path, dst: Path, exclude_dirs: Iterable[str] = ()) -> int:
-    """Copy a directory tree, returning the number of files copied."""
+    """Copy a directory tree, returning the number of files copied.
+
+    Symlinks are skipped (nanoclaw group folders contain container-internal
+    symlinks like ``.claude-shared.md -> /app/CLAUDE.md`` that are noise on
+    the host), and individual copy failures are logged and skipped so a file
+    rotated mid-walk by the live host never aborts the backup.
+    """
     count = 0
     for dirpath, dirnames, filenames in os.walk(src):
         dirnames[:] = [d for d in dirnames if d not in exclude_dirs]
@@ -195,13 +201,19 @@ def _copy_tree(src: Path, dst: Path, exclude_dirs: Iterable[str] = ()) -> int:
         target = dst / rel if str(rel) != "." else dst
         target.mkdir(parents=True, exist_ok=True)
         for name in filenames:
-            shutil.copy2(Path(dirpath) / name, target / name)
-            count += 1
+            src_file = Path(dirpath) / name
+            if src_file.is_symlink():
+                continue
+            try:
+                shutil.copy2(src_file, target / name)
+                count += 1
+            except OSError as exc:
+                log.warning("backup_copy_skipped", path=str(src_file), error=str(exc))
     return count
 
 
 def _collect_group_folder(root: Path, staging: Path, folder: str) -> int:
-    """Copy one agent group's folder (excluding generated files)."""
+    """Copy one agent group's folder (excluding generated files and symlinks)."""
     src = root / "groups" / folder
     if not src.is_dir():
         return 0
@@ -216,8 +228,14 @@ def _collect_group_folder(root: Path, staging: Path, folder: str) -> int:
         for name in filenames:
             if name in GENERATED_GROUP_FILES:
                 continue
-            shutil.copy2(Path(dirpath) / name, target / name)
-            count += 1
+            src_file = Path(dirpath) / name
+            if src_file.is_symlink():
+                continue
+            try:
+                shutil.copy2(src_file, target / name)
+                count += 1
+            except OSError as exc:
+                log.warning("backup_copy_skipped", path=str(src_file), error=str(exc))
     return count
 
 

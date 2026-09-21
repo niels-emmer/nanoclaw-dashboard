@@ -164,6 +164,21 @@ def test_collect_missing_db_raises(tmp_path: Path):
         collect_backup(root, staging, ["full"], passphrase="pw")
 
 
+def test_collect_skips_broken_symlinks(nanoclaw_root: Path, tmp_path: Path):
+    """Broken container-internal symlinks (e.g. .claude-shared.md) must not
+    abort the backup — they are skipped."""
+    import os
+
+    link = nanoclaw_root / "groups" / "main" / ".claude-shared.md"
+    link.symlink_to("/app/CLAUDE.md")  # dangling on the host
+    staging = tmp_path / "staging"
+    staging.mkdir()
+    manifest = collect_backup(nanoclaw_root, staging, ["agents"])
+    assert manifest is not None
+    assert not (staging / "groups" / "main" / ".claude-shared.md").exists()
+    assert (staging / "groups" / "main" / "instructions.prepend.md").is_file()
+
+
 def test_collect_unknown_agent_ids_raise(nanoclaw_root: Path, tmp_path: Path):
     staging = tmp_path / "staging"
     staging.mkdir()

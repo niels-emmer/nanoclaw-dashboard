@@ -4,6 +4,9 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     env_file: .env
+    # Run as the host user so backups/ (archives + restore scripts) are owned
+    # by the operator, not root. Set NANOCLAW_UID/GID to the host user's ids.
+    user: "${NANOCLAW_UID:-0}:${NANOCLAW_GID:-0}"
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     environment:
