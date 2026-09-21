@@ -316,8 +316,35 @@ if [[ ! -d "$NANOCLAW_ROOT/node_modules/better-sqlite3" ]]; then
   exit 2
 fi
 
+# ---- Locate a node that can load the checkout's better-sqlite3 ----------------
+# The nanoclaw service often runs an nvm-managed Node (e.g. v22) while the
+# system `node` is newer; the pnpm-store native binding is compiled for the
+# service's ABI and fails to dlopen under a mismatched Node. Probe candidates
+# and pick the first that loads better-sqlite3.
+find_node() {
+  local candidates=()
+  for d in "$HOME"/.nvm/versions/node/*/bin; do
+    [[ -x "$d/node" ]] && candidates+=("$d/node")
+  done
+  candidates+=("$(command -v node || true)")
+  local n
+  for n in "${candidates[@]}"; do
+    if [[ -n "$n" ]] && (cd "$NANOCLAW_ROOT" && "$n" -e "require('better-sqlite3')" >/dev/null 2>&1); then
+      echo "$n"
+      return 0
+    fi
+  done
+  echo ""
+}
+NODE_BIN="$(find_node)"
+if [[ -z "$NODE_BIN" ]]; then
+  echo "error: no node binary can load better-sqlite3 from $NANOCLAW_ROOT — run 'pnpm install' with the nanoclaw service's node" >&2
+  exit 2
+fi
+echo "using node: $NODE_BIN"
+
 echo "verifying archive integrity ..."
-(cd "$TMP" && node -e "
+(cd "$TMP" && "$NODE_BIN" -e "
   const fs = require('fs'), crypto = require('crypto');
   const m = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
   let bad = 0;
@@ -509,8 +536,8 @@ POLICY="skip"
 [[ "$OVERWRITE" = 1 ]] && POLICY="overwrite"
 
 # ---- Version compatibility check -------------------------------------------
-BACKUP_SCHEMA="$(node -e "const m=require('$TMP/manifest.json'); console.log(m.schema_version || '')")"
-TARGET_SCHEMA="$(cd "$NANOCLAW_ROOT" && node -e "const D=require('better-sqlite3'); const db=new D('data/v2.db',{readonly:true}); try{console.log(db.prepare('SELECT MAX(version) v FROM schema_version').get().v||'')}catch(e){console.log('')}")"
+BACKUP_SCHEMA="$("$NODE_BIN" -e "const m=require('$TMP/manifest.json'); console.log(m.schema_version || '')")"
+TARGET_SCHEMA="$(cd "$NANOCLAW_ROOT" && "$NODE_BIN" -e "const D=require('better-sqlite3'); const db=new D('data/v2.db',{readonly:true}); try{console.log(db.prepare('SELECT MAX(version) v FROM schema_version').get().v||'')}catch(e){console.log('')}")"
 if [[ -n "$BACKUP_SCHEMA" && -n "$TARGET_SCHEMA" && "$BACKUP_SCHEMA" -gt "$TARGET_SCHEMA" ]]; then
   echo "error: backup schema v$BACKUP_SCHEMA is newer than target v$TARGET_SCHEMA — refusing to downgrade" >&2
   exit 3
@@ -521,7 +548,7 @@ fi
 
 # ---- Plan mode --------------------------------------------------------------
 if [[ "$MODE" = "plan" ]]; then
-  NODE_PATH="$NANOCLAW_ROOT/node_modules" node "$TMP/helper.cjs" "$NANOCLAW_ROOT" "$TMP" plan "$POLICY"
+  NODE_PATH="$NANOCLAW_ROOT/node_modules" "$NODE_BIN" "$TMP/helper.cjs" "$NANOCLAW_ROOT" "$TMP" plan "$POLICY"
   exit 0
 fi
 
@@ -616,7 +643,7 @@ if [[ -d "$NANOCLAW_ROOT/groups" ]]; then cp -R "$NANOCLAW_ROOT/groups" "$SNAPSH
 if [[ -f "$NANOCLAW_ROOT/.env" ]]; then cp "$NANOCLAW_ROOT/.env" "$SNAPSHOT_DIR/.env" && chmod 600 "$SNAPSHOT_DIR/.env"; fi
 
 echo "applying backup ..."
-NODE_PATH="$NANOCLAW_ROOT/node_modules" node "$TMP/helper.cjs" "$NANOCLAW_ROOT" "$TMP" apply "$POLICY"
+NODE_PATH="$NANOCLAW_ROOT/node_modules" "$NODE_BIN" "$TMP/helper.cjs" "$NANOCLAW_ROOT" "$TMP" apply "$POLICY"
 
 # .env (encrypted) — decrypt with the passphrase (via stdin, not argv, so it
 # does not show up in the process list).
