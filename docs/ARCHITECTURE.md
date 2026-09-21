@@ -119,9 +119,9 @@ When new telemetry attributes are required, bump `schema_version`, update both t
 
 ## Configuration + environment
 
-- Backend config derives from env vars prefixed with `NANOCLAW_` (see `config.py`). Example knobs: `NANOCLAW_MOCK_AGENT_NAMES`, `NANOCLAW_BASE_INTERVAL_MS`, `NANOCLAW_MAX_CLIENTS`, `NANOCLAW_EVENT_BUFFER_SIZE` (default 100).
-- Frontend config relies on Vite env vars: `VITE_BACKEND_WS_URL`, `VITE_EVENT_HISTORY` (default 200), `VITE_AGENT_SOLID_MINUTES` (default 15), `VITE_AGENT_FADE_MINUTES` (default 90).
-- Node `20.19.0` is required; we vendor the tarball under `.tools/node` for deterministic teams.
+- Backend config derives from env vars prefixed with `NANOCLAW_` (see `config.py`). Example knobs: `NANOCLAW_MOCK_AGENT_NAMES`, `NANOCLAW_BASE_INTERVAL_MS`, `NANOCLAW_MAX_CLIENTS`, `NANOCLAW_EVENT_BUFFER_SIZE` (default 100), `NANOCLAW_BACKUP_DIR` (backup archive folder), `NANOCLAW_BACKUP_TOKEN` (optional shared secret for `/api/backup/*`).
+- Frontend config relies on Vite env vars: `VITE_BACKEND_WS_URL`, `VITE_EVENT_HISTORY` (default 200), `VITE_AGENT_SOLID_MINUTES` (default 15), `VITE_AGENT_FADE_MINUTES` (default 90), `VITE_BACKUP_TOKEN` (optional, mirrors `NANOCLAW_BACKUP_TOKEN`).
+- Node `22.23.2` is required; we vendor the tarball under `.tools/node` for deterministic teams.
 
 ## Nanoclaw integration
 
@@ -137,6 +137,15 @@ When new telemetry attributes are required, bump `schema_version`, update both t
 
   It maps `messages_in.source_session_id` to discover agent-to-agent traffic and correlates `messages_out.in_reply_to` with the cached inbound rows for response edges.
 - Safety: only read operations are performed. If the mount is missing/unreadable the backend logs a warning and falls back to the mock generator.
+
+### Backup / restore (`backend/app/backup/`)
+
+- **Constraint**: the nanoclaw data mount is read-only by design (ADR 0006). The dashboard can *read* state for backups but never *writes* to the nanoclaw folder. Restore therefore runs as a **host-side script**.
+- **Backup flow**: the backend collects selected categories from the read-only mount into a staging dir, then writes a `.tar.gz` archive **and** an executable `restore.sh` into the dashboard's writable backup folder (`NANOCLAW_BACKUP_DIR`, default `<repo>/backups`, mounted at `/backups` in Docker). The archive carries a `manifest.json` (format version, nanoclaw `schema_version`, categories, per-file sha256).
+- **Collection** (`collect.py`): config tables dumped as JSON (`tables/<table>.json`), raw `v2.db` copied via the SQLite backup API (WAL-safe) for `full` backups, `groups/<folder>/` files (excluding generated `CLAUDE.md`/`container.json`), `memory/` trees, scheduled-task rows (with session routing), session DBs (opt-in `history`), and `.env` encrypted with openssl AES-256-CBC (passphrase required — never plaintext).
+- **Restore** (`restore.py`): the backend computes a conflict plan (create/skip/overwrite/replace per item) for the UI preview; the generated `restore.sh` re-computes the plan on the host (authoritative) and applies it. The script embeds a Node helper that uses the nanoclaw checkout's `better-sqlite3`, supports `plan`/`restore`/`import` modes (`restore` requires a full-system backup; `import` handles partial), stops/starts the service (launchd/systemd/nohup), snapshots current state before applying, refuses schema downgrades, and never restores `data/upgrade-state.json`.
+- **API**: `/api/backup/*` (status, create, list, download, plan, restore-script) — origin-validated; `GET /status` returns 200 with `enabled: false` in mock mode, the rest return 503; optional `NANOCLAW_BACKUP_TOKEN` shared secret. See `API.md`.
+- **Out of scope**: the OneCLI Agent Vault (separate system — restore instructions document reconnecting it) and `~/.config/nanoclaw` allowlists (outside the mount — documented manual step).
 
 ### Channel semantics & the Human node
 
@@ -160,7 +169,7 @@ When new telemetry attributes are required, bump `schema_version`, update both t
 ## Containerization
 
 - `backend/Dockerfile` packages the FastAPI app on top of `python:3.11-slim` and exposes port `8000`.
-- `frontend/Dockerfile` builds the SPA with `node:20.19.0`, then serves the `dist/` bundle via nginx. `frontend/nginx.conf` proxies `/ws/` traffic to the backend container, so browsers can use same-origin WebSocket URLs.
+- `frontend/Dockerfile` builds the SPA with `node:22.23.2`, then serves the `dist/` bundle via nginx. `frontend/nginx.conf` proxies `/ws/`, `/api/config/`, and `/api/backup/` traffic to the backend container, so browsers can use same-origin WebSocket + API URLs.
 - `docker-compose.yml` wires both services together, reading defaults from `.env` and exposing ports `BACKEND_PORT` (default `8000`) and `FRONTEND_PORT` (default `4173`).
 
 ## Deployment (live nanoclaw host)

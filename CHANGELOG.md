@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Backup / restore for nanoclaw config** — a Backup & restore panel on the
+  Nanoclaw Instance details screen. Backups read the read-only nanoclaw mount
+  and write archives + host-side restore scripts into `backups/` (mounted at
+  `/backups` in Docker). Categories: full system, agents (all or specific),
+  orchestrator rules, channels & wirings, users & roles, memory, scheduled
+  tasks, environment (`.env`, passphrase-encrypted), conversation history.
+  Restore runs on the nanoclaw host via a generated `restore.sh`
+  (`plan`/`restore`/`import` modes, conflict plan, snapshot, schema-downgrade
+  refusal). New `/api/backup/*` endpoints (origin-validated, optional
+  `NANOCLAW_BACKUP_TOKEN` shared secret). See `API.md` and ADR 0024.
+
 ### Changed
 
 - **Frontend dependency batch** — react/react-dom 19.3.0, vite 8.3.0, vitest 5.0.1, oxlint 1.83.0, lucide-react 1.47.0, @types/node 26.6.2, @types/react 19.3.0, @types/react-dom 19.3.0, @heroui/react 3.2.6, @heroui/styles 3.2.6 (all nine dependabot PRs merged; react/react-dom bumped together to keep versions matched).

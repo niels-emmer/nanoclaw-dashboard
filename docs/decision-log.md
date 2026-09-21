@@ -263,3 +263,19 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - `THIRD_PARTY.md` updated to the new versions (react/react-dom 19.3.0, vite 8.3.0, vitest 5.0.0, oxlint 1.82.0, lucide-react 1.45.0, @types/node 26.5.1, @types/react 19.3.0, @types/react-dom 19.3.0, @heroui/react 3.2.6, @heroui/styles 3.2.5).
   - No telemetry schema or transport change; no `schema_version` bump.
   - Note: the Heroui react-aria peer conflict is upstream (Heroui pins `@react-types/color@3.2.0` while requiring `react-aria@^3.52.1`); the fresh lockfile resolution works today but may recur on future Heroui bumps.
+
+## 0024 – Backup / restore for nanoclaw config (2026-09-21)
+- **Status**: Accepted
+- **Context**: Operators need to clone a nanoclaw instance (fresh-host restore) and selectively import config (agents, wirings, users, orchestrator rules) into a running one. The dashboard mounts the nanoclaw data folder **read-only by design** (ADR 0006), so the dashboard backend can read state but must never write to it.
+- **Decision**:
+  - **Backup** runs in the dashboard backend: it reads the read-only mount, collects selected categories into a staging dir, and writes a `.tar.gz` archive plus a self-contained `restore.sh` into a **new writable `backups/` folder** inside the dashboard repo (mounted at `/backups` in Docker; the nanoclaw mount stays `:ro`).
+  - **Restore** is executed by the host-side `restore.sh` (the user runs it on the nanoclaw host, where the data is writable and the service can be stopped). The script supports `plan` (dry-run), `restore` (full, stop→replace→restart→health-check), and `import` (partial, stop→apply→restart); it uses the nanoclaw checkout's `better-sqlite3` via an embedded Node helper, snapshots current state before applying, and never restores `data/upgrade-state.json`.
+  - **Categories**: `full` (everything incl. raw `v2.db`), `agents` (all or specific ids), `orchestrator` (destinations + message policies + wirings/channels + orchestrator group), `channels`, `users`, `memory`, `tasks`, `env` (`.env`, **passphrase-encrypted** with openssl AES-256-CBC — required, never plaintext), `history` (opt-in session DBs).
+  - **Conflict handling**: plan reports create/skip/overwrite/replace per item; default policy is skip-on-collision with an `--overwrite` flag; schema-version downgrade is refused.
+  - **Out of scope**: the OneCLI Agent Vault (separate system; restore instructions document reconnecting it) and `~/.config/nanoclaw` allowlists (outside the mount; documented manual step).
+- **Consequences**:
+  - New endpoints under `/api/backup` (status, create, list, download, plan, restore-script), all origin-validated like `/api/config/file`; `GET /status` returns 200 with `enabled: false` in mock mode, the rest return 503. An optional `NANOCLAW_BACKUP_TOKEN` shared secret (sent as `X-Backup-Token`) hardens the surface beyond the origin check.
+  - New `NANOCLAW_BACKUP_DIR` setting + `backups/` mount in `docker-compose.yml`; `backups/` is gitignored (may contain encrypted secrets).
+  - No new Python/JS dependencies (stdlib + `openssl` binary, already present in `python:3.11-slim`).
+  - No telemetry schema or transport change; no `schema_version` bump.
+  - Threat model updated for the new read-only endpoints and the host-side restore script (see `docs/threat-models/2026-07-25.md`).

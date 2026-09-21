@@ -128,7 +128,8 @@ docker compose up --build
 - Backend API docs: **`API.md`** (endpoints, WebSocket protocol, event schema) — live OpenAPI spec at `http://localhost:8000/openapi.json`
 
 The frontend container serves the production build via nginx and proxies
-WebSocket traffic to the backend automatically. Adjust ports in `.env` (copy from `.env.example`).
+WebSocket traffic (`/ws/`) plus the backend HTTP API (`/api/config/`,
+`/api/backup/`) to the backend container automatically. Adjust ports in `.env` (copy from `.env.example`).
 
 ## Connect to a Real Nanoclaw Host
 
@@ -151,6 +152,40 @@ The backend mounts the nanoclaw data folder **read-only** and tails the
 SQLite databases (`data/v2.db`, per-session `inbound.db`/`outbound.db`)
 for live events. If the mount is missing or unreadable, it falls back to
 mock telemetry automatically.
+
+## Backup & Restore
+
+The **Nanoclaw Instance details** screen (click the liveness dot in the status
+strip) has a **Backup & restore** panel. Backups read the read-only nanoclaw
+mount and write archives + restore scripts into `backups/` inside this repo
+(mounted at `/backups` in Docker — the nanoclaw data mount stays read-only).
+
+**Create a backup** — pick categories (Full system, Agents, Orchestrator rules,
+Channels & wirings, Users & roles, Memory, Scheduled tasks, Environment,
+Conversation history) and create. The `.env` category requires a passphrase and
+is encrypted (openssl AES-256-CBC); it is never stored in plaintext. Archives
+can be downloaded for off-host storage.
+
+**Restore** — select a backup, view the conflict plan (create/skip/overwrite/
+replace per item), then run the generated script **on the nanoclaw host**:
+
+```bash
+bash backups/<backup-id>.sh plan    # dry-run
+bash backups/<backup-id>.sh restore # full restore (fresh instance)
+bash backups/<backup-id>.sh import  # partial import into an existing instance
+```
+
+`restore` only works with full-system backups (it replaces the central
+database); partial category backups use `import`. Both modes stop the service
+during apply, snapshot current state, and restart with a health check. The
+script refuses schema downgrades and never restores `data/upgrade-state.json`.
+Notes:
+
+- The **OneCLI Agent Vault** is not part of the backup — after restoring to a
+  fresh host, reconnect it (`ONECLI_URL` / `ONECLI_API_KEY` in `.env`).
+- `~/.config/nanoclaw` allowlists (`mount-allowlist.json`,
+  `sender-allowlist.json`) live outside the mount — copy them manually if needed.
+- `backups/` is gitignored (archives may contain encrypted secrets).
 
 ## Deploy to a Live Host
 
@@ -221,6 +256,7 @@ nanoclaw-dashboard/
 │   │   ├── events.py           # EventHub — broadcast + ring buffer flush to WS clients
 │   │   ├── logging.py          # structlog JSON configuration
 │   │   ├── cli.py              # CLI entry point
+│   │   ├── backup/             # Backup/restore: manifest, collect, archive, restore, router
 │   │   └── telemetry/
 │   │       ├── models.py       # Canonical event schema
 │   │       ├── source.py       # TelemetrySource interface + MockTelemetrySource

@@ -34,6 +34,7 @@ nanoclaw-dashboard/
 │   │   ├── events.py              # EventHub — broadcast + ring buffer flush to WS clients
 │   │   ├── logging.py             # structlog JSON config
 │   │   ├── cli.py                 # CLI entry point
+│   │   ├── backup/                # Backup/restore: manifest, collect, archive, restore, router
 │   │   └── telemetry/
 │   │       ├── models.py          # Canonical event schema (source of truth)
 │   │       ├── source.py          # TelemetrySource interface + MockTelemetrySource

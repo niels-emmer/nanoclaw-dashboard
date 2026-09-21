@@ -88,6 +88,19 @@ class Settings(BaseSettings):
     history_events: int = Field(default=20, ge=0, le=200)
     orchestrator_group: Optional[str] = Field(default=None)
 
+    # Backup / restore
+    # Directory where backup archives + restore scripts are written. The
+    # nanoclaw data mount is read-only by design; backups live in a separate
+    # writable folder (default: <repo>/backups, mounted at /backups in Docker).
+    backup_dir: str = Field(default="../backups")
+    # Optional shared secret for the /api/backup/* endpoints. When set, every
+    # backup request must carry it in the X-Backup-Token header (compared with
+    # a constant-time digest). The backup surface is more sensitive than the
+    # telemetry stream (full config + history + encrypted .env), so operators
+    # on shared networks should set this. The frontend sends it via the
+    # VITE_BACKUP_TOKEN build arg.
+    backup_token: Optional[str] = Field(default=None)
+
     @field_validator("mock_agent_names", "allowed_origins", mode="before")
     @classmethod
     def _parse_list_from_str(cls, value: object) -> object:
@@ -99,6 +112,10 @@ class Settings(BaseSettings):
     @property
     def root_path(self) -> Path:
         return Path(self.root).expanduser()
+
+    @property
+    def backup_path(self) -> Path:
+        return Path(self.backup_dir).expanduser()
 
 
 settings = Settings()

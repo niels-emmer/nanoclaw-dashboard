@@ -38,6 +38,14 @@ The WebSocket interface is currently **unauthenticated** and intended for
 surfaces live in `docs/threat-models/`. Review them before deploying
 outside a controlled network.
 
+The **backup/restore surface** (`/api/backup/*` and the `backups/` data store)
+is more sensitive than the telemetry stream — archives contain full nanoclaw
+config, conversation history, and a passphrase-encrypted `.env`. It is
+origin-validated like the rest of the API and can additionally require a
+shared secret (`NANOCLAW_BACKUP_TOKEN` → `X-Backup-Token` header). Backups
+are written mode-restricted (0600/0700) and `backups/` is gitignored. See
+`docs/threat-models/2026-07-25.md` for the full analysis.
+
 ## Governance
 
 This repository follows strict governance principles. Key requirements:

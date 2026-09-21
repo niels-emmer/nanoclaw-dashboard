@@ -8,8 +8,11 @@ services:
       - "${BACKEND_PORT:-8000}:8000"
     environment:
       NANOCLAW_ROOT: ${NANOCLAW_CONTAINER_DATA:-/nanoclaw}
+      NANOCLAW_BACKUP_DIR: /backups
     volumes:
       - ${NANOCLAW_HOST_DATA:-../nanoclaw}:${NANOCLAW_CONTAINER_DATA:-/nanoclaw}:ro
+      # Writable backup folder inside the dashboard repo (never the nanoclaw data).
+      - ${BACKUP_DIR:-./backups}:/backups
     restart: unless-stopped
 
   frontend:
@@ -18,6 +21,7 @@ services:
       dockerfile: frontend/Dockerfile
       args:
         VITE_BACKEND_WS_URL: ${VITE_BACKEND_WS_URL:-}
+        VITE_BACKUP_TOKEN: ${VITE_BACKUP_TOKEN:-}
     depends_on:
       - backend
     ports:

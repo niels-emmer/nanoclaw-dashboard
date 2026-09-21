@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { config } from '../lib/config'
 import { describeConfigFile, describeConfigFolder, parseFrontmatter } from '../lib/configFileContext'
 import type { ConfigFile, ConfigGroup, InstanceInfo, ResourceSample } from '../lib/types'
+import { BackupRestore } from './BackupRestore'
 
 interface Props {
   instanceInfo: InstanceInfo | null
@@ -176,6 +177,7 @@ export function InstanceDetails({ instanceInfo, configGroups, resourceHistory, h
   const [fileContent, setFileContent] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [showBackup, setShowBackup] = useState(false)
 
   // Tick every second so uptime / time-to-reset stay live.
   useEffect(() => {
@@ -261,12 +263,21 @@ export function InstanceDetails({ instanceInfo, configGroups, resourceHistory, h
           <span className="instance-title-dot" aria-hidden />
           <h1>Nanoclaw Instance details</h1>
         </div>
-        <button type="button" className="instance-close" onClick={onClose} aria-label="Back to dashboard">
-          <span aria-hidden>✕</span> Back to dashboard
-        </button>
+        <div className="instance-header-actions">
+          <button type="button" className="instance-close" onClick={() => setShowBackup(true)} aria-label="Open backup and restore">
+            Backup &amp; restore
+          </button>
+          <button type="button" className="instance-close" onClick={onClose} aria-label="Back to dashboard">
+            <span aria-hidden>✕</span> Back to dashboard
+          </button>
+        </div>
       </header>
 
-      {/* ---- Top row: instance details (single line) ---- */}
+      {showBackup ? (
+        <BackupRestore instanceInfo={info} onClose={() => setShowBackup(false)} />
+      ) : (
+        <>
+          {/* ---- Top row: instance details (single line) ---- */}
       <section className="instance-details-row" aria-label="Instance details">
         <div className="detail-cell">
           <span className="detail-label">Version</span>
@@ -357,6 +368,8 @@ export function InstanceDetails({ instanceInfo, configGroups, resourceHistory, h
           </span>
         </div>
       </footer>
+        </>
+      )}
     </div>
   )
 }

@@ -3,6 +3,9 @@
 .env.local
 .env.*.local
 
+# Backup archives + restore scripts (may contain encrypted secrets)
+backups/
+
 # Local tooling
 .venv/
 .tools/
