@@ -329,7 +329,10 @@ find_node() {
   candidates+=("$(command -v node || true)")
   local n
   for n in "${candidates[@]}"; do
-    if [[ -n "$n" ]] && (cd "$NANOCLAW_ROOT" && "$n" -e "require('better-sqlite3')" >/dev/null 2>&1); then
+    # Probe with an actual open: better-sqlite3 defers the native binding load
+    # to the constructor, so require() alone passes even when the binding
+    # cannot dlopen under a mismatched Node ABI.
+    if [[ -n "$n" ]] && (cd "$NANOCLAW_ROOT" && "$n" -e "const D=require('better-sqlite3'); new D(':memory:')" >/dev/null 2>&1); then
       echo "$n"
       return 0
     fi
