@@ -236,3 +236,17 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - **Main agent group surfaced** — the human-facing agent (sticky `humanAgentId` from real human channels) is mapped to its config folder via the `agent_groups.folder` column, now included per agent in `instance_info` (`folder` field — additive, no `schema_version` bump). The Agents folder expands by default and the main agent's folder is sorted to the top with a **Main** badge.
   - **Resource sparkline strip** — the bottom metrics bar (messages/errors already on the main dashboard; token-buffer/time-to-reset had no data source) was replaced with CPU/memory/disk sparklines fed by the periodic `instance_info` events (accumulated in the reducer, ~30 min window) plus host details, freeing vertical space for the config browser.
   - **CPU fix** — the real source's `cpuPercent` was computed from `os.getloadavg()` (a host-global run-queue length) and pegged at 100% on the busy host; now computed from `/proc/stat` jiffie deltas between polls (the `top` method).
+
+## 0022 – GitHub discoverability polish: description, topics, social preview (2026-09-21)
+- **Status**: Accepted
+- **Context**: An organic-traffic audit flagged four repo-level discoverability issues: (1) the repo description ended with a double period and described the retired v2 orbit-canvas design; (2) the `nanoclaw` topic is self-referential with no existing audience; (3) the release feed appeared empty; (4) the OG social preview was GitHub's auto-generated gradient card.
+- **Decision**:
+  - Rewrote the repo description to describe the current product and target searchable keywords: *"Real-time telemetry dashboard for AI agent orchestrators — live WebSocket event stream, hierarchical tree visualization, and agent activity feed on a single 1080p screen."*
+  - Replaced the `nanoclaw` topic with audience-bearing topics: `observability`, `monitoring`, `real-time`, `websocket-server`, `dashboard`, `visualization` (kept `ai-agents`, `fastapi`, `opencode`, `react`, `telemetry`, `typescript`, `web`).
+  - Releases: verified already healthy — v1.3.1 latest (2026-09-06), tags pushed, `release.yml` green. No action needed; the audit was stale.
+  - Social preview: generated `docs/social-preview.png` (1280×640, GitHub's recommended size) from the dashboard's design tokens (dark gradient, accent blue, pulse colors, Space Grotesk) with a stylized tree-graph motif. GitHub exposes no API for the social preview image, so upload is a one-time manual step via Settings → Social Preview.
+- **Consequences**:
+  - Repo now surfaces under active topic pages (observability, monitoring, real-time, websocket-server) instead of the self-referential `nanoclaw`.
+  - Description is accurate to the current tree-graph product and keyword-rich for search.
+  - Social preview requires a manual upload (no API path); the asset is versioned in-repo at `docs/social-preview.png`.
+  - No code, schema, or dependency changes; no `schema_version` bump.
