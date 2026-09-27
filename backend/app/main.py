@@ -32,6 +32,7 @@ def build_source() -> TelemetrySource:
         agent_names=settings.mock_agent_names,
         base_interval_ms=settings.base_interval_ms,
         jitter_ms=settings.jitter_ms,
+        profile=settings.mock_profile,
     )
 
 

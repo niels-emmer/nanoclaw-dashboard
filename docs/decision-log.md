@@ -280,3 +280,16 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - No new Python/JS dependencies (stdlib + `openssl` binary, already present in `python:3.11-slim`).
   - No telemetry schema or transport change; no `schema_version` bump.
   - Threat model updated for the new read-only endpoints and the host-side restore script (see `docs/threat-models/2026-07-25.md`).
+
+## 0025 – Demo instance: multi-tier mock profile + proxy-network compose override (2026-09-27)
+- **Status**: Accepted
+- **Context**: The user wants a self-contained demo instance of the dashboard on a VPS — no nanoclaw host — with a realistic multi-tier agent network an engineer would use, coherent demo message content, and the UI reachable only through a reverse proxy. The default mock profile is a flat specialist roster with no human-channel traffic, so the Human node never renders in mock mode.
+- **Decision**:
+  - **Demo mock profile** (`NANOCLAW_MOCK_PROFILE=demo`, `backend/app/telemetry/demo_profile.py`): `MockTelemetrySource` becomes profile-driven (content dicts moved to instance attributes). The demo profile defines a 3-tier roster — `orchestrator` root → `concierge` (human-facing, whatsapp), `route-planner` → [`route-optimizer`, `route-validator`], `coder` → [`reviewer`, `tester`], plus `architect`/`researcher`/`editor`/`terminal`/`plotter` — with coherent engineering story content and human-channel events (`channel:whatsapp` ↔ `agent:concierge`) that drive the Human node.
+  - **Compose override** (`docker-compose.demo.yml`): removes all host port mappings; the frontend joins the external proxy network (reverse-proxy ingress only; network name from `NANOCLAW_PROXY_NETWORK` in the gitignored `.env`) and the backend is reachable only from the frontend over an internal network. **Nothing is exposed on the host.**
+  - **Privacy**: the human-facing agent is named `concierge` (a role, not a person). VPS address, folder path, and reverse-proxy network name are host-specific and live only in the gitignored `.env` on the host / orchestrator memory — never in the repo. Deployment steps are documented generically in `docs/DEMO.md`.
+- **Consequences**:
+  - New `NANOCLAW_MOCK_PROFILE` setting (`default` | `demo`); default behavior unchanged. The demo profile overrides the configured agent roster so the hierarchy is always complete.
+  - No new dependencies; no telemetry schema or transport change; no `schema_version` bump.
+  - The demo override drops the nanoclaw read-only mount (mock mode needs no data); the backup surface stays available but is not exposed (no host ports).
+  - Threat model unchanged: the demo instance exposes no new network surface beyond the reverse-proxy ingress to the frontend (same-origin WS/API proxying as the production compose).

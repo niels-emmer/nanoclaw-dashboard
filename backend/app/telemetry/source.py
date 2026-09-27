@@ -199,16 +199,92 @@ _A2A_PATTERNS: list[tuple[str, str, str, str]] = [
      "Stripe API docs shared. Key endpoints: /charges, /webhooks, and /customers."),
 ]
 
+# Default topology (flat specialist roster with one routing tier). The demo
+# profile replaces these with a multi-tier hierarchy.
+_CHANNELS: list[dict] = [
+    {"id": "telegram", "type": "telegram", "agents": ["agent:coder", "agent:terminal"]},
+    {"id": "discord", "type": "discord", "agents": ["agent:architect", "agent:editor"]},
+    {"id": "slack", "type": "slack", "agents": ["agent:researcher", "agent:plotter"]},
+]
+_A2A_EDGES: list[dict] = [
+    {"source": "agent:architect", "target": "agent:coder"},
+    {"source": "agent:researcher", "target": "agent:editor"},
+    {"source": "agent:terminal", "target": "agent:plotter"},
+]
+_TREE: dict = {
+    "root": "orchestrator",
+    "children": {
+        "agent:route-planner": ["agent:route-optimizer", "agent:route-validator"],
+    },
+}
+
 
 class MockTelemetrySource(TelemetrySource):
-    """Synthetic event generator for demos and tests."""
+    """Synthetic event generator for demos and tests.
 
-    def __init__(self, agent_names: list[str], base_interval_ms: int, jitter_ms: int) -> None:
-        self._agents = agent_names
+    ``profile`` selects the content set: ``"default"`` (flat specialist roster)
+    or ``"demo"`` (multi-tier agent network with a human-facing concierge
+    agent and coherent engineering demo content — see ``demo_profile.py``).
+    """
+
+    def __init__(
+        self,
+        agent_names: list[str],
+        base_interval_ms: int,
+        jitter_ms: int,
+        profile: str = "default",
+    ) -> None:
         self._interval = base_interval_ms
         self._jitter = jitter_ms
         self._topology_timer = 0.0
         self._idle_agents: set[str] = set()
+        self._tools = _TOOLS
+        self._tool_timeouts = _TOOL_TIMEOUTS
+        if profile == "demo":
+            from .demo_profile import (  # noqa: PLC0415
+                DEMO_A2A_EDGES,
+                DEMO_A2A_PATTERNS,
+                DEMO_AGENTS,
+                DEMO_CHANNELS,
+                DEMO_HUMAN_AGENT,
+                DEMO_HUMAN_CHANNEL,
+                DEMO_HUMAN_QUESTIONS,
+                DEMO_HUMAN_RESPONSES,
+                DEMO_MODELS,
+                DEMO_QUESTIONS,
+                DEMO_RESPONSES,
+                DEMO_SKILLS,
+                DEMO_TREE,
+            )
+
+            self._agents = DEMO_AGENTS
+            self._skills = {**_AGENT_SKILLS, **DEMO_SKILLS}
+            self._models = {**_AGENT_MODELS, **DEMO_MODELS}
+            self._questions = {**_QUESTIONS, **DEMO_QUESTIONS}
+            self._responses = {**_RESPONSES, **DEMO_RESPONSES}
+            self._human_questions = DEMO_HUMAN_QUESTIONS
+            self._human_responses = DEMO_HUMAN_RESPONSES
+            self._a2a_patterns = DEMO_A2A_PATTERNS
+            self._channels = DEMO_CHANNELS
+            self._a2a_edges = DEMO_A2A_EDGES
+            self._tree = DEMO_TREE
+            self._human_agent = DEMO_HUMAN_AGENT
+            self._human_channel = DEMO_HUMAN_CHANNEL
+        else:
+            self._agents = agent_names
+            self._skills = _AGENT_SKILLS
+            self._models = _AGENT_MODELS
+            self._questions = _QUESTIONS
+            self._responses = _RESPONSES
+            self._human_questions = {}
+            self._human_responses = {}
+            self._a2a_patterns = _A2A_PATTERNS
+            self._channels = _CHANNELS
+            self._a2a_edges = _A2A_EDGES
+            self._tree = _TREE
+            self._human_agent = None
+            self._human_channel = None
+        self._human_timer = 0
         # Instance-level state for instance_info / config_snapshot events
         self._started_at = time.monotonic()
         self._messages_total = 0
@@ -241,7 +317,7 @@ class MockTelemetrySource(TelemetrySource):
 
             # Occasionally trigger agent-to-agent communication
             if random.random() < 0.2:
-                a2a = random.choice(_A2A_PATTERNS)
+                a2a = random.choice(self._a2a_patterns)
                 src, tgt, question_text, response_text = a2a
                 if src in self._agents and tgt in self._agents:
                     for evt in self._emit_a2a_conversation(src, tgt, question_text, response_text):
@@ -249,8 +325,19 @@ class MockTelemetrySource(TelemetrySource):
                     await asyncio.sleep(self._sleep_seconds() * 0.8)
                     continue
 
+            # --- Human-channel conversation (demo profile) ---
+            # A human messages the concierge via a real channel (e.g. whatsapp);
+            # this drives the Human node above the human-facing agent.
+            self._human_timer += 1
+            if self._human_agent and self._human_timer >= 10:
+                self._human_timer = 0
+                for evt in self._emit_human_conversation():
+                    yield evt
+                await asyncio.sleep(self._sleep_seconds() * 0.8)
+                continue
+
             # --- Core orchestrator → agent flow ---
-            question_text = random.choice(_QUESTIONS.get(agent, ["Process the assigned task"]))
+            question_text = random.choice(self._questions.get(agent, ["Process the assigned task"]))
             question = self._build_event(
                 EventType.QUESTION,
                 source="orchestrator",
@@ -270,7 +357,7 @@ class MockTelemetrySource(TelemetrySource):
                     await asyncio.sleep(self._sleep_seconds() * 0.3)
 
             # Response from agent
-            response_text = random.choice(_RESPONSES.get(agent, ["Task completed."]))
+            response_text = random.choice(self._responses.get(agent, ["Task completed."]))
             response = self._build_event(
                 EventType.RESPONSE,
                 source=f"agent:{agent}",
@@ -343,13 +430,70 @@ class MockTelemetrySource(TelemetrySource):
 
         return events
 
+    def _emit_human_conversation(self) -> list[TelemetryEvent]:
+        """Emit a human ↔ human-facing-agent conversation over a real channel.
+
+        The human node in the UI is driven by events whose source or target is
+        a real human channel (whatsapp/matrix/etc.), so this pair makes the
+        Human node appear above the concierge agent.
+        """
+        if not self._human_agent:
+            return []
+        if not self._human_questions or not self._human_responses:
+            return []
+        channel = f"channel:{self._human_channel}"
+        agent = f"agent:{self._human_agent}"
+        provider, model = self._models.get(self._human_agent, ("claude", "sonnet"))
+        skills = self._skills.get(self._human_agent, [])
+        # Pick an index so the question and reply read as one coherent exchange.
+        # Guard against divergent list lengths (would otherwise kill the stream).
+        idx = random.randrange(min(len(self._human_questions), len(self._human_responses)))
+
+        q = TelemetryEvent(
+            id=str(uuid4()),
+            timestamp=_timestamp(),
+            type=EventType.QUESTION,
+            source=channel,
+            target=agent,
+            payload=EventPayload(
+                summary=self._human_questions[idx],
+                status="running",
+                provider=provider,
+                model=model,
+                skills=skills,
+                container_status="running",
+                heartbeat_age_ms=random.randint(100, 3000),
+            ),
+            agent_state=AgentState.RUNNING,
+        )
+        r = TelemetryEvent(
+            id=str(uuid4()),
+            timestamp=_timestamp(),
+            type=EventType.RESPONSE,
+            source=agent,
+            target=channel,
+            payload=EventPayload(
+                summary=self._human_responses[idx],
+                status="completed",
+                duration_ms=random.randint(500, 5000),
+                provider=provider,
+                model=model,
+                skills=skills,
+                container_status="running",
+                heartbeat_age_ms=random.randint(100, 3000),
+            ),
+            agent_state=AgentState.IDLE,
+        )
+        self._messages_total += 2
+        return [q, r]
+
     def _simulate_tool_activity(self, agent: str) -> list[TelemetryEvent]:
         """Emit activity_update events simulating a tool run."""
-        tool = random.choice(_TOOLS)
-        timeout = _TOOL_TIMEOUTS.get(tool, 30_000)
+        tool = random.choice(self._tools)
+        timeout = self._tool_timeouts.get(tool, 30_000)
         elapsed = random.randint(2000, min(timeout, 15000))
-        provider, model = _AGENT_MODELS.get(agent, ("claude", "sonnet"))
-        skills = _AGENT_SKILLS.get(agent, [])
+        provider, model = self._models.get(agent, ("claude", "sonnet"))
+        skills = self._skills.get(agent, [])
 
         # Tool start
         start_event = TelemetryEvent(
@@ -479,24 +623,11 @@ class MockTelemetrySource(TelemetrySource):
 
     def _build_topology_event(self) -> TelemetryEvent:
         """Emit a topology_snapshot event with the routing graph."""
-        channels = [
-            {"id": "telegram", "type": "telegram", "agents": ["agent:coder", "agent:terminal"]},
-            {"id": "discord", "type": "discord", "agents": ["agent:architect", "agent:editor"]},
-            {"id": "slack", "type": "slack", "agents": ["agent:researcher", "agent:plotter"]},
-        ]
-        a2a_edges = [
-            {"source": "agent:architect", "target": "agent:coder"},
-            {"source": "agent:researcher", "target": "agent:editor"},
-            {"source": "agent:terminal", "target": "agent:plotter"},
-        ]
+        channels = self._channels
+        a2a_edges = self._a2a_edges
         # Parent-child hierarchy (sub-agents reporting to a parent agent).
         # Root is the orchestrator; children map a parent agent to its sub-agents.
-        tree = {
-            "root": "orchestrator",
-            "children": {
-                "agent:route-planner": ["agent:route-optimizer", "agent:route-validator"],
-            },
-        }
+        tree = self._tree
         return TelemetryEvent(
             id=str(uuid4()),
             timestamp=_timestamp(),
@@ -527,8 +658,8 @@ class MockTelemetrySource(TelemetrySource):
         if self._time_to_reset_ms <= 0:
             self._time_to_reset_ms = random.randint(15, 90) * 60_000
 
-        skills = sorted({s for group in _AGENT_SKILLS.values() for s in group})
-        models = sorted({f"{provider}/{model}" for provider, model in _AGENT_MODELS.values()})
+        skills = sorted({s for group in self._skills.values() for s in group})
+        models = sorted({f"{provider}/{model}" for provider, model in self._models.values()})
         agents = [
             {
                 "id": f"agent:{name}",
@@ -558,7 +689,7 @@ class MockTelemetrySource(TelemetrySource):
             "skills": skills,
             "models": models,
             "agents": agents,
-            "tools": _TOOLS,
+            "tools": self._tools,
             "metrics": {
                 "messagesTotal": self._messages_total,
                 "errorsTotal": self._errors_total,
@@ -613,8 +744,8 @@ class MockTelemetrySource(TelemetrySource):
         # Agents — one file per agent describing role, model, and skills.
         agent_files = []
         for name in self._agents:
-            skills = ", ".join(_AGENT_SKILLS.get(name, [])) or "none"
-            provider, model = _AGENT_MODELS.get(name, ("claude", "sonnet"))
+            skills = ", ".join(self._skills.get(name, [])) or "none"
+            provider, model = self._models.get(name, ("claude", "sonnet"))
             agent_files.append({
                 "id": f"agents/{name}",
                 "path": f"agents/{name}.md",
@@ -708,9 +839,9 @@ class MockTelemetrySource(TelemetrySource):
         agent_ref = target if event_type == EventType.QUESTION else source
         agent_name = agent_ref.removeprefix("agent:") if agent_ref.startswith("agent:") else None
         meta: dict[str, str] = {}
-        if agent_name and agent_name in _AGENT_SKILLS:
-            meta["skills"] = ",".join(_AGENT_SKILLS[agent_name])
-        provider, model = _AGENT_MODELS.get(agent_name, ("", "")) if agent_name else ("", "")
+        if agent_name and agent_name in self._skills:
+            meta["skills"] = ",".join(self._skills[agent_name])
+        provider, model = self._models.get(agent_name, ("", "")) if agent_name else ("", "")
         payload = EventPayload(
             summary=summary or f"{event_type.value.title()} to {target}",
             duration_ms=None,
@@ -718,7 +849,7 @@ class MockTelemetrySource(TelemetrySource):
             meta=meta or None,
             provider=provider or None,
             model=model or None,
-            skills=_AGENT_SKILLS.get(agent_name) if agent_name else None,
+            skills=self._skills.get(agent_name) if agent_name else None,
             container_status="running",
             heartbeat_age_ms=random.randint(100, 3000),
         )
