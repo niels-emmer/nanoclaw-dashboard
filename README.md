@@ -131,6 +131,21 @@ The frontend container serves the production build via nginx and proxies
 WebSocket traffic (`/ws/`) plus the backend HTTP API (`/api/config/`,
 `/api/backup/`) to the backend container automatically. Adjust ports in `.env` (copy from `.env.example`).
 
+### Demo instance
+
+For a self-contained demo with no nanoclaw host — a realistic multi-tier mock
+agent network (orchestrator → concierge/route-planner/coder → sub-agents) with
+coherent demo content and a Human node — run the demo override. It exposes
+**only** the frontend on an external proxy network (name from
+`NANOCLAW_PROXY_NETWORK` in the gitignored `.env`); no host ports are
+published. Requires Docker Compose v2.24+:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.demo.yml up --build -d
+```
+
+See **`docs/DEMO.md`** for the full guide.
+
 ## Connect to a Real Nanoclaw Host
 
 By default, the dashboard uses mock telemetry. To connect to a live nanoclaw
@@ -304,6 +319,7 @@ nanoclaw-dashboard/
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── decision-log.md
+│   ├── DEMO.md                  # Demo instance deployment guide
 │   ├── OPENCODE_WORKFLOW.md    # OpenCode session governance playbook
 │   ├── screenshot.png
 │   └── threat-models/          # STRIDE analyses
@@ -322,6 +338,7 @@ nanoclaw-dashboard/
 │       └── security.yml        # Security scanning CI
 ├── CHANGELOG.md                # Release history
 ├── docker-compose.yml
+├── docker-compose.demo.yml     # Demo instance override (proxy-network only)
 ├── .env.example                # Environment template (copy to .env)
 ├── LICENSE
 ├── README.md
@@ -370,6 +387,7 @@ This forces the agent to manually load the `governance` skill and read `docs/OPE
 | Location | Purpose |
 |----------|---------|
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design, data flow, component responsibilities |
+| [docs/DEMO.md](docs/DEMO.md) | Demo instance deployment guide (proxy-network only, no nanoclaw host) |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute — setup, guidelines, PR process |
 | [SECURITY.md](SECURITY.md) | Security controls, threat models, vulnerability reporting |
 | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards |
