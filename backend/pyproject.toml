@@ -9,7 +9,7 @@ dependencies = [
     "fastapi==0.140.6",
     "uvicorn[standard]==0.52.4",
     "pydantic-settings==2.14.2",
-    "orjson==3.11.9",
+    "orjson==3.13.0",
     "structlog==26.1.0",
     "python-dotenv==1.2.3"
 ]
