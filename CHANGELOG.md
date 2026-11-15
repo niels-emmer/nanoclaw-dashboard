@@ -15,6 +15,30 @@
   `.env`) — no host ports, backend internal-only. See
   `docs/DEMO.md` and ADR 0025.
 
+### Changed
+
+- **Dependency batch (Dependabot consolidation)** — 18 open Dependabot PRs
+  consolidated into one change, verified as a whole rather than per-PR.
+  - Backend (`backend/requirements.txt`, exact pins): fastapi 0.141.1 → 0.162.0,
+    uvicorn 0.52.4 → 0.54.0, pydantic-settings 2.15.0 → 2.16.2, orjson 3.12.0 →
+    3.13.0, python-dotenv 1.2.3 → 1.2.4, pytest 9.1.1 → 9.2.0,
+    pytest-asyncio 1.4.0 → 1.4.1.post1.
+  - Frontend (`frontend/package.json`): react / react-dom 19.3.0 → 19.3.1,
+    vite 8.3.0 → 8.3.4, @vitejs/plugin-react 6.1.1 → 6.1.2, vitest 5.0.1 →
+    5.0.5, jsdom 29.1.1 → 30.1.3, oxlint 1.83.0 → 1.88.0, lucide-react 1.47.0 →
+    1.58.0, @types/node 26.6.2 → 26.6.5. Lockfile regenerated as a whole
+    (`npm install --package-lock`), so transitive source-map-js 1.2.1 → 1.2.2
+    and undici (now 8.12.4 via jsdom 30) moved with it.
+  - jsdom 30 lifts the former 29.x pin: it requires undici ^8.12.1, which needs
+    Node >= 22.19.0 — already satisfied by the project's pinned Node 22.23.2.
+    Dependabot's `undici 7.30.1` bump is therefore superseded by undici 8.12.4.
+
+### Security
+
+- **`npm audit` is clean (0 vulnerabilities)** — the previous vite,
+  undici, and launch-editor advisories are resolved by this batch. Verified
+  with `npm audit` on the regenerated lockfile.
+
 ## [1.4.0] — 2026-09-21
 
 ### Added

@@ -293,3 +293,19 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - No new dependencies; no telemetry schema or transport change; no `schema_version` bump.
   - The demo override drops the nanoclaw read-only mount (mock mode needs no data); the backup surface stays available but is not exposed (no host ports).
   - Threat model unchanged: the demo instance exposes no new network surface beyond the reverse-proxy ingress to the frontend (same-origin WS/API proxying as the production compose).
+
+## 0026 – Dependabot batch: backend + frontend dependency consolidation (2026-11-15)
+- **Status**: Accepted
+- **Context**: Eighteen Dependabot PRs were open against `main` — seven pip bumps (backend) and eleven npm bumps (frontend, two of them overlapping vitest). Merging them one at a time costs n(n−1)/2 rebases and CI runs against a moving `main`, and several are coupled (react/react-dom must match; vitest and @vitest/mocker ship together; jsdom's transitive `undici` collides with an independent `undici` bump).
+- **Decision**:
+  - **One integration branch, one PR, one gate.** Branched from the verified `origin/main` (`270766a`) rather than local `main`; all bumps applied together, verified as a single tree, then merged once.
+  - **Backend** (`backend/requirements.txt`, exact pins per governance): fastapi 0.141.1→0.162.0, uvicorn 0.52.4→0.54.0, pydantic-settings 2.15.0→2.16.2, orjson 3.12.0→3.13.0, python-dotenv 1.2.3→1.2.4, pytest 9.1.1→9.2.0, pytest-asyncio 1.4.0→1.4.1.post1. `structlog` and `httpx` unchanged.
+  - **Frontend** (`frontend/package.json`, caret ranges kept per local convention): react + react-dom 19.3.0→19.3.1 (coupled — `react-dom@19.3.1` requires peer `react@^19.3.1`), vite 8.3.0→8.3.4, @vitejs/plugin-react 6.1.1→6.1.2, vitest 5.0.1→5.0.5 (absorbs both #101 and #105), jsdom 29.1.1→30.1.3, oxlint 1.83.0→1.88.0, lucide-react 1.47.0→1.58.0, @types/node 26.6.2→26.6.5.
+  - **Lockfile pinned to the requested targets, not to whatever floats.** `npm install --package-lock` is required (global `~/.npmrc` sets `package-lock=false`) and was used to regenerate; a plain regeneration resolved *past* the Dependabot targets (vite 8.3.8, vitest 5.1.0, lucide-react 1.73.0, oxlint 1.93.0, @vitejs/plugin-react 6.3.0). The direct deps were then installed at the exact target versions and the caret ranges restored, so the lockfile stays deterministic while `package.json` keeps the repo's range style. `npm ci` confirms lockfile/`package.json` consistency.
+  - **undici target superseded.** jsdom 30 requires `undici@^8.12.1` (engines: Node >= 22.19.0), so Dependabot's `undici 7.30.1` (#108) cannot coexist with the jsdom bump. undici resolves to **8.12.4**, which carries the same security fix; jsdom 30's former 29.x pin is lifted because the project pins Node 22.23.2 (CI, security workflow, frontend Dockerfile).
+- **Consequences**:
+  - All eighteen Dependabot PRs are superseded and closed in favour of the consolidation PR; `main` is green (backend pytest + frontend lint/build/test).
+  - `npm audit`: **0 vulnerabilities** — the earlier vite, undici and launch-editor advisories are gone.
+  - `THIRD_PARTY.md` updated to the new exact versions; `undici` and `source-map-js` added as tracked transitive dependencies.
+  - No application code changes were required by the bumps — no source or test compatibility fixes needed.
+  - No telemetry schema or transport change; no `schema_version` bump. No new direct dependencies.
