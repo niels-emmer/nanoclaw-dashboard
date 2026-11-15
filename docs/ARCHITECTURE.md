@@ -119,7 +119,7 @@ When new telemetry attributes are required, bump `schema_version`, update both t
 
 ## Configuration + environment
 
-- Backend config derives from env vars prefixed with `NANOCLAW_` (see `config.py`). Example knobs: `NANOCLAW_MOCK_AGENT_NAMES`, `NANOCLAW_BASE_INTERVAL_MS`, `NANOCLAW_MAX_CLIENTS`, `NANOCLAW_EVENT_BUFFER_SIZE` (default 100), `NANOCLAW_BACKUP_DIR` (backup archive folder), `NANOCLAW_BACKUP_TOKEN` (optional shared secret for `/api/backup/*`).
+- Backend config derives from env vars prefixed with `NANOCLAW_` (see `config.py`). Example knobs: `NANOCLAW_MOCK_PROFILE` (`default` flat roster or `demo` multi-tier network), `NANOCLAW_MOCK_AGENT_NAMES`, `NANOCLAW_BASE_INTERVAL_MS`, `NANOCLAW_MAX_CLIENTS`, `NANOCLAW_EVENT_BUFFER_SIZE` (default 100), `NANOCLAW_BACKUP_DIR` (backup archive folder), `NANOCLAW_BACKUP_TOKEN` (optional shared secret for `/api/backup/*`).
 - Frontend config relies on Vite env vars: `VITE_BACKEND_WS_URL`, `VITE_EVENT_HISTORY` (default 200), `VITE_AGENT_SOLID_MINUTES` (default 15), `VITE_AGENT_FADE_MINUTES` (default 90), `VITE_BACKUP_TOKEN` (optional, mirrors `NANOCLAW_BACKUP_TOKEN`).
 - Node `22.23.2` is required; we vendor the tarball under `.tools/node` for deterministic teams.
 
@@ -172,6 +172,27 @@ When new telemetry attributes are required, bump `schema_version`, update both t
 - `backend/Dockerfile` packages the FastAPI app on top of `python:3.11-slim` and exposes port `8000`.
 - `frontend/Dockerfile` builds the SPA with `node:22.23.2`, then serves the `dist/` bundle via nginx. `frontend/nginx.conf` proxies `/ws/`, `/api/config/`, and `/api/backup/` traffic to the backend container, so browsers can use same-origin WebSocket + API URLs.
 - `docker-compose.yml` wires both services together, reading defaults from `.env` and exposing ports `BACKEND_PORT` (default `8000`) and `FRONTEND_PORT` (default `4173`).
+
+## Demo instance (`docker-compose.demo.yml`)
+
+- **Purpose**: a self-contained demo of the dashboard with no nanoclaw host —
+  the backend runs the **demo mock profile** (`NANOCLAW_MOCK_PROFILE=demo`,
+  see `backend/app/telemetry/demo_profile.py`): a realistic multi-tier agent
+  network an engineer would use, with coherent demo message content.
+- **Topology**: 3 tiers — `orchestrator` root → `concierge` (human-facing,
+  whatsapp channel), `route-planner` → [`route-optimizer`, `route-validator`],
+  `coder` → [`reviewer`, `tester`], plus `architect`/`researcher`/`editor`/
+  `terminal`/`plotter`. Human-channel events (`channel:whatsapp` ↔
+  `agent:concierge`) drive the **Human node** above the concierge.
+- **Networking**: the override removes all host port mappings. The frontend
+  joins the external proxy network (reverse-proxy ingress only; network name
+  from `NANOCLAW_PROXY_NETWORK` in the gitignored `.env`); the backend is
+  reachable only from the frontend container over the internal network.
+  **Nothing is exposed on the host.**
+- **Run**: `docker compose -f docker-compose.yml -f docker-compose.demo.yml up --build -d`.
+  Host-specific values (VPS address, folder, reverse-proxy network name) are
+  not in the repo — they live in the gitignored `.env` on the host. See
+  `docs/DEMO.md`.
 
 ## Deployment (live nanoclaw host)
 

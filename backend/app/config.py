@@ -41,7 +41,13 @@ class Settings(BaseSettings):
     """Runtime configuration loaded from environment variables."""
 
     model_config = SettingsConfigDict(
-        env_prefix="NANOCLAW_", env_file=".env", env_file_encoding="utf-8", extra="ignore"
+        env_prefix="NANOCLAW_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        # Empty env vars (e.g. `NANOCLAW_MOCK_PROFILE=` in a copied .env) fall
+        # back to the field default instead of being parsed verbatim.
+        env_ignore_empty=True,
     )
 
     @classmethod
@@ -62,6 +68,9 @@ class Settings(BaseSettings):
 
     app_name: str = Field(default="Nanoclaw Dashboard Backend")
     transport: Literal["websocket", "sse"] = Field(default="websocket")
+    # Mock telemetry content set: "default" (flat specialist roster) or "demo"
+    # (multi-tier agent network with a human-facing concierge agent).
+    mock_profile: Literal["default", "demo"] = Field(default="default")
     mock_agent_names: list[str] = Field(
         default_factory=lambda: [
             "researcher",

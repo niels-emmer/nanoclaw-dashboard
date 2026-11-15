@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Demo instance** — a self-contained demo of the dashboard with no nanoclaw
+  host. New `NANOCLAW_MOCK_PROFILE=demo` mock profile
+  (`backend/app/telemetry/demo_profile.py`) renders a realistic multi-tier
+  agent network (orchestrator → concierge/route-planner/coder → sub-agents)
+  with coherent engineering demo content and human-channel traffic
+  (`channel:whatsapp` ↔ `agent:concierge`) that drives the Human node. New
+  `docker-compose.demo.yml` override exposes **only** the frontend on the
+  external proxy network (name from `NANOCLAW_PROXY_NETWORK` in the gitignored
+  `.env`) — no host ports, backend internal-only. See
+  `docs/DEMO.md` and ADR 0025.
+
 ## [1.4.0] — 2026-09-21
 
 ### Added
