@@ -309,3 +309,16 @@ Document architectural decisions here (lightweight ADRs). Each entry cites ratio
   - `THIRD_PARTY.md` updated to the new exact versions; `undici` and `source-map-js` added as tracked transitive dependencies.
   - No application code changes were required by the bumps — no source or test compatibility fixes needed.
   - No telemetry schema or transport change; no `schema_version` bump. No new direct dependencies.
+
+## 0027 – Drop unused @heroui/react and @heroui/styles dependencies (2026-11-15)
+- **Status**: Accepted
+- **Context**: `@heroui/react` and `@heroui/styles` (both pinned at `3.2.6`) were carried in `frontend/package.json` from the v1 scaffold, but an audit showed 0 HeroUI component imports across `frontend/src/components/`. Only two usages remained: `useTheme('dark')` in `frontend/src/main.tsx` and `@import "@heroui/styles"` in `frontend/src/index.css` (providing `@theme inline` color mappings for `background`, `foreground`, `surface`, `accent`, and `muted`). Carrying HeroUI also introduced recurring upstream `react-aria` peer-dependency conflicts (ADR 0023).
+- **Decision**:
+  - Removed `@heroui/react` (`3.2.6`) and `@heroui/styles` (`3.2.6`) from `frontend/package.json` and regenerated `frontend/package-lock.json` via `npm install --package-lock` (removing 46 transitive packages).
+  - Replaced `useTheme` with a minimal local hook (`frontend/src/hooks/useTheme.ts`) that preserves the exact behavior (`heroui-theme` `localStorage` key, `prefers-color-scheme: dark` subscription when `'system'`, `useLayoutEffect` sync of `document.documentElement.classList` and `data-theme`).
+  - Removed `@import "@heroui/styles"` from `frontend/src/index.css` and inlined `@theme inline` for the 5 palette tokens (`--color-background`, `--color-foreground`, `--color-surface`, `--color-accent`, `--color-muted`).
+  - Hand-rolled Tailwind panels suit the 1080p wall-display constraint and keep the DOM shallow on a high-frequency telemetry render path.
+- **Consequences**:
+  - Smaller bundle and 46 fewer npm packages; `npm audit` remains at 0 vulnerabilities.
+  - Eliminates the upstream `@heroui/react` / `react-aria` peer-dependency friction.
+  - No telemetry schema or transport change; no `schema_version` bump. No new dependencies.

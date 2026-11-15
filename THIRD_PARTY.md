@@ -16,8 +16,6 @@ Record every external dependency here with license info and notes on local modif
 | React / React DOM | 19.3.1 | MIT | Frontend UI library | None |
 | Vite | 8.3.4 | MIT | Frontend dev server / build tool | None |
 | Tailwind CSS | 4.3.3 | MIT | Utility-first CSS framework for styling | None |
-| @heroui/react | 3.2.6 | MIT | UI component library | None |
-| @heroui/styles | 3.2.6 | MIT | HeroUI pre-built component styles | None |
 | @tailwindcss/vite | 4.3.3 | MIT | Tailwind Vite integration plugin | None |
 | lucide-react | 1.58.0 | ISC | SVG icon library for agent graph node icons | None |
 | oxlint | 1.88.0 | MIT | JavaScript / TypeScript linter | None |

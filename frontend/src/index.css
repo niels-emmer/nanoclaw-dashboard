@@ -1,11 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @import "tailwindcss";
-@import "@heroui/styles";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-accent: var(--accent);
+  --color-muted: var(--muted);
+}
 
 /* Design tokens — single source of truth.
-   Colors override HeroUI's dark-theme defaults so the whole UI resolves to
-   one explicit palette (both Tailwind utilities and var() references).
+   Explicit palette for both Tailwind utilities and var() references.
    Typography is the type scale. */
 :root {
   /* Colors */
