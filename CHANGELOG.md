@@ -39,6 +39,18 @@
   undici, and launch-editor advisories are resolved by this batch. Verified
   with `npm audit` on the regenerated lockfile.
 
+### Removed
+
+- **Unused `@heroui/react` (3.2.6) and `@heroui/styles` (3.2.6)** — zero
+  HeroUI components were used anywhere in `frontend/src/components/`. Replaced
+  the sole `useTheme('dark')` call in `frontend/src/main.tsx` with a minimal
+  local `frontend/src/hooks/useTheme.ts` hook preserving exact behavior
+  (`heroui-theme` storage key, `dark` class + `data-theme` attribute,
+  `prefers-color-scheme` support), removed `@import "@heroui/styles"` from
+  `frontend/src/index.css` in favor of a minimal `@theme inline` block for the
+  5 palette tokens, and regenerated `frontend/package-lock.json` (46 packages
+  removed). See ADR 0027.
+
 ## [1.4.0] — 2026-09-21
 
 ### Added
